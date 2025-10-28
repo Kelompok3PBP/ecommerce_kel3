@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:getwidget/getwidget.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../model/cart.dart';
 import '../model/product.dart';
+import '../services/api_service.dart';
+import 'cart_page.dart';
+import 'detail_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
-import 'detail_page.dart';
-import 'cart_page.dart'; // ✅ Tambahkan ini
-import '../services/api_service.dart';
 
 class DashboardPage extends StatefulWidget {
   final String email;
@@ -21,26 +21,35 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final ApiService _apiService = ApiService();
-
   List<Product> products = [];
   List<Product> filteredProducts = [];
   bool isLoading = true;
-  String searchQuery = "";
-
   String userName = "";
   String userEmail = "";
 
-  final NumberFormat currencyFormat = NumberFormat.currency(
-    locale: 'en_US',
-    symbol: '\$',
-    decimalDigits: 2,
-  );
+  final NumberFormat currencyFormat =
+      NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
   @override
   void initState() {
     super.initState();
     _loadUserInfo();
     _fetchProducts();
+  }
+
+  String translateCategory(String category) {
+    switch (category.toLowerCase()) {
+      case "electronics":
+        return "Elektronik";
+      case "jewelery":
+        return "Perhiasan";
+      case "men's clothing":
+        return "Pakaian Pria";
+      case "women's clothing":
+        return "Pakaian Wanita";
+      default:
+        return category;
+    }
   }
 
   Future<void> _loadUserInfo() async {
@@ -54,81 +63,75 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _fetchProducts() async {
     try {
       final productList = await _apiService.getProducts();
-      setState(() {
-        products = productList
-            .map<Product>((json) => Product.fromJson(json))
-            .toList();
-        filteredProducts = products;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          products = productList.map((json) => Product.fromJson(json)).toList();
+          filteredProducts = products;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      print("Error fetching products: $e");
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   void _searchProducts(String query) {
     setState(() {
-      searchQuery = query.toLowerCase();
+      final searchQuery = query.toLowerCase();
       filteredProducts = products.where((p) {
-        final title = p.title.toLowerCase();
-        final category = p.category.toLowerCase();
-        return title.contains(searchQuery) || category.contains(searchQuery);
+        return p.title.toLowerCase().contains(searchQuery) ||
+            translateCategory(p.category).toLowerCase().contains(searchQuery);
       }).toList();
     });
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('current_user');
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartModel>(context);
-
     return Scaffold(
-      backgroundColor: Colors.white,
       drawer: _buildDrawer(context),
       appBar: AppBar(
         title: const Text("Dashboard"),
-        backgroundColor: Colors.purple,
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () async {
-              final result = await showSearch(
-                context: context,
-                delegate: _ProductSearchDelegate(
-                  products: products,
-                  onSearch: _searchProducts,
-                ),
-              );
-              if (result != null && result.isNotEmpty) {
-                _searchProducts(result);
-              }
+            onPressed: () {
+              showSearch(
+                  context: context,
+                  delegate: _ProductSearchDelegate(products, _searchProducts));
             },
           ),
           Stack(
+            alignment: Alignment.center,
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart),
-                onPressed: () {
-                  // ✅ Sekarang tombol keranjang bisa dipencet
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CartPage()),
-                  );
-                },
+                onPressed: () => Navigator.pushNamed(context, '/cart'),
               ),
               if (cart.items.isNotEmpty)
                 Positioned(
-                  right: 6,
-                  top: 6,
+                  right: 8,
+                  top: 8,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
                       color: Colors.red,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                     child: Text(
                       cart.items.length.toString(),
-                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 10),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -138,15 +141,15 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : filteredProducts.isEmpty
-          ? const Center(child: Text('Produk tidak ditemukan'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: filteredProducts.length,
-              itemBuilder: (context, index) {
-                final p = filteredProducts[index];
-                return _buildProductCard(p, cart);
-              },
+          : RefreshIndicator(
+              onRefresh: _fetchProducts,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: filteredProducts.length,
+                itemBuilder: (context, index) {
+                  return _buildProductCard(filteredProducts[index], cart);
+                },
+              ),
             ),
     );
   }
@@ -157,109 +160,96 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: Colors.purple),
             accountName: Text(userName),
             accountEmail: Text(userEmail),
             currentAccountPicture: const CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person, color: Colors.purple, size: 40),
-            ),
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, size: 40, color: Colors.purple)),
+            decoration: const BoxDecoration(color: Colors.purple),
           ),
           ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text("Home"),
-            onTap: () => Navigator.pop(context),
-          ),
+              leading: const Icon(Icons.home),
+              title: const Text("Home"),
+              onTap: () => Navigator.pop(context)),
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text("Profile"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProfilePage(name: userName, email: userEmail),
-                ),
-              ).then((_) => _loadUserInfo());
+            onTap: () async {
+              await Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const ProfilePage()));
+              _loadUserInfo();
             },
           ),
           ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text("Settings"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SettingsPage()),
-              );
-            },
-          ),
+              leading: const Icon(Icons.settings),
+              title: const Text("Settings"),
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const SettingsPage()))),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text("Logout"),
-            onTap: () => Navigator.pushReplacementNamed(context, '/login'),
-          ),
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text("Logout", style: TextStyle(color: Colors.red)),
+              onTap: _logout),
         ],
       ),
     );
   }
 
   Widget _buildProductCard(Product p, CartModel cart) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => DetailPage(product: p)),
-        );
-      },
-      child: GFCard(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        imageOverlay: Image.network(p.image, fit: BoxFit.cover).image,
-        title: GFListTile(
-          avatar: CircleAvatar(backgroundImage: NetworkImage(p.image)),
-          titleText: p.title,
-          subTitleText: p.category,
-        ),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(p.description, style: const TextStyle(fontSize: 14)),
-            const SizedBox(height: 6),
-            Text(
-              currencyFormat.format(p.price),
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.purple,
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.push(
+            context, MaterialPageRoute(builder: (_) => DetailPage(product: p))),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            children: [
+              Image.network(p.image,
+                  height: 120,
+                  fit: BoxFit.contain,
+                  errorBuilder: (c, e, s) =>
+                      const Icon(Icons.image, size: 100, color: Colors.grey)),
+              const SizedBox(height: 10),
+              Text(p.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center),
+              
+              // ✅ BARIS KATEGORI SUDAH DIHAPUS DARI SINI
+              
+              const SizedBox(height: 10), // Menambahkan sedikit spasi
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(currencyFormat.format(p.price),
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.purple)),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.add_shopping_cart, size: 16),
+                    label: const Text("Tambah"),
+                    onPressed: () {
+                      cart.add(p);
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text("${p.title} ditambahkan"),
+                          duration: const Duration(seconds: 1),
+                          backgroundColor: Colors.green));
+                    },
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        buttonBar: GFButtonBar(
-          children: [
-            GFButton(
-              onPressed: () {
-                cart.add(p);
-                GFToast.showToast(
-                  "${p.title} ditambahkan ke keranjang",
-                  context,
-                  toastDuration: 3,
-                  backgroundColor: GFColors.SUCCESS,
-                  textStyle: const TextStyle(color: Colors.white),
-                );
-              },
-              text: "Tambah",
-              icon: const Icon(
-                Icons.add_shopping_cart,
-                color: Colors.white,
-                size: 18,
-              ),
-              color: GFColors.SUCCESS,
-              size: GFSize.MEDIUM,
-              shape: GFButtonShape.pills,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -269,19 +259,15 @@ class _DashboardPageState extends State<DashboardPage> {
 class _ProductSearchDelegate extends SearchDelegate<String> {
   final List<Product> products;
   final Function(String) onSearch;
-
-  _ProductSearchDelegate({required this.products, required this.onSearch});
+  _ProductSearchDelegate(this.products, this.onSearch);
 
   @override
-  List<Widget>? buildActions(BuildContext context) => [
-    IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
-  ];
+  List<Widget>? buildActions(BuildContext context) =>
+      [IconButton(icon: const Icon(Icons.clear), onPressed: () => query = '')];
 
   @override
   Widget? buildLeading(BuildContext context) => IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () => close(context, ''),
-  );
+      icon: const Icon(Icons.arrow_back), onPressed: () => close(context, ''));
 
   @override
   Widget buildResults(BuildContext context) {
@@ -293,26 +279,19 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
   @override
   Widget buildSuggestions(BuildContext context) {
     final results = products.where((p) {
-      final title = p.title.toLowerCase();
-      final category = p.category.toLowerCase();
-      return title.contains(query.toLowerCase()) ||
-          category.contains(query.toLowerCase());
+      final q = query.toLowerCase();
+      return p.title.toLowerCase().contains(q) ||
+          p.category.toLowerCase().contains(q);
     }).toList();
-
-    if (results.isEmpty) {
-      return const Center(child: Text('Produk tidak ditemukan'));
-    }
 
     return ListView.builder(
       itemCount: results.length,
       itemBuilder: (context, index) {
-        final p = results[index];
         return ListTile(
-          title: Text(p.title),
-          subtitle: Text(p.category),
+          title: Text(results[index].title),
           onTap: () {
-            onSearch(p.title);
-            close(context, p.title);
+            query = results[index].title;
+            showResults(context);
           },
         );
       },
