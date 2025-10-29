@@ -1,8 +1,10 @@
+// payment_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../model/cart.dart';
+import '../model/cart.dart'; // 💡 Pastikan path model benar
 
 class PaymentPage extends StatefulWidget {
   final double total;
@@ -15,7 +17,6 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   String? selectedMethod;
 
-  // ✅ Fungsi ini sudah benar dan sekarang konsisten dengan halaman lain
   String formatRupiah(double price) {
     final format = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
     return format.format(price);
@@ -39,7 +40,9 @@ class _PaymentPageState extends State<PaymentPage> {
             RadioListTile<String>(value: 'Bayar di Tempat (COD)', groupValue: selectedMethod, title: const Text('Bayar di Tempat (COD)'), onChanged: (v) => setState(() => selectedMethod = v)),
             const Spacer(),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+              style: Theme.of(context).elevatedButtonTheme.style?.copyWith( // ✅ Ganti
+                minimumSize: MaterialStateProperty.all(const Size(double.infinity, 50))
+              ),
               onPressed: selectedMethod == null ? null : () async {
                 cart.clear();
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pembayaran berhasil!'), backgroundColor: Colors.green));

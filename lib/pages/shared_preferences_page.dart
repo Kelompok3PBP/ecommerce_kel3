@@ -1,5 +1,8 @@
+// shared_preferences_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'theme_page.dart';
 
 class SharedPreferencesPage extends StatefulWidget {
   const SharedPreferencesPage({super.key});
@@ -41,10 +44,8 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text("Data Shared Preferences"),
-        backgroundColor: Colors.purple,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadAllPrefs),
           IconButton(icon: const Icon(Icons.delete), onPressed: _clearPrefs),
@@ -66,7 +67,8 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(entry.value.toString()),
-                    leading: const Icon(Icons.storage, color: Colors.purple),
+                    leading:
+                        Icon(Icons.storage, color: AppTheme.primaryColor), // ✅ Ganti
                   ),
                 );
               }).toList(),

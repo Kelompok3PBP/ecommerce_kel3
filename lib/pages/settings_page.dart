@@ -37,24 +37,35 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ PERBAIKAN: Ambil tema dari context, bukan instance baru
+    final theme = Theme.of(context);
+
+    // ✅ Ambil warna dari tema yang sudah diambil
+    final primary = theme.colorScheme.primary;
+    final secondary = theme.colorScheme.secondary;
+    final background = theme.colorScheme.background;
+    final textMain = theme.textTheme.bodyLarge!.color!;
+    final textSub = theme.textTheme.bodyMedium!.color!;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: background,
       appBar: AppBar(
         title: const Text("Pengaturan"),
-        backgroundColor: Colors.purple,
-        elevation: 2,
+        // ✅ Warna otomatis dari tema
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // 🔸 Bagian Tampilan & Notifikasi
           _buildSection(
             icon: Icons.dark_mode,
             title: "Tampilan & Notifikasi",
+            theme: theme,
             children: [
               SwitchListTile(
-                activeColor: Colors.purple,
-                title: const Text("Mode Gelap"),
-                secondary: const Icon(Icons.nights_stay, color: Colors.purple),
+                activeColor: primary,
+                title: Text("Mode Gelap", style: TextStyle(color: textMain)),
+                secondary: Icon(Icons.nights_stay, color: primary),
                 value: darkMode,
                 onChanged: (val) async {
                   setState(() => darkMode = val);
@@ -65,18 +76,16 @@ class _SettingsPageState extends State<SettingsPage> {
                         val ? 'Mode Gelap Aktif 🌙' : 'Mode Terang Aktif ☀️',
                       ),
                       duration: const Duration(seconds: 1),
+                      backgroundColor: secondary,
                     ),
                   );
                 },
               ),
               const Divider(height: 1),
               SwitchListTile(
-                activeColor: Colors.purple,
-                title: const Text("Notifikasi"),
-                secondary: const Icon(
-                  Icons.notifications,
-                  color: Colors.purple,
-                ),
+                activeColor: primary,
+                title: Text("Notifikasi", style: TextStyle(color: textMain)),
+                secondary: Icon(Icons.notifications, color: primary),
                 value: notif,
                 onChanged: (val) async {
                   setState(() => notif = val);
@@ -89,6 +98,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             : 'Notifikasi Dimatikan 🔕',
                       ),
                       duration: const Duration(seconds: 1),
+                      backgroundColor: secondary,
                     ),
                   );
                 },
@@ -96,14 +106,18 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
           const SizedBox(height: 16),
+
+          // 🔸 Bagian Informasi Aplikasi
           _buildSection(
             icon: Icons.info_outline,
             title: "Informasi Aplikasi",
+            theme: theme,
             children: [
               _buildListTile(
                 icon: Icons.devices,
                 title: "Device Info",
                 subtitle: "Lihat detail perangkat kamu",
+                theme: theme,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const DeviceInfoPage()),
@@ -113,6 +127,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 icon: Icons.storage,
                 title: "Shared Preferences",
                 subtitle: "Lihat data tersimpan di aplikasi",
+                theme: theme,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -124,6 +139,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 icon: Icons.feedback,
                 title: "Feedback",
                 subtitle: "Berikan masukan untuk aplikasi ini",
+                theme: theme,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const FeedbackPage()),
@@ -132,14 +148,18 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
           const SizedBox(height: 16),
+
+          // 🔸 Bagian Lainnya
           _buildSection(
             icon: Icons.settings,
             title: "Lainnya",
+            theme: theme,
             children: [
               _buildListTile(
                 icon: Icons.language,
                 title: "Bahasa",
                 subtitle: "Pilih bahasa aplikasi",
+                theme: theme,
                 onTap: () {
                   showDialog(
                     context: context,
@@ -147,7 +167,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      title: const Text("Pilih Bahasa"),
+                      title: Text(
+                        "Pilih Bahasa",
+                        style: TextStyle(color: primary),
+                      ),
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -156,8 +179,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             onTap: () {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
+                                SnackBar(
+                                  backgroundColor: secondary,
+                                  content: const Text(
                                     'Bahasa diatur ke Indonesia 🇮🇩',
                                   ),
                                 ),
@@ -169,8 +193,11 @@ class _SettingsPageState extends State<SettingsPage> {
                             onTap: () {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Language set to English 🇬🇧'),
+                                SnackBar(
+                                  backgroundColor: secondary,
+                                  content: const Text(
+                                    'Language set to English 🇬🇧',
+                                  ),
                                 ),
                               );
                             },
@@ -185,22 +212,21 @@ class _SettingsPageState extends State<SettingsPage> {
                 icon: Icons.info,
                 title: "Tentang Aplikasi",
                 subtitle: "Informasi versi & deskripsi aplikasi",
+                theme: theme,
                 onTap: () {
                   showAboutDialog(
                     context: context,
-                    applicationName: "Luminé Care",
+                    applicationName: "MaroonMart",
                     applicationVersion: "1.0.0",
-                    applicationIcon: const Icon(
-                      Icons.spa,
-                      color: Colors.purple,
-                    ),
+                    applicationIcon: Icon(Icons.storefront, color: primary),
                     applicationLegalese:
-                        "© 2025 Luminé Beauty Care\nAll rights reserved.",
-                    children: const [
+                        "© 2025 MaroonMart\nAll rights reserved.",
+                    children: [
                       Padding(
-                        padding: EdgeInsets.only(top: 10),
+                        padding: const EdgeInsets.only(top: 10),
                         child: Text(
-                          "Luminé Care membantu kamu memeriksa kandungan produk kecantikan dengan mudah dan cepat",
+                          "MaroonMart adalah platform e-commerce elegan dengan sentuhan maroon dan beige yang memudahkan kamu dalam berbelanja online.",
+                          style: TextStyle(color: textSub),
                         ),
                       ),
                     ],
@@ -214,12 +240,17 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // 🔸 Section builder
   Widget _buildSection({
     required String title,
     required IconData icon,
     required List<Widget> children,
+    required ThemeData theme,
   }) {
+    final primary = theme.colorScheme.primary;
+    final background = theme.colorScheme.surface;
     return Card(
+      color: background,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       elevation: 3,
       child: Column(
@@ -227,7 +258,7 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.purple.shade50,
+              color: primary.withOpacity(0.1),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(14),
               ),
@@ -235,12 +266,12 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                Icon(icon, color: Colors.purple),
+                Icon(icon, color: primary),
                 const SizedBox(width: 10),
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.purple,
+                  style: TextStyle(
+                    color: primary,
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
@@ -254,17 +285,28 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // 🔸 ListTile builder
   Widget _buildListTile({
     required IconData icon,
     required String title,
     String? subtitle,
     required VoidCallback onTap,
+    required ThemeData theme,
   }) {
+    final primary = theme.colorScheme.primary;
+    final textMain = theme.textTheme.bodyLarge!.color!;
+    final textSub = theme.textTheme.bodyMedium!.color!;
+
     return ListTile(
-      leading: Icon(icon, color: Colors.purple),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: subtitle != null ? Text(subtitle) : null,
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+      leading: Icon(icon, color: primary),
+      title: Text(
+        title,
+        style: TextStyle(fontWeight: FontWeight.w600, color: textMain),
+      ),
+      subtitle: subtitle != null
+          ? Text(subtitle, style: TextStyle(color: textSub))
+          : null,
+      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: primary),
       onTap: onTap,
     );
   }

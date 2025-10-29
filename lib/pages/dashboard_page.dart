@@ -1,15 +1,17 @@
+// dashboard_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../model/cart.dart';
-import '../model/product.dart';
-import '../services/api_service.dart';
-import 'cart_page.dart';
+import '../model/cart.dart'; // 💡 Pastikan path model benar
+import '../model/product.dart'; // 💡 Pastikan path model benar
+import '../services/api_service.dart'; // 💡 Pastikan path service benar
 import 'detail_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
+import 'theme_page.dart'; // ✅ Tambahkan ini
 
 class DashboardPage extends StatefulWidget {
   final String email;
@@ -87,7 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('current_user');
+    await prefs.remove('current_user'); // ✅ Logout hapus session
     if (mounted) {
       Navigator.pushReplacementNamed(context, '/login');
     }
@@ -100,48 +102,26 @@ class _DashboardPageState extends State<DashboardPage> {
       drawer: _buildDrawer(context),
       appBar: AppBar(
         title: const Text("Dashboard"),
+        
+        // ✅✅✅ TOMBOL SEARCH DITAMBAHKAN DI SINI ✅✅✅
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
+              // Ini adalah fungsi untuk MEMANGGIL SearchDelegate kamu
               showSearch(
-                  context: context,
-                  delegate: _ProductSearchDelegate(products, _searchProducts));
+                context: context,
+                delegate: _ProductSearchDelegate(products, _searchProducts),
+              );
             },
           ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.shopping_cart),
-                onPressed: () => Navigator.pushNamed(context, '/cart'),
-              ),
-              if (cart.items.isNotEmpty)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Text(
-                      cart.items.length.toString(),
-                      style:
-                          const TextStyle(color: Colors.white, fontSize: 10),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
         ],
+        // ✅✅✅ ------------------------------------- ✅✅✅
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
           : RefreshIndicator(
+              color: AppTheme.primaryColor,
               onRefresh: _fetchProducts,
               child: ListView.builder(
                 padding: const EdgeInsets.all(12),
@@ -155,6 +135,8 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Drawer _buildDrawer(BuildContext context) {
+    final theme = Theme.of(context); // ✅ Ambil tema dari context
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -162,18 +144,19 @@ class _DashboardPageState extends State<DashboardPage> {
           UserAccountsDrawerHeader(
             accountName: Text(userName),
             accountEmail: Text(userEmail),
-            currentAccountPicture: const CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 40, color: Colors.purple)),
-            decoration: const BoxDecoration(color: Colors.purple),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: AppTheme.cardColor,
+              child: Icon(Icons.person, size: 40, color: AppTheme.primaryColor),
+            ),
+            decoration: BoxDecoration(color: AppTheme.primaryColor),
           ),
           ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text("Home"),
+              leading: Icon(Icons.home, color: AppTheme.primaryColor),
+              title: Text("Home", style: theme.textTheme.bodyLarge),
               onTap: () => Navigator.pop(context)),
           ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text("Profile"),
+            leading: Icon(Icons.person, color: AppTheme.primaryColor),
+            title: Text("Profile", style: theme.textTheme.bodyLarge),
             onTap: () async {
               await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ProfilePage()));
@@ -181,23 +164,31 @@ class _DashboardPageState extends State<DashboardPage> {
             },
           ),
           ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text("Settings"),
+              leading: Icon(Icons.settings, color: AppTheme.primaryColor),
+              title: Text("Settings", style: theme.textTheme.bodyLarge),
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const SettingsPage()))),
           const Divider(),
           ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text("Logout", style: TextStyle(color: Colors.red)),
-              onTap: _logout),
+            leading: Icon(Icons.logout, color: AppTheme.secondaryColor),
+            title: Text("Logout",
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: AppTheme.secondaryColor, 
+                  fontWeight: FontWeight.bold
+                )),
+            onTap: _logout,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildProductCard(Product p, CartModel cart) {
+    final theme = Theme.of(context); // ✅ Ambil tema
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
+      color: AppTheme.cardColor,
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
@@ -208,42 +199,50 @@ class _DashboardPageState extends State<DashboardPage> {
           padding: const EdgeInsets.all(12.0),
           child: Column(
             children: [
-              Image.network(p.image,
-                  height: 120,
-                  fit: BoxFit.contain,
-                  errorBuilder: (c, e, s) =>
-                      const Icon(Icons.image, size: 100, color: Colors.grey)),
+              Image.network(
+                p.image,
+                height: 120,
+                fit: BoxFit.contain,
+                errorBuilder: (c, e, s) =>
+                    Icon(Icons.image, size: 100, color: AppTheme.textSecondaryColor),
+              ),
               const SizedBox(height: 10),
-              Text(p.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center),
-              
-              // ✅ BARIS KATEGORI SUDAH DIHAPUS DARI SINI
-              
-              const SizedBox(height: 10), // Menambahkan sedikit spasi
+              Text(
+                p.title,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimaryColor,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(currencyFormat.format(p.price),
-                      style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purple)),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
+                  Text(
+                    currencyFormat.format(p.price),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
                     ),
+                  ),
+                  ElevatedButton.icon(
+                    style: theme.elevatedButtonTheme.style,
                     icon: const Icon(Icons.add_shopping_cart, size: 16),
                     label: const Text("Tambah"),
                     onPressed: () {
                       cart.add(p);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
                           content: Text("${p.title} ditambahkan"),
                           duration: const Duration(seconds: 1),
-                          backgroundColor: Colors.green));
+                          backgroundColor: AppTheme.secondaryColor,
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -256,18 +255,41 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
+// ✅ Perbaikan Search Delegate
 class _ProductSearchDelegate extends SearchDelegate<String> {
   final List<Product> products;
   final Function(String) onSearch;
   _ProductSearchDelegate(this.products, this.onSearch);
 
   @override
-  List<Widget>? buildActions(BuildContext context) =>
-      [IconButton(icon: const Icon(Icons.clear), onPressed: () => query = '')];
+  ThemeData appBarTheme(BuildContext context) {
+    // ✅ Atur tema untuk search bar
+    final theme = Theme.of(context);
+    return theme.copyWith(
+      appBarTheme: theme.appBarTheme.copyWith(
+        backgroundColor: AppTheme.cardColor, // Latar putih
+        foregroundColor: AppTheme.textPrimaryColor, // Teks hitam
+        iconTheme: IconThemeData(color: AppTheme.primaryColor), // Icon maroon
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        hintStyle: TextStyle(color: AppTheme.textSecondaryColor),
+        border: InputBorder.none,
+      ),
+      scaffoldBackgroundColor: AppTheme.backgroundColor,
+    );
+  }
+
+  @override
+  List<Widget>? buildActions(BuildContext context) => [
+        IconButton(
+            icon: Icon(Icons.clear, color: AppTheme.primaryColor),
+            onPressed: () => query = '')
+      ];
 
   @override
   Widget? buildLeading(BuildContext context) => IconButton(
-      icon: const Icon(Icons.arrow_back), onPressed: () => close(context, ''));
+      icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+      onPressed: () => close(context, ''));
 
   @override
   Widget buildResults(BuildContext context) {
@@ -288,7 +310,8 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
       itemCount: results.length,
       itemBuilder: (context, index) {
         return ListTile(
-          title: Text(results[index].title),
+          title: Text(results[index].title,
+              style: TextStyle(color: AppTheme.textPrimaryColor)),
           onTap: () {
             query = results[index].title;
             showResults(context);

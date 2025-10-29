@@ -1,5 +1,8 @@
+// change_password_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'theme_page.dart'; // ✅ panggil theme di sini
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -16,9 +19,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     if (passController.text != confirmController.text ||
         passController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Password tidak sama atau kosong"),
-          backgroundColor: Colors.redAccent,
+        SnackBar(
+          content: const Text("Password tidak sama atau kosong"),
+          backgroundColor: AppTheme.primaryColor, // ✅ Ganti
         ),
       );
       return;
@@ -29,9 +32,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     if (!mounted) return;
     Navigator.pop(context);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Password berhasil diubah")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text("Password berhasil diubah"),
+        backgroundColor: Colors.green, // ✅ Ganti ke warna sukses
+      ),
+    );
   }
 
   @override
@@ -39,7 +45,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Ubah Password"),
-        backgroundColor: Colors.purple,
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -50,7 +55,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               obscureText: true,
               decoration: const InputDecoration(
                 labelText: "Password Baru",
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -59,17 +63,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               obscureText: true,
               decoration: const InputDecoration(
                 labelText: "Konfirmasi Password",
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 30),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+              style: Theme.of(context).elevatedButtonTheme.style, // ✅ Ganti
               onPressed: _savePassword,
-              child: const Text(
-                "Simpan",
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text("Simpan"),
             ),
           ],
         ),
