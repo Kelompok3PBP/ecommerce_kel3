@@ -1,3 +1,5 @@
+// pages/settings_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'device_info_page.dart';
@@ -12,7 +14,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool darkMode = false;
+  // Variabel darkMode sudah dihapus
   bool notif = true;
 
   @override
@@ -24,23 +26,20 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadUserPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      darkMode = prefs.getBool('darkMode') ?? false;
+      // Logika untuk darkMode sudah dihapus
       notif = prefs.getBool('notif') ?? true;
     });
   }
 
   Future<void> _savePrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('darkMode', darkMode);
+    // Logika untuk darkMode sudah dihapus
     await prefs.setBool('notif', notif);
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ PERBAIKAN: Ambil tema dari context, bukan instance baru
     final theme = Theme.of(context);
-
-    // ✅ Ambil warna dari tema yang sudah diambil
     final primary = theme.colorScheme.primary;
     final secondary = theme.colorScheme.secondary;
     final background = theme.colorScheme.background;
@@ -49,39 +48,17 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       backgroundColor: background,
-      appBar: AppBar(
-        title: const Text("Pengaturan"),
-        // ✅ Warna otomatis dari tema
-      ),
+      appBar: AppBar(title: const Text("Pengaturan")),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // 🔸 Bagian Tampilan & Notifikasi
+          // Bagian Tampilan & Notifikasi
           _buildSection(
-            icon: Icons.dark_mode,
-            title: "Tampilan & Notifikasi",
+            icon: Icons.notifications, // Ikon diubah
+            title: "Notifikasi", // Judul diubah
             theme: theme,
             children: [
-              SwitchListTile(
-                activeColor: primary,
-                title: Text("Mode Gelap", style: TextStyle(color: textMain)),
-                secondary: Icon(Icons.nights_stay, color: primary),
-                value: darkMode,
-                onChanged: (val) async {
-                  setState(() => darkMode = val);
-                  await _savePrefs();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        val ? 'Mode Gelap Aktif 🌙' : 'Mode Terang Aktif ☀️',
-                      ),
-                      duration: const Duration(seconds: 1),
-                      backgroundColor: secondary,
-                    ),
-                  );
-                },
-              ),
-              const Divider(height: 1),
+              // SwitchListTile untuk Mode Gelap sudah dihapus
               SwitchListTile(
                 activeColor: primary,
                 title: Text("Notifikasi", style: TextStyle(color: textMain)),
@@ -107,7 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
 
-          // 🔸 Bagian Informasi Aplikasi
+          // Bagian Informasi Aplikasi
           _buildSection(
             icon: Icons.info_outline,
             title: "Informasi Aplikasi",
@@ -149,7 +126,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
 
-          // 🔸 Bagian Lainnya
+          // Bagian Lainnya
           _buildSection(
             icon: Icons.settings,
             title: "Lainnya",
@@ -240,7 +217,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // 🔸 Section builder
   Widget _buildSection({
     required String title,
     required IconData icon,
@@ -285,7 +261,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // 🔸 ListTile builder
   Widget _buildListTile({
     required IconData icon,
     required String title,

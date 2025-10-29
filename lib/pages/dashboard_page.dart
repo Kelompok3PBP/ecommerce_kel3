@@ -1,17 +1,17 @@
-// dashboard_page.dart
+// pages/dashboard_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../model/cart.dart'; // 💡 Pastikan path model benar
-import '../model/product.dart'; // 💡 Pastikan path model benar
-import '../services/api_service.dart'; // 💡 Pastikan path service benar
+import '../model/cart.dart';
+import '../model/product.dart';
+import '../services/api_service.dart';
 import 'detail_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
-import 'theme_page.dart'; // ✅ Tambahkan ini
+import 'theme_page.dart';
+import 'theme_provider.dart';
 
 class DashboardPage extends StatefulWidget {
   final String email;
@@ -29,8 +29,11 @@ class _DashboardPageState extends State<DashboardPage> {
   String userName = "";
   String userEmail = "";
 
-  final NumberFormat currencyFormat =
-      NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+  final NumberFormat currencyFormat = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
 
   @override
   void initState() {
@@ -89,7 +92,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('current_user'); // ✅ Logout hapus session
+    await prefs.remove('current_user');
     if (mounted) {
       Navigator.pushReplacementNamed(context, '/login');
     }
@@ -98,34 +101,50 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartModel>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       drawer: _buildDrawer(context),
       appBar: AppBar(
         title: const Text("Dashboard"),
-        
-        // ✅✅✅ TOMBOL SEARCH DITAMBAHKAN DI SINI ✅✅✅
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // Ini adalah fungsi untuk MEMANGGIL SearchDelegate kamu
               showSearch(
                 context: context,
                 delegate: _ProductSearchDelegate(products, _searchProducts),
               );
             },
           ),
+          IconButton(
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay,
+            ),
+            onPressed: () {
+              themeProvider.toggleTheme(!themeProvider.isDarkMode);
+            },
+          ),
         ],
-        // ✅✅✅ ------------------------------------- ✅✅✅
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).primaryColor,
+              ),
+            )
           : RefreshIndicator(
-              color: AppTheme.primaryColor,
+              color: Theme.of(context).primaryColor,
               onRefresh: _fetchProducts,
-              child: ListView.builder(
+              child: GridView.builder(
                 padding: const EdgeInsets.all(12),
                 itemCount: filteredProducts.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.6,
+                ),
                 itemBuilder: (context, index) {
                   return _buildProductCard(filteredProducts[index], cart);
                 },
@@ -135,7 +154,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Drawer _buildDrawer(BuildContext context) {
-    final theme = Theme.of(context); // ✅ Ambil tema dari context
+    final theme = Theme.of(context);
 
     return Drawer(
       child: ListView(
@@ -145,37 +164,45 @@ class _DashboardPageState extends State<DashboardPage> {
             accountName: Text(userName),
             accountEmail: Text(userEmail),
             currentAccountPicture: CircleAvatar(
-              backgroundColor: AppTheme.cardColor,
-              child: Icon(Icons.person, size: 40, color: AppTheme.primaryColor),
+              backgroundColor: theme.cardColor,
+              child: Icon(Icons.person, size: 40, color: theme.primaryColor),
             ),
-            decoration: BoxDecoration(color: AppTheme.primaryColor),
+            decoration: BoxDecoration(color: theme.primaryColor),
           ),
           ListTile(
-              leading: Icon(Icons.home, color: AppTheme.primaryColor),
-              title: Text("Home", style: theme.textTheme.bodyLarge),
-              onTap: () => Navigator.pop(context)),
+            leading: Icon(Icons.home, color: theme.primaryColor),
+            title: Text("Home", style: theme.textTheme.bodyLarge),
+            onTap: () => Navigator.pop(context),
+          ),
           ListTile(
-            leading: Icon(Icons.person, color: AppTheme.primaryColor),
+            leading: Icon(Icons.person, color: theme.primaryColor),
             title: Text("Profile", style: theme.textTheme.bodyLarge),
             onTap: () async {
-              await Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const ProfilePage()));
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
               _loadUserInfo();
             },
           ),
           ListTile(
-              leading: Icon(Icons.settings, color: AppTheme.primaryColor),
-              title: Text("Settings", style: theme.textTheme.bodyLarge),
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const SettingsPage()))),
+            leading: Icon(Icons.settings, color: theme.primaryColor),
+            title: Text("Settings", style: theme.textTheme.bodyLarge),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            ),
+          ),
           const Divider(),
           ListTile(
-            leading: Icon(Icons.logout, color: AppTheme.secondaryColor),
-            title: Text("Logout",
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: AppTheme.secondaryColor, 
-                  fontWeight: FontWeight.bold
-                )),
+            leading: Icon(Icons.logout, color: theme.colorScheme.secondary),
+            title: Text(
+              "Logout",
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.secondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             onTap: _logout,
           ),
         ],
@@ -184,78 +211,70 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildProductCard(Product p, CartModel cart) {
-    final theme = Theme.of(context); // ✅ Ambil tema
+    final theme = Theme.of(context);
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      color: AppTheme.cardColor,
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => Navigator.push(
-            context, MaterialPageRoute(builder: (_) => DetailPage(product: p))),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            children: [
-              Image.network(
-                p.image,
-                height: 120,
-                fit: BoxFit.contain,
-                errorBuilder: (c, e, s) =>
-                    Icon(Icons.image, size: 100, color: AppTheme.textSecondaryColor),
+          context,
+          MaterialPageRoute(builder: (_) => DetailPage(product: p)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.network(
+                  p.image,
+                  fit: BoxFit.contain,
+                  errorBuilder: (c, e, s) => Icon(
+                    Icons.image,
+                    size: 80,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
               ),
-              const SizedBox(height: 10),
-              Text(
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(
                 p.title,
-                style: theme.textTheme.bodyLarge?.copyWith(
+                style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimaryColor,
+                  fontSize: 12,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.start,
               ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    currencyFormat.format(p.price),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    style: theme.elevatedButtonTheme.style,
-                    icon: const Icon(Icons.add_shopping_cart, size: 16),
-                    label: const Text("Tambah"),
-                    onPressed: () {
-                      cart.add(p);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("${p.title} ditambahkan"),
-                          duration: const Duration(seconds: 1),
-                          backgroundColor: AppTheme.secondaryColor,
-                        ),
-                      );
-                    },
-                  ),
-                ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(
+                left: 10,
+                right: 10,
+                top: 4,
+                bottom: 8,
               ),
-            ],
-          ),
+              child: Text(
+                currencyFormat.format(p.price),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: theme.primaryColor,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ✅ Perbaikan Search Delegate
 class _ProductSearchDelegate extends SearchDelegate<String> {
   final List<Product> products;
   final Function(String) onSearch;
@@ -263,33 +282,34 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
 
   @override
   ThemeData appBarTheme(BuildContext context) {
-    // ✅ Atur tema untuk search bar
     final theme = Theme.of(context);
     return theme.copyWith(
       appBarTheme: theme.appBarTheme.copyWith(
-        backgroundColor: AppTheme.cardColor, // Latar putih
-        foregroundColor: AppTheme.textPrimaryColor, // Teks hitam
-        iconTheme: IconThemeData(color: AppTheme.primaryColor), // Icon maroon
+        backgroundColor: theme.cardColor,
+        foregroundColor: theme.textTheme.bodyLarge?.color,
+        iconTheme: IconThemeData(color: theme.primaryColor),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(color: AppTheme.textSecondaryColor),
+        hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color),
         border: InputBorder.none,
       ),
-      scaffoldBackgroundColor: AppTheme.backgroundColor,
+      scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
     );
   }
 
   @override
   List<Widget>? buildActions(BuildContext context) => [
-        IconButton(
-            icon: Icon(Icons.clear, color: AppTheme.primaryColor),
-            onPressed: () => query = '')
-      ];
+    IconButton(
+      icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
+      onPressed: () => query = '',
+    ),
+  ];
 
   @override
   Widget? buildLeading(BuildContext context) => IconButton(
-      icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
-      onPressed: () => close(context, ''));
+    icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
+    onPressed: () => close(context, ''),
+  );
 
   @override
   Widget buildResults(BuildContext context) {
@@ -310,8 +330,12 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
       itemCount: results.length,
       itemBuilder: (context, index) {
         return ListTile(
-          title: Text(results[index].title,
-              style: TextStyle(color: AppTheme.textPrimaryColor)),
+          title: Text(
+            results[index].title,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
           onTap: () {
             query = results[index].title;
             showResults(context);
