@@ -1,4 +1,4 @@
-// main.dart
+
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'MaroonMart',
+          title: 'Belanjain.in',
           debugShowCheckedModeBanner: false,
 
           // Terapkan tema berdasarkan provider

@@ -7,11 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../model/cart.dart';
 import '../model/product.dart';
 import '../services/api_service.dart';
+import 'cart_page.dart';
 import 'detail_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
 import 'theme_page.dart';
 import 'theme_provider.dart';
+import 'dart:io' show File;
+import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class DashboardPage extends StatefulWidget {
   final String email;
@@ -28,6 +32,8 @@ class _DashboardPageState extends State<DashboardPage> {
   bool isLoading = true;
   String userName = "";
   String userEmail = "";
+  String? _imagePath;
+  String? _webBase64;
 
   final NumberFormat currencyFormat = NumberFormat.currency(
     locale: 'id_ID',
@@ -40,6 +46,22 @@ class _DashboardPageState extends State<DashboardPage> {
     super.initState();
     _loadUserInfo();
     _fetchProducts();
+  }
+
+  ImageProvider? _buildProfileImage() {
+    if (kIsWeb && _webBase64 != null) {
+      try {
+        return MemoryImage(base64Decode(_webBase64!));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    if (_imagePath != null && File(_imagePath!).existsSync()) {
+      return FileImage(File(_imagePath!));
+    }
+
+    return null;
   }
 
   String translateCategory(String category) {
@@ -62,6 +84,8 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       userName = prefs.getString('user_name') ?? widget.email.split('@')[0];
       userEmail = prefs.getString('user_email') ?? widget.email;
+      _imagePath = prefs.getString('profile_picture_path');
+      _webBase64 = prefs.getString('profile_picture_base64');
     });
   }
 
@@ -117,6 +141,40 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             },
           ),
+
+          // 🌟 Tambahkan Icon Keranjang (dengan badge jumlah item)
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_cart_outlined),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CartPage()),
+                  );
+                },
+              ),
+              if (cart.items.isNotEmpty)
+                Positioned(
+                  right: 6,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${cart.items.length}',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          // 🌙 Tombol mode gelap / terang
           IconButton(
             icon: Icon(
               themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay,
@@ -165,10 +223,14 @@ class _DashboardPageState extends State<DashboardPage> {
             accountEmail: Text(userEmail),
             currentAccountPicture: CircleAvatar(
               backgroundColor: theme.cardColor,
-              child: Icon(Icons.person, size: 40, color: theme.primaryColor),
+              backgroundImage: _buildProfileImage(),
+              child: _buildProfileImage() == null
+                  ? Icon(Icons.person, size: 40, color: theme.primaryColor)
+                  : null,
             ),
             decoration: BoxDecoration(color: theme.primaryColor),
           ),
+
           ListTile(
             leading: Icon(Icons.home, color: theme.primaryColor),
             title: Text("Home", style: theme.textTheme.bodyLarge),

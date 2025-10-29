@@ -1,6 +1,8 @@
 // pages/profile_page.dart
 
-import 'dart:io';
+import 'dart:io' show File;
+import 'dart:convert'; // untuk base64 web
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -20,6 +22,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String userName = "";
   String userEmail = "";
   String? _imagePath;
+  String? _webBase64; // khusus web
 
   @override
   void initState() {
@@ -34,6 +37,7 @@ class _ProfilePageState extends State<ProfilePage> {
         userName = prefs.getString('user_name') ?? 'User';
         userEmail = prefs.getString('user_email') ?? 'user@mail.com';
         _imagePath = prefs.getString('profile_picture_path');
+        _webBase64 = prefs.getString('profile_picture_base64');
       });
     }
   }
@@ -45,31 +49,49 @@ class _ProfilePageState extends State<ProfilePage> {
       final ImagePicker picker = ImagePicker();
       final XFile? pickedFile = await picker.pickImage(
         source: source,
-        imageQuality: 80, // Mengurangi kualitas gambar agar lebih ringan
+        imageQuality: 80,
       );
 
-      if (pickedFile == null) return; // Pengguna membatalkan
-
-      final appDir = await getApplicationDocumentsDirectory();
-      final fileName = path.basename(pickedFile.path);
-      final savedImagePath = path.join(appDir.path, fileName);
-
-      final File savedImage = await File(pickedFile.path).copy(savedImagePath);
+      if (pickedFile == null) return; // Pengguna batal
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('profile_picture_path', savedImage.path);
 
-      if (mounted) {
-        setState(() {
-          _imagePath = savedImage.path;
-        });
+      if (kIsWeb) {
+        // ✅ WEB: simpan base64
+        final bytes = await pickedFile.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        await prefs.setString('profile_picture_base64', base64Image);
+        await prefs.remove('profile_picture_path'); // bersihin sisa lama
+
+        if (mounted) {
+          setState(() {
+            _webBase64 = base64Image;
+            _imagePath = null;
+          });
+        }
+      } else {
+        // ✅ ANDROID / iOS: simpan file biasa
+        final appDir = await getApplicationDocumentsDirectory();
+        final fileName = path.basename(pickedFile.path);
+        final savedImagePath = path.join(appDir.path, fileName);
+        final savedImage = await File(pickedFile.path).copy(savedImagePath);
+
+        await prefs.setString('profile_picture_path', savedImage.path);
+        await prefs.remove('profile_picture_base64');
+
+        if (mounted) {
+          setState(() {
+            _imagePath = savedImage.path;
+            _webBase64 = null;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Gagal mengambil gambar. Pastikan izin telah diberikan.',
+              'Gagal mengambil gambar. Pastikan izin kamera/galeri diizinkan.',
             ),
             backgroundColor: Colors.red,
           ),
@@ -100,12 +122,27 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  ImageProvider? _buildProfileImage() {
+    // ✅ WEB
+    if (kIsWeb && _webBase64 != null) {
+      try {
+        return MemoryImage(base64Decode(_webBase64!));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // ✅ MOBILE
+    if (_imagePath != null && File(_imagePath!).existsSync()) {
+      return FileImage(File(_imagePath!));
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Pengecekan apakah file gambar benar-benar ada
-    final bool imageExists =
-        _imagePath != null && File(_imagePath!).existsSync();
 
     return Scaffold(
       appBar: AppBar(title: const Text("Profil Saya")),
@@ -120,10 +157,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: theme.primaryColor.withOpacity(0.1),
-                    backgroundImage: imageExists
-                        ? FileImage(File(_imagePath!))
-                        : null,
-                    child: !imageExists
+                    backgroundImage: _buildProfileImage(),
+                    child: _buildProfileImage() == null
                         ? Icon(
                             Icons.person,
                             size: 60,

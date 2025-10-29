@@ -1,13 +1,14 @@
-// detail_page.dart
+// pages/detail_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:translator/translator.dart';
-import '../model/product.dart'; // 💡 Pastikan path model benar
-import '../model/cart.dart'; // 💡 Pastikan path model benar
-import 'theme_page.dart'; // ✅ Tambahkan ini
+import '../model/product.dart';
+import '../model/cart.dart';
+import 'theme_page.dart';
+import 'cart_page.dart'; // ✅ Tambahkan ini
 
 class DetailPage extends StatefulWidget {
   final Product product;
@@ -104,14 +105,48 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<CartModel>(context, listen: false);
-    final theme = Theme.of(context); // ✅ Panggil tema
+    final cart = Provider.of<CartModel>(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isTranslating ? "Memuat..." : translatedTitle),
-        // ✅ Warna otomatis dari tema
+
+        // 🛒 Tambahkan ikon keranjang di kanan AppBar
+        actions: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_cart_outlined),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CartPage()),
+                  );
+                },
+              ),
+              if (cart.items.isNotEmpty)
+                Positioned(
+                  right: 6,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${cart.items.length}',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -130,21 +165,21 @@ class _DetailPageState extends State<DetailPage> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor, // ✅ Ganti
+                color: AppTheme.textPrimaryColor,
               ),
             ),
             if (isTranslating)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: LinearProgressIndicator(color: AppTheme.primaryColor), // ✅ Ganti
+                child: LinearProgressIndicator(color: AppTheme.primaryColor),
               ),
             const SizedBox(height: 10),
             Chip(
               label: Text(
                 translateCategory(widget.product.category),
-                style: TextStyle(color: AppTheme.textPrimaryColor), // ✅ Ganti
+                style: TextStyle(color: AppTheme.textPrimaryColor),
               ),
-              backgroundColor: AppTheme.secondaryColor.withOpacity(0.4), // ✅ Ganti
+              backgroundColor: AppTheme.secondaryColor.withOpacity(0.4),
             ),
             const SizedBox(height: 10),
             Text(
@@ -152,13 +187,13 @@ class _DetailPageState extends State<DetailPage> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor, // ✅ Ganti
+                color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 20),
             Text(
               "Beri Rating:",
-              style: TextStyle(fontSize: 16, color: AppTheme.textPrimaryColor), // ✅ Ganti
+              style: TextStyle(fontSize: 16, color: AppTheme.textPrimaryColor),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -166,7 +201,7 @@ class _DetailPageState extends State<DetailPage> {
                 return IconButton(
                   icon: Icon(
                     index < userRating ? Icons.star : Icons.star_border,
-                    color: AppTheme.secondaryColor, // ✅ Ganti
+                    color: AppTheme.secondaryColor,
                     size: 32,
                   ),
                   onPressed: () {
@@ -182,7 +217,7 @@ class _DetailPageState extends State<DetailPage> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor, // ✅ Ganti
+                color: AppTheme.textPrimaryColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -192,17 +227,20 @@ class _DetailPageState extends State<DetailPage> {
               style: TextStyle(
                 fontSize: 16,
                 height: 1.4,
-                color: AppTheme.textSecondaryColor, // ✅ Ganti
+                color: AppTheme.textSecondaryColor,
               ),
             ),
           ],
         ),
       ),
+
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton.icon(
-          style: theme.elevatedButtonTheme.style?.copyWith( // ✅ Ganti
-             minimumSize: MaterialStateProperty.all(const Size(double.infinity, 50)),
+          style: theme.elevatedButtonTheme.style?.copyWith(
+            minimumSize: MaterialStateProperty.all(
+              const Size(double.infinity, 50),
+            ),
           ),
           icon: const Icon(Icons.add_shopping_cart),
           label: const Text(
@@ -213,8 +251,10 @@ class _DetailPageState extends State<DetailPage> {
             cart.add(widget.product);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("${widget.product.title} ditambahkan"),
-                backgroundColor: AppTheme.secondaryColor, // ✅ Ganti
+                content: Text(
+                  "${widget.product.title} ditambahkan ke keranjang",
+                ),
+                backgroundColor: AppTheme.secondaryColor,
               ),
             );
           },
