@@ -1,5 +1,3 @@
-// pages/settings_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'device_info_page.dart';
@@ -14,8 +12,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // Variabel darkMode sudah dihapus
-  bool notif = true;
+  bool notif = true; // default true
 
   @override
   void initState() {
@@ -25,16 +22,17 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _loadUserPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      // Logika untuk darkMode sudah dihapus
-      notif = prefs.getBool('notif') ?? true;
-    });
+    final savedNotif = prefs.getBool('notif');
+    if (mounted) {
+      setState(() {
+        notif = savedNotif ?? true;
+      });
+    }
   }
 
-  Future<void> _savePrefs() async {
+  Future<void> _savePrefs(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    // Logika untuk darkMode sudah dihapus
-    await prefs.setBool('notif', notif);
+    await prefs.setBool('notif', value);
   }
 
   @override
@@ -52,13 +50,12 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Bagian Tampilan & Notifikasi
+          // 🔔 Bagian Notifikasi
           _buildSection(
-            icon: Icons.notifications, // Ikon diubah
-            title: "Notifikasi", // Judul diubah
+            icon: Icons.notifications,
+            title: "Notifikasi",
             theme: theme,
             children: [
-              // SwitchListTile untuk Mode Gelap sudah dihapus
               SwitchListTile(
                 activeColor: primary,
                 title: Text("Notifikasi", style: TextStyle(color: textMain)),
@@ -66,7 +63,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 value: notif,
                 onChanged: (val) async {
                   setState(() => notif = val);
-                  await _savePrefs();
+                  await _savePrefs(val); // Simpan nilai baru
+                  if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -84,7 +82,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
 
-          // Bagian Informasi Aplikasi
+          // ℹ️ Bagian Informasi Aplikasi
           _buildSection(
             icon: Icons.info_outline,
             title: "Informasi Aplikasi",
@@ -101,18 +99,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               _buildListTile(
-                icon: Icons.storage,
-                title: "Shared Preferences",
-                subtitle: "Lihat data tersimpan di aplikasi",
-                theme: theme,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const SharedPreferencesPage(),
-                  ),
-                ),
-              ),
-              _buildListTile(
                 icon: Icons.feedback,
                 title: "Feedback",
                 subtitle: "Berikan masukan untuk aplikasi ini",
@@ -124,9 +110,10 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ],
           ),
+
           const SizedBox(height: 16),
 
-          // Bagian Lainnya
+          // ⚙️ Bagian Lainnya
           _buildSection(
             icon: Icons.settings,
             title: "Lainnya",
@@ -138,51 +125,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 subtitle: "Pilih bahasa aplikasi",
                 theme: theme,
                 onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      title: Text(
-                        "Pilih Bahasa",
-                        style: TextStyle(color: primary),
-                      ),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            title: const Text("Indonesia 🇮🇩"),
-                            onTap: () {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: secondary,
-                                  content: const Text(
-                                    'Bahasa diatur ke Indonesia 🇮🇩',
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          ListTile(
-                            title: const Text("English 🇬🇧"),
-                            onTap: () {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: secondary,
-                                  content: const Text(
-                                    'Language set to English 🇬🇧',
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  _showLanguageDialog(context, primary, secondary);
                 },
               ),
               _buildListTile(
@@ -283,6 +226,55 @@ class _SettingsPageState extends State<SettingsPage> {
           : null,
       trailing: Icon(Icons.arrow_forward_ios, size: 16, color: primary),
       onTap: onTap,
+    );
+  }
+
+  void _showLanguageDialog(
+      BuildContext context, Color primary, Color secondary) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: Text(
+          "Pilih Bahasa",
+          style: TextStyle(color: primary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text("Indonesia 🇮🇩"),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: secondary,
+                    content: const Text(
+                      'Bahasa diatur ke Indonesia 🇮🇩',
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text("English 🇬🇧"),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: secondary,
+                    content: const Text(
+                      'Language set to English 🇬🇧',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

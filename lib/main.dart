@@ -1,9 +1,8 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+// Pages
 import 'pages/payment_page.dart';
-import 'model/cart.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
@@ -15,9 +14,17 @@ import 'pages/feedback_page.dart';
 import 'pages/theme_page.dart';
 import 'pages/theme_provider.dart';
 
+// Models & Services
+import 'model/cart.dart';
+import 'services/notification_service.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 🔔 Inisialisasi notifikasi
+  await NotificationService().initNotification();
+
+  // 🛒 Inisialisasi model keranjang
   final cart = CartModel();
   await cart.loadCart();
 
@@ -40,14 +47,11 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'Belanjain.in',
+          title: 'Belanja.in',
           debugShowCheckedModeBanner: false,
-
-          // Terapkan tema berdasarkan provider
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
-
           home: const SplashPage(),
           routes: {
             '/splash': (context) => const SplashPage(),

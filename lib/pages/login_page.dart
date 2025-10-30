@@ -1,10 +1,7 @@
-// pages/login_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard_page.dart';
 import 'register_page.dart';
-import 'theme_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,43 +23,35 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  // ✅ Fungsi login utama
   Future<void> _login() async {
-    final email = _emailController.text;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-    // ▼▼▼ BAGIAN YANG DIUBAH: LOGIKA ADMIN TANPA PASSWORD ▼▼▼
-    // Langsung cek apakah input adalah 'admin'.
-    // Jika ya, langsung login tanpa validasi form atau password.
-    if (email == 'admin') {
-      final prefs = await SharedPreferences.getInstance();
-      const adminEmail = 'admin@mail.com'; // Email default untuk sesi admin
+    final prefs = await SharedPreferences.getInstance();
 
+    // 🧠 Admin login
+    if (email == 'admin' && password == 'admin') {
+      const adminEmail = 'admin@mail.com';
       await prefs.setString('current_user', adminEmail);
-      await prefs.setString(
-        'user_name',
-        'admin',
-      ); // Tampilkan 'admin' sebagai nama
+      await prefs.setString('user_name', 'Admin');
       await prefs.setString('user_email', adminEmail);
+      await prefs.setBool('is_logged_in', true);
 
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DashboardPage(email: adminEmail),
-          ),
-        );
-      }
-      return; // Penting: Hentikan eksekusi fungsi di sini agar tidak lanjut ke validasi user biasa.
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardPage(email: adminEmail)),
+      );
+      return;
     }
-    // ▲▲▲ BATAS PERUBAHAN ▲▲▲
 
-    // --- Logika untuk Pengguna Biasa (tetap sama) ---
-    // Kode di bawah ini hanya akan berjalan jika email yang dimasukkan BUKAN 'admin'.
+    // 🧠 Login user biasa
     if (_formKey.currentState!.validate()) {
-      final prefs = await SharedPreferences.getInstance();
-      final password = _passwordController.text;
+      final registeredUsers = prefs.getStringList('registered_users') ?? [];
+
       bool isAuthenticated = false;
 
-      final registeredUsers = prefs.getStringList('registered_users') ?? [];
       for (var user in registeredUsers) {
         final parts = user.split(':');
         if (parts.length == 2 && parts[0] == email && parts[1] == password) {
@@ -75,15 +64,20 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('current_user', email);
         await prefs.setString('user_name', email.split('@')[0]);
         await prefs.setString('user_email', email);
+        await prefs.setBool('is_logged_in', true);
 
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DashboardPage(email: email),
-            ),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Login berhasil!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => DashboardPage(email: email)),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -95,9 +89,31 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // ✅ Auto login jika sudah login sebelumnya
+  Future<void> _checkAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    final email = prefs.getString('user_email') ?? '';
+
+    if (isLoggedIn && email.isNotEmpty) {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardPage(email: email)),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAutoLogin();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -118,11 +134,9 @@ class _LoginPageState extends State<LoginPage> {
                       "assets/logo.png",
                       height: 120,
                       width: 120,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.shopping_bag,
-                        size: 100,
-                        color: theme.colorScheme.primary,
-                      ),
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(Icons.shopping_bag,
+                              size: 100, color: theme.colorScheme.primary),
                     ),
                     const SizedBox(height: 20),
                     Text(
@@ -138,22 +152,18 @@ class _LoginPageState extends State<LoginPage> {
                       controller: _emailController,
                       decoration: InputDecoration(
                         labelText: 'Email atau Username',
-                        prefixIcon: Icon(
-                          Icons.person,
-                          color: theme.colorScheme.primary,
-                        ),
+                        prefixIcon: Icon(Icons.person,
+                            color: theme.colorScheme.primary),
                       ),
-                      keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Field ini tidak boleh kosong';
                         }
-                        // Jika input BUKAN 'admin', maka validasi sebagai email
                         if (value != 'admin' &&
                             !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                           return 'Masukkan email yang valid';
                         }
-                        return null; // Lolos validasi
+                        return null;
                       },
                     ),
                     const SizedBox(height: 16),
@@ -161,11 +171,9 @@ class _LoginPageState extends State<LoginPage> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: 'Password', // Hint diubah
-                        prefixIcon: Icon(
-                          Icons.lock,
-                          color: theme.colorScheme.primary,
-                        ),
+                        labelText: 'Password',
+                        prefixIcon: Icon(Icons.lock,
+                            color: theme.colorScheme.primary),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
@@ -181,10 +189,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       validator: (value) {
-                        // Validasi password ini sekarang hanya berlaku untuk user biasa,
-                        // karena admin sudah ditangani di awal fungsi _login.
-                        if (_emailController.text != 'admin' &&
-                            (value == null || value.isEmpty)) {
+                        if (value == null || value.isEmpty) {
                           return 'Password tidak boleh kosong';
                         }
                         return null;
@@ -195,16 +200,16 @@ class _LoginPageState extends State<LoginPage> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _login,
-                        style: theme.elevatedButtonTheme.style?.copyWith(
-                          padding: MaterialStateProperty.all(
-                            const EdgeInsets.symmetric(vertical: 16),
-                          ),
+                        style: ElevatedButton.styleFrom(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: Text(
+                        child: const Text(
                           'Login',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onPrimary,
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -215,8 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const RegisterPage(),
-                          ),
+                              builder: (context) => const RegisterPage()),
                         );
                       },
                       child: Text.rich(
@@ -226,11 +230,10 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             TextSpan(
                               text: "Register",
-                              style: theme.textTheme.bodyMedium?.copyWith(
+                              style: TextStyle(
                                 color: theme.colorScheme.secondary,
                                 fontWeight: FontWeight.bold,
                                 decoration: TextDecoration.underline,
-                                decorationColor: theme.colorScheme.secondary,
                               ),
                             ),
                           ],

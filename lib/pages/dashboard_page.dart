@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../model/cart.dart';
 import '../model/product.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import 'cart_page.dart';
 import 'detail_page.dart';
 import 'profile_page.dart';
@@ -114,13 +115,19 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('current_user');
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
-    }
+Future<void> _logout() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.clear(); // Hapus semua data user biar bersih
+
+  if (mounted) {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login', // Pastikan route ini sesuai dengan yang kamu daftarkan di main.dart
+      (route) => false, // Hapus semua route sebelumnya
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -272,69 +279,77 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildProductCard(Product p, CartModel cart) {
-    final theme = Theme.of(context);
+Widget _buildProductCard(Product p, CartModel cart) {
+  final theme = Theme.of(context);
 
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => Navigator.push(
+  return Card(
+    elevation: 3,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: () async {
+        // Tambah produk ke keranjang
+        cart.add(p);
+
+        // 🔔 Tampilkan notifikasi lokal
+        await NotificationService().showNotification(
+          title: "Produk Ditambahkan!",
+          body: "${p.title} berhasil dimasukkan ke keranjang 🛒",
+        );
+
+        // Arahkan ke halaman detail produk
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => DetailPage(product: p)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Image.network(
-                  p.image,
-                  fit: BoxFit.contain,
-                  errorBuilder: (c, e, s) => Icon(
-                    Icons.image,
-                    size: 80,
-                    color: theme.textTheme.bodyMedium?.color,
-                  ),
+        );
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.network(
+                p.image,
+                fit: BoxFit.contain,
+                errorBuilder: (c, e, s) => Icon(
+                  Icons.image,
+                  size: 80,
+                  color: theme.textTheme.bodyMedium?.color,
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Text(
-                p.title,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.start,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(
+              p.title,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.start,
+            ),
+          ),
+          Padding(
+            padding:
+                const EdgeInsets.only(left: 10, right: 10, top: 4, bottom: 8),
+            child: Text(
+              currencyFormat.format(p.price),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: theme.primaryColor,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(
-                left: 10,
-                right: 10,
-                top: 4,
-                bottom: 8,
-              ),
-              child: Text(
-                currencyFormat.format(p.price),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: theme.primaryColor,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _ProductSearchDelegate extends SearchDelegate<String> {

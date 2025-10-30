@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'theme_page.dart'; // Pastikan path ini benar
+import 'theme_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -10,7 +10,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _formKey = GlobalKey<FormState>(); // ✅ Untuk validasi
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
@@ -25,19 +25,26 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  // ✅ Fungsi untuk menyimpan akun secara permanen di SharedPreferences
   Future<void> _register() async {
-    // ✅ Validasi form sebelum register
     if (_formKey.currentState!.validate()) {
       final prefs = await SharedPreferences.getInstance();
-      
-      // ✅ Mengambil list user yang sudah ada
-      final registeredUsers = prefs.getStringList('registered_users') ?? [];
+
+      // Ambil daftar user yang sudah tersimpan
+      List<String> registeredUsers = prefs.getStringList('registered_users') ?? [];
+
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
 
       // Cek apakah email sudah terdaftar
-      final emailExists = registeredUsers.any((user) => user.split(':')[0] == _emailController.text);
+      final emailExists = registeredUsers.any((user) {
+        final parts = user.split(':');
+        return parts.isNotEmpty && parts[0] == email;
+      });
+
       if (emailExists) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text("Email sudah terdaftar. Silakan login."),
             backgroundColor: Colors.orangeAccent,
           ),
@@ -45,23 +52,28 @@ class _RegisterPageState extends State<RegisterPage> {
         return;
       }
 
-      // Simpan user baru (email:password)
-      registeredUsers.add("${_emailController.text}:${_passwordController.text}");
+      // ✅ Tambahkan akun baru (format email:password)
+      registeredUsers.add("$email:$password");
+
+      // ✅ Simpan daftar user yang sudah diperbarui
       await prefs.setStringList('registered_users', registeredUsers);
+      await prefs.setString('user_name', email.split('@')[0]);
+      await prefs.setString('user_email', email);
+      await prefs.setBool('is_logged_in', false); // belum login langsung
 
-      // Simpan juga data untuk login/profil (opsional tapi bagus)
-      await prefs.setString('user_name', _emailController.text.split('@')[0]);
-      await prefs.setString('user_email', _emailController.text);
-
+      // ✅ Force simpan (memastikan flush ke storage)
+      await prefs.reload();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text("Registrasi berhasil! Silakan login."),
-            backgroundColor: Colors.green, // ✅ Warna sukses
+            backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context); // Kembali ke halaman login
+
+        // Arahkan kembali ke halaman login
+        Navigator.pop(context);
       }
     }
   }
@@ -70,7 +82,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor, // Sesuai dengan splash screen
+      backgroundColor: AppTheme.backgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -81,14 +93,13 @@ class _RegisterPageState extends State<RegisterPage> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
-              child: Form( // ✅ Dibungkus Form
+              child: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Logo
                     Image.asset(
-                      "assets/logo.png", // Pastikan path logo benar
+                      "assets/logo.png",
                       height: 120,
                       width: 120,
                       errorBuilder: (context, error, stackTrace) => Icon(
@@ -98,7 +109,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Header
                     Text(
                       "Daftar Akun belanja.in",
                       textAlign: TextAlign.center,
@@ -108,7 +118,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     const SizedBox(height: 30),
-                    // Email
                     TextFormField(
                       controller: _emailController,
                       decoration: InputDecoration(
@@ -116,10 +125,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         prefixIcon: Icon(Icons.email, color: AppTheme.primaryColor),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppTheme.primaryColor),
                         ),
                       ),
                       keyboardType: TextInputType.emailAddress,
@@ -134,7 +139,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    // Password
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -143,7 +147,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         prefixIcon: Icon(Icons.lock, color: AppTheme.primaryColor),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: AppTheme.primaryColor,
                           ),
                           onPressed: () {
@@ -151,13 +157,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               _obscurePassword = !_obscurePassword;
                             });
                           },
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppTheme.primaryColor),
                         ),
                       ),
                       validator: (value) {
@@ -171,7 +170,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    // Konfirmasi Password
                     TextFormField(
                       controller: _confirmPasswordController,
                       obscureText: _obscureConfirmPassword,
@@ -180,7 +178,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         prefixIcon: Icon(Icons.lock_outline, color: AppTheme.primaryColor),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                            _obscureConfirmPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: AppTheme.primaryColor,
                           ),
                           onPressed: () {
@@ -188,13 +188,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               _obscureConfirmPassword = !_obscureConfirmPassword;
                             });
                           },
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppTheme.primaryColor),
                         ),
                       ),
                       validator: (value) {
@@ -208,7 +201,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       },
                     ),
                     const SizedBox(height: 30),
-                    // Tombol Register
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -223,18 +215,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: Text(
                           'Register',
                           style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onPrimary, // ✅ Perbaikan
+                            color: theme.colorScheme.onPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Link ke Login
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context); // Kembali ke halaman login
-                      },
+                      onTap: () => Navigator.pop(context),
                       child: Text.rich(
                         TextSpan(
                           text: "Sudah punya akun? ",
