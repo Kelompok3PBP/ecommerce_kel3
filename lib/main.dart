@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'bloc/cart_cubit.dart';
+import 'bloc/product_cubit.dart';
+import 'services/api_service.dart';
 
 // Pages
 import 'pages/payment_page.dart';
@@ -15,7 +19,7 @@ import 'pages/theme_page.dart';
 import 'pages/theme_provider.dart';
 
 // Models & Services
-import 'model/cart.dart';
+// cart model removed; using CartCubit instead
 import 'services/notification_service.dart';
 
 Future<void> main() async {
@@ -24,17 +28,16 @@ Future<void> main() async {
   // 🔔 Inisialisasi notifikasi
   await NotificationService().initNotification();
 
-  // 🛒 Inisialisasi model keranjang
-  final cart = CartModel();
-  await cart.loadCart();
-
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => cart),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ],
-      child: const MyApp(),
+      providers: [ChangeNotifierProvider(create: (_) => ThemeProvider())],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => CartCubit()),
+          BlocProvider(create: (_) => ProductCubit(ApiService())),
+        ],
+        child: const MyApp(),
+      ),
     ),
   );
 }

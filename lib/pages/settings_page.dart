@@ -230,17 +230,15 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showLanguageDialog(
-      BuildContext context, Color primary, Color secondary) {
+    BuildContext context,
+    Color primary,
+    Color secondary,
+  ) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: Text(
-          "Pilih Bahasa",
-          style: TextStyle(color: primary),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text("Pilih Bahasa", style: TextStyle(color: primary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -251,9 +249,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     backgroundColor: secondary,
-                    content: const Text(
-                      'Bahasa diatur ke Indonesia 🇮🇩',
-                    ),
+                    content: const Text('Bahasa diatur ke Indonesia 🇮🇩'),
                   ),
                 );
               },
@@ -265,9 +261,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     backgroundColor: secondary,
-                    content: const Text(
-                      'Language set to English 🇬🇧',
-                    ),
+                    content: const Text('Language set to English 🇬🇧'),
                   ),
                 );
               },

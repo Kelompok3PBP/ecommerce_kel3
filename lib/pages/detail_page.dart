@@ -1,12 +1,12 @@
 // pages/detail_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:translator/translator.dart';
 import '../model/product.dart';
-import '../model/cart.dart';
+import '../bloc/cart_cubit.dart';
 import 'theme_page.dart';
 import 'cart_page.dart'; // ✅ Tambahkan ini
 
@@ -105,7 +105,6 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<CartModel>(context);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -126,22 +125,29 @@ class _DetailPageState extends State<DetailPage> {
                   );
                 },
               ),
-              if (cart.items.isNotEmpty)
-                Positioned(
-                  right: 6,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
+              BlocBuilder<CartCubit, CartState>(
+                builder: (context, state) {
+                  if (state.items.isEmpty) return const SizedBox.shrink();
+                  return Positioned(
+                    right: 6,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${state.items.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                    child: Text(
-                      '${cart.items.length}',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ),
-                ),
+                  );
+                },
+              ),
             ],
           ),
         ],
@@ -248,7 +254,7 @@ class _DetailPageState extends State<DetailPage> {
             style: TextStyle(fontSize: 18),
           ),
           onPressed: () {
-            cart.add(widget.product);
+            context.read<CartCubit>().add(widget.product);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
