@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
+import 'package:go_router/go_router.dart';
 import 'theme_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
-
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  // ... (Semua fungsi _register, dispose, dll. tidak berubah) ...
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -30,7 +30,8 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       final prefs = await SharedPreferences.getInstance();
-      List<String> registeredUsers = prefs.getStringList('registered_users') ?? [];
+      List<String> registeredUsers =
+          prefs.getStringList('registered_users') ?? [];
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
@@ -48,13 +49,13 @@ class _RegisterPageState extends State<RegisterPage> {
         );
         return;
       }
-      
+
       registeredUsers.add("$email:$password");
-      
+
       await prefs.setStringList('registered_users', registeredUsers);
       await prefs.setString('user_name', email.split('@')[0]);
       await prefs.setString('user_email', email);
-      await prefs.setBool('is_logged_in', false); 
+      await prefs.setBool('is_logged_in', false);
       await prefs.reload();
 
       if (mounted) {
@@ -64,7 +65,7 @@ class _RegisterPageState extends State<RegisterPage> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+        context.pop();
       }
     }
   }
@@ -77,15 +78,14 @@ class _RegisterPageState extends State<RegisterPage> {
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
-          
-          // 👇👇 INI PERUBAHANNYA 👇👇
           child: SizedBox(
-            width: 450, // <-- KUNCI LEBAR KARTU MAKSIMAL 450px
+            width: 450, // <-- ConstrainedBox-mu sudah benar
             child: Card(
               margin: EdgeInsets.symmetric(horizontal: 4.w),
               color: AppTheme.cardColor,
               elevation: 8,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
                 child: Form(
@@ -95,30 +95,31 @@ class _RegisterPageState extends State<RegisterPage> {
                     children: [
                       Image.asset(
                         "assets/logo.png",
-                        height: 18.h,
-                        width: 18.h,
+                        height: 18.h, // <-- Layout Sizer OK
+                        width: 18.h,  // <-- Layout Sizer OK
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.shopping_bag,
-                          size: 25.w,
+                          size: 25.w, // <-- Layout Sizer OK
                           color: AppTheme.primaryColor,
                         ),
                       ),
-                      SizedBox(height: 2.h),
+                      SizedBox(height: 2.h), // <-- Layout Sizer OK
                       Text(
                         "Daftar Akun belanja.in",
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryColor,
-                          fontSize: 18.sp,
+                          fontSize: 22, // <-- GANTI DARI 18.sp
                         ),
                       ),
-                      SizedBox(height: 3.h),
+                      SizedBox(height: 3.h), // <-- Layout Sizer OK
                       TextFormField(
                         controller: _emailController,
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          prefixIcon: Icon(Icons.email, color: AppTheme.primaryColor),
+                          prefixIcon:
+                              Icon(Icons.email, color: AppTheme.primaryColor),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -128,19 +129,21 @@ class _RegisterPageState extends State<RegisterPage> {
                           if (value == null || value.isEmpty) {
                             return 'Email tidak boleh kosong';
                           }
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                              .hasMatch(value)) {
                             return 'Masukkan email yang valid';
                           }
                           return null;
                         },
                       ),
-                      SizedBox(height: 2.h),
+                      SizedBox(height: 2.h), // <-- Layout Sizer OK
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: Icon(Icons.lock, color: AppTheme.primaryColor),
+                          prefixIcon:
+                              Icon(Icons.lock, color: AppTheme.primaryColor),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -165,13 +168,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 2.h),
+                      SizedBox(height: 2.h), // <-- Layout Sizer OK
                       TextFormField(
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
                         decoration: InputDecoration(
                           labelText: 'Konfirmasi Password',
-                          prefixIcon: Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+                          prefixIcon: Icon(Icons.lock_outline,
+                              color: AppTheme.primaryColor),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword
@@ -181,7 +185,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             onPressed: () {
                               setState(() {
-                                _obscureConfirmPassword = !_obscureConfirmPassword;
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
                               });
                             },
                           ),
@@ -196,14 +201,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 4.h), // <-- Layout Sizer OK
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _register,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
-                            padding: EdgeInsets.symmetric(vertical: 2.h),
+                            padding: EdgeInsets.symmetric(vertical: 2.h), // <-- Layout Sizer OK
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -213,20 +218,20 @@ class _RegisterPageState extends State<RegisterPage> {
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: theme.colorScheme.onPrimary,
                               fontWeight: FontWeight.bold,
-                              fontSize: 14.sp,
+                              fontSize: 16, // <-- GANTI DARI 14.sp
                             ),
                           ),
                         ),
                       ),
-                      SizedBox(height: 2.5.h),
+                      SizedBox(height: 2.5.h), // <-- Layout Sizer OK
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: () => context.pop(),
                         child: Text.rich(
                           TextSpan(
                             text: "Sudah punya akun? ",
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: AppTheme.textPrimaryColor,
-                              fontSize: 11.sp,
+                              fontSize: 14, // <-- GANTI DARI 11.sp
                             ),
                             children: [
                               TextSpan(
@@ -236,7 +241,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   fontWeight: FontWeight.bold,
                                   decoration: TextDecoration.underline,
                                   decorationColor: AppTheme.secondaryColor,
-                                  fontSize: 11.sp,
+                                  fontSize: 14, // <-- GANTI DARI 11.sp
                                 ),
                               ),
                             ],
@@ -249,7 +254,6 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
           ),
-          // 👆👆 SAMPAI SINI 👆👆
         ),
       ),
     );

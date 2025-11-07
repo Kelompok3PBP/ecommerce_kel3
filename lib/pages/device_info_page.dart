@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart'; // <--- PASTIKAN INI ADA
+import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:sizer/sizer.dart';
 
@@ -77,11 +77,11 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
                   leading: const Icon(Icons.info_outline),
                   title: Text(
                     e.key,
-                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold), // <-- GANTI DARI 12.sp
                   ),
                   subtitle: Text(
                     e.value.toString(),
-                    style: TextStyle(fontSize: 11.sp),
+                    style: TextStyle(fontSize: 14), // <-- GANTI DARI 11.sp
                   ),
                 );
               }).toList(),

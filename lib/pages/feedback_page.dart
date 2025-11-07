@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // <--- PASTIKAN INI ADA
+import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'theme_page.dart';
 
@@ -44,7 +44,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
         title: const Text('Feedback Aplikasi'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(5.w),
+        padding: EdgeInsets.all(5.w), // <-- Layout Sizer OK
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -53,10 +53,10 @@ class _FeedbackPageState extends State<FeedbackPage> {
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimaryColor,
-                fontSize: 13.sp,
+                fontSize: 16, // <-- GANTI DARI 13.sp
               ),
             ),
-            SizedBox(height: 2.h),
+            SizedBox(height: 2.h), // <-- Layout Sizer OK
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
@@ -64,7 +64,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   icon: Icon(
                     index < _rating ? Icons.star : Icons.star_border,
                     color: AppTheme.secondaryColor,
-                    size: 30.sp,
+                    size: 40, // <-- GANTI DARI 30.sp
                   ),
                   onPressed: () {
                     setState(() {
@@ -74,25 +74,25 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 );
               }),
             ),
-            SizedBox(height: 2.h),
+            SizedBox(height: 2.h), // <-- Layout Sizer OK
             TextField(
               controller: _commentController,
               maxLines: 3,
               decoration: const InputDecoration(
                 labelText: 'Tulis komentar kamu',
               ),
-              style: TextStyle(fontSize: 12.sp),
+              style: TextStyle(fontSize: 15), // <-- GANTI DARI 12.sp
             ),
-            SizedBox(height: 3.h),
+            SizedBox(height: 3.h), // <-- Layout Sizer OK
             Center(
               child: ElevatedButton(
                 onPressed: _submitFeedback,
                 style: theme.elevatedButtonTheme.style,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.2.h),
+                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.2.h), // <-- Layout Sizer OK
                   child: Text(
                     'Kirim Feedback',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.sp),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16), // <-- GANTI DARI 13.sp
                   ),
                 ),
               ),

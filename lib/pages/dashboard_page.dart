@@ -1,25 +1,21 @@
-import 'package:flutter/material.dart'; // <--- FIKS
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sizer/sizer.dart';
-import '../bloc/cart_cubit.dart';
-import '../bloc/product_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../model/product.dart';
-import 'cart_page.dart';
-import 'detail_page.dart';
-import 'profile_page.dart';
-import 'settings_page.dart';
-import 'theme_provider.dart';
-// import 'dart:io' show File; <-- HAPUS (FIKS Web Error)
+import 'package:go_router/go_router.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
+
+import '../bloc/cart_cubit.dart';
+import '../bloc/product_cubit.dart';
+import '../model/product.dart';
+import 'theme_provider.dart';
 
 class DashboardPage extends StatefulWidget {
   final String email;
   const DashboardPage({super.key, required this.email});
-
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
@@ -30,7 +26,6 @@ class _DashboardPageState extends State<DashboardPage> {
   bool isLoading = true;
   String userName = "";
   String userEmail = "";
-  // String? _imagePath; <-- HAPUS (FIKS Web Error)
   String? _webBase64;
 
   final NumberFormat currencyFormat = NumberFormat.currency(
@@ -53,9 +48,6 @@ class _DashboardPageState extends State<DashboardPage> {
         return null;
       }
     }
-    // if (_imagePath != null && File(_imagePath!).existsSync()) { // <-- HAPUS (FIKS Web Error)
-    //   return FileImage(File(_imagePath!));
-    // }
     return null;
   }
 
@@ -79,7 +71,6 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       userName = prefs.getString('user_name') ?? widget.email.split('@')[0];
       userEmail = prefs.getString('user_email') ?? widget.email;
-      // _imagePath = prefs.getString('profile_picture_path'); <-- HAPUS (FIKS Web Error)
       _webBase64 = prefs.getString('profile_picture_base64');
     });
   }
@@ -87,6 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void _searchProducts(String query) {
     setState(() {
       final searchQuery = query.toLowerCase();
+      // Selalu filter dari list produk asli
       filteredProducts = products.where((p) {
         return p.title.toLowerCase().contains(searchQuery) ||
             translateCategory(p.category).toLowerCase().contains(searchQuery);
@@ -99,16 +91,16 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
+      await prefs.setBool('is_logged_in', false);
       print("--- SharedPreferences DIBERSIHKAN ---");
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        context.go('/login');
         print("--- NAVIGASI KE /login ---");
       }
     } catch (e) {
       print("--- !!! ERROR SAAT LOGOUT: $e ---");
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -121,11 +113,14 @@ class _DashboardPageState extends State<DashboardPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
+            onPressed: () async {
+              final String? query = await showSearch<String?>(
                 context: context,
-                delegate: _ProductSearchDelegate(products, _searchProducts),
+                delegate: _ProductSearchDelegate(products), 
               );
+              if (query != null) {
+                _searchProducts(query);
+              }
             },
           ),
           Stack(
@@ -134,30 +129,33 @@ class _DashboardPageState extends State<DashboardPage> {
               IconButton(
                 icon: const Icon(Icons.shopping_cart_outlined),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CartPage()),
-                  );
+                  // 👇👇👇 1. PERBAIKAN DI SINI 👇👇👇
+                  context.go('/cart');
                 },
               ),
               BlocBuilder<CartCubit, CartState>(
                 builder: (context, state) {
                   if (state.items.isEmpty) return const SizedBox.shrink();
                   return Positioned(
-                    right: 6,
+                    right: 8,
                     top: 8,
                     child: Container(
-                      padding: EdgeInsets.all(1.w),
-                      decoration: const BoxDecoration(
+                      padding: const EdgeInsets.fromLTRB(5, 2, 5, 2), 
+                      decoration: BoxDecoration(
                         color: Colors.red,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(10.0), 
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
                       ),
                       child: Text(
                         '${state.items.length}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 9.sp,
+                          fontSize: 10,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   );
@@ -188,36 +186,37 @@ class _DashboardPageState extends State<DashboardPage> {
           if (state.error != null) {
             return Center(child: Text('Error: ${state.error}'));
           }
-
-          if (products.isEmpty) {
-            products = state.products;
-            filteredProducts = products;
+          
+          products = state.products;
+          if (filteredProducts.isEmpty) {
+             filteredProducts = products;
           }
 
           return RefreshIndicator(
             color: Theme.of(context).primaryColor,
-            onRefresh: () async => context.read<ProductCubit>().fetchProducts(),
-            
-            child: Center( // <-- PERBAIKAN ADAPTIF
-              child: ConstrainedBox( // <-- PERBAIKAN ADAPTIF
+            onRefresh: () async {
+              _searchProducts(""); // Reset filter saat refresh
+              await context.read<ProductCubit>().fetchProducts();
+            },
+            child: Center(
+              child: ConstrainedBox(
                 constraints: const BoxConstraints(
-                  maxWidth: 1400, // <-- Batasi lebar grid
+                  maxWidth: 1400,
                 ),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    
                     int crossAxisCount;
                     if (constraints.maxWidth > 1200) {
                       crossAxisCount = 6;
                     } else if (constraints.maxWidth > 800) {
                       crossAxisCount = 4;
                     } else {
-                      crossAxisCount = 3; 
+                      crossAxisCount = 3;
                     }
 
                     return GridView.builder(
                       padding: EdgeInsets.all(3.w),
-                      itemCount: filteredProducts.length,
+                      itemCount: filteredProducts.length, 
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
                         crossAxisSpacing: 3.w,
@@ -253,7 +252,7 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundImage: _buildProfileImage(),
               child: _buildProfileImage() == null
                   ? Icon(Icons.person,
-                      size: 30.sp, // <-- PERBAIKAN .dp KE .sp
+                      size: 40, 
                       color: theme.primaryColor)
                   : null,
             ),
@@ -267,21 +266,23 @@ class _DashboardPageState extends State<DashboardPage> {
           ListTile(
             leading: Icon(Icons.person, color: theme.primaryColor),
             title: Text("Profile", style: theme.textTheme.bodyLarge),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfilePage()),
-              );
-              _loadUserInfo();
+            onTap: () { // <-- Hapus async
+              Navigator.pop(context);
+              // 👇👇👇 2. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
+              context.go('/profile');
+              // Kita tidak bisa 'await' context.go()
+              // Jadi, _loadUserInfo() tidak akan jalan otomatis saat kembali
+              // User harus refresh manual
             },
           ),
           ListTile(
             leading: Icon(Icons.settings, color: theme.primaryColor),
             title: Text("Settings", style: theme.textTheme.bodyLarge),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsPage()),
-            ),
+            onTap: () {
+              Navigator.pop(context);
+              // 👇👇👇 3. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
+              context.go('/settings');
+            },
           ),
           const Divider(),
           ListTile(
@@ -309,10 +310,8 @@ class _DashboardPageState extends State<DashboardPage> {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => DetailPage(product: p)),
-          );
+          // 👇👇👇 4. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
+          context.go('/detail/${p.id}');
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -337,7 +336,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 p.title,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 10.sp,
+                  fontSize: 14,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -354,7 +353,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Text(
                 currencyFormat.format(p.price),
                 style: TextStyle(
-                  fontSize: 12.sp,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: theme.primaryColor,
                 ),
@@ -367,10 +366,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-class _ProductSearchDelegate extends SearchDelegate<String> {
+// Delegate tidak diubah, sudah benar
+class _ProductSearchDelegate extends SearchDelegate<String?> {
   final List<Product> products;
-  final Function(String) onSearch;
-  _ProductSearchDelegate(this.products, this.onSearch);
+  _ProductSearchDelegate(this.products); 
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -382,7 +381,8 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
         iconTheme: IconThemeData(color: theme.primaryColor),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13.sp),
+        hintStyle:
+            TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 16),
         border: InputBorder.none,
       ),
       scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
@@ -393,20 +393,22 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
   List<Widget>? buildActions(BuildContext context) => [
         IconButton(
           icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
-          onPressed: () => query = '',
+          onPressed: () { 
+            query = '';
+            showSuggestions(context);
+          },
         ),
       ];
 
   @override
   Widget? buildLeading(BuildContext context) => IconButton(
         icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
-        onPressed: () => close(context, ''),
+        onPressed: () => close(context, null), 
       );
 
   @override
   Widget buildResults(BuildContext context) {
-    onSearch(query);
-    close(context, query);
+    close(context, query); 
     return Container();
   }
 
@@ -426,12 +428,12 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
             results[index].title,
             style: TextStyle(
               color: Theme.of(context).textTheme.bodyLarge?.color,
-              fontSize: 12.sp,
+              fontSize: 15,
             ),
           ),
           onTap: () {
             query = results[index].title;
-            showResults(context);
+            close(context, query); 
           },
         );
       },

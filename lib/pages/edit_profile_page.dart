@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart'; // <--- PASTIKAN INI ADA
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
+import 'package:go_router/go_router.dart';
 import 'theme_page.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -47,7 +48,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         backgroundColor: Colors.green,
       ),
     );
-    Navigator.pop(context, true);
+    context.pop(true);
   }
 
   @override
@@ -59,10 +60,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(6.w),
+          padding: EdgeInsets.all(6.w), // <-- Layout Sizer OK
           child: Container(
-            width: 90.w,
-            padding: EdgeInsets.all(6.w),
+            constraints:
+                const BoxConstraints(maxWidth: 600), // <-- Adaptif OK
+            padding: EdgeInsets.all(6.w), // <-- Layout Sizer OK
             decoration: BoxDecoration(
               color: AppTheme.cardColor,
               borderRadius: BorderRadius.circular(20),
@@ -82,26 +84,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     labelText: "Nama",
                   ),
                 ),
-                SizedBox(height: 2.5.h),
+                SizedBox(height: 2.5.h), // <-- Layout Sizer OK
                 TextField(
                   controller: emailController,
                   decoration: const InputDecoration(
                     labelText: "Email",
                   ),
                 ),
-                SizedBox(height: 4.h),
+                SizedBox(height: 4.h), // <-- Layout Sizer OK
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
                           padding: WidgetStateProperty.all(
-                            EdgeInsets.symmetric(vertical: 1.8.h),
+                            EdgeInsets.symmetric(vertical: 1.8.h), // <-- Layout Sizer OK
                           ),
                         ),
                     onPressed: _saveProfile,
                     child: Text(
                       "Simpan Perubahan",
-                      style: TextStyle(fontSize: 13.sp),
+                      style: TextStyle(fontSize: 16), // <-- GANTI DARI 13.sp
                     ),
                   ),
                 ),

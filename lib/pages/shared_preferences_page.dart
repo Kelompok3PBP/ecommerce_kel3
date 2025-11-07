@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sizer/sizer.dart'; // <--- TAMBAHKAN IMPORT INI
+import 'package:sizer/sizer.dart';
 import 'theme_page.dart';
 
 class SharedPreferencesPage extends StatefulWidget {
@@ -19,7 +19,6 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
     _loadAllPrefs();
   }
 
-  // (Fungsi _loadAllPrefs dan _clearPrefs tidak berubah)
   Future<void> _loadAllPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final allKeys = prefs.getKeys();
@@ -52,10 +51,9 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
         ],
       ),
       body: data.isEmpty
-          ? Center(child: Text("Belum ada data tersimpan", style: TextStyle(fontSize: 12.sp))) // Ganti size
+          ? Center(child: Text("Belum ada data tersimpan", style: TextStyle(fontSize: 16))) // <-- GANTI DARI 12.sp
           : ListView(
-              // Ganti padding statis
-              padding: EdgeInsets.all(2.w),
+              padding: EdgeInsets.all(2.w), // <-- Layout Sizer OK
               children: data.entries.map((entry) {
                 return Card(
                   shape: RoundedRectangleBorder(
@@ -67,12 +65,12 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
                       entry.key,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 12.sp, // Ganti size
+                        fontSize: 15, // <-- GANTI DARI 12.sp
                       ),
                     ),
                     subtitle: Text(
                       entry.value.toString(),
-                      style: TextStyle(fontSize: 10.sp), // Ganti size
+                      style: TextStyle(fontSize: 14), // <-- GANTI DARI 10.sp
                     ),
                     leading:
                         Icon(Icons.storage, color: AppTheme.primaryColor),

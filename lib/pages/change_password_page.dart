@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart'; // <--- PASTIKAN INI ADA
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
+import 'package:go_router/go_router.dart';
 import 'theme_page.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
-
   @override
   State<ChangePasswordPage> createState() => _ChangePasswordPageState();
 }
@@ -30,7 +30,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     await prefs.setString('user_password', passController.text);
 
     if (!mounted) return;
-    Navigator.pop(context);
+    context.pop();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Password berhasil diubah"),
@@ -46,7 +46,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         title: const Text("Ubah Password"),
       ),
       body: Padding(
-        padding: EdgeInsets.all(5.w),
+        padding: EdgeInsets.all(5.w), // <-- Layout Sizer OK
         child: Column(
           children: [
             TextField(
@@ -56,7 +56,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 labelText: "Password Baru",
               ),
             ),
-            SizedBox(height: 2.h),
+            SizedBox(height: 2.h), // <-- Layout Sizer OK
             TextField(
               controller: confirmController,
               obscureText: true,
@@ -64,13 +64,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 labelText: "Konfirmasi Password",
               ),
             ),
-            SizedBox(height: 4.h),
+            SizedBox(height: 4.h), // <-- Layout Sizer OK
             ElevatedButton(
               style: Theme.of(context).elevatedButtonTheme.style,
               onPressed: _savePassword,
               child: Text(
                 "Simpan",
-                style: TextStyle(fontSize: 13.sp),
+                style: TextStyle(fontSize: 16), // <-- GANTI DARI 13.sp
               ),
             ),
           ],

@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
-import 'device_info_page.dart';
-import 'shared_preferences_page.dart';
-import 'feedback_page.dart';
+import 'package:go_router/go_router.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
-
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // ... (Semua fungsi _loadUserPrefs, _savePrefs, dll. tidak berubah) ...
   bool notif = true;
 
   @override
@@ -49,15 +45,13 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(title: const Text("Pengaturan")),
-      
-      // 👇👇 INI PERUBAHANNYA 👇👇
-      body: Center( // 1. Buat ke tengah
-        child: ConstrainedBox( // 2. Batasi lebarnya
+      body: Center(
+        child: ConstrainedBox( // <-- Adaptif OK
           constraints: const BoxConstraints(
-            maxWidth: 700, // 3. Lebar maksimal 700px
+            maxWidth: 700,
           ),
-          child: ListView( // 4. Ini konten aslimu
-            padding: EdgeInsets.all(4.w),
+          child: ListView(
+            padding: EdgeInsets.all(4.w), // <-- Layout Sizer OK
             children: [
               _buildSection(
                 icon: Icons.notifications,
@@ -67,7 +61,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   SwitchListTile(
                     activeThumbColor: primary,
                     title: Text("Notifikasi",
-                        style: TextStyle(color: textMain, fontSize: 12.sp)),
+                        style: TextStyle(color: textMain, fontSize: 16)), // <-- GANTI DARI 12.sp
                     secondary: Icon(Icons.notifications, color: primary),
                     value: notif,
                     onChanged: (val) async {
@@ -89,7 +83,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 2.h),
+              SizedBox(height: 2.h), // <-- Layout Sizer OK
               _buildSection(
                 icon: Icons.info_outline,
                 title: "Informasi Aplikasi",
@@ -100,24 +94,31 @@ class _SettingsPageState extends State<SettingsPage> {
                     title: "Device Info",
                     subtitle: "Lihat detail perangkat kamu",
                     theme: theme,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DeviceInfoPage()),
-                    ),
+                    onTap: () {
+                      context.push('/device-info');
+                    },
                   ),
                   _buildListTile(
                     icon: Icons.feedback,
                     title: "Feedback",
                     subtitle: "Berikan masukan untuk aplikasi ini",
                     theme: theme,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const FeedbackPage()),
-                    ),
+                    onTap: () {
+                      context.push('/feedback');
+                    },
+                  ),
+                  _buildListTile(
+                    icon: Icons.storage,
+                    title: "Developer: SharedPreferences",
+                    subtitle: "Lihat data mentah Shared Preferences",
+                    theme: theme,
+                    onTap: () {
+                      context.push('/shared-prefs');
+                    },
                   ),
                 ],
               ),
-              SizedBox(height: 2.h),
+              SizedBox(height: 2.h), // <-- Layout Sizer OK
               _buildSection(
                 icon: Icons.settings,
                 title: "Lainnya",
@@ -147,10 +148,10 @@ class _SettingsPageState extends State<SettingsPage> {
                             "© 2025 Kelompok 3\nAll rights reserved.",
                         children: [
                           Padding(
-                            padding: EdgeInsets.only(top: 1.5.h),
+                            padding: EdgeInsets.only(top: 1.5.h), // <-- Layout Sizer OK
                             child: Text(
                               "Belanja.in adalah platform e-commerce...",
-                              style: TextStyle(color: textSub, fontSize: 11.sp),
+                              style: TextStyle(color: textSub, fontSize: 14), // <-- GANTI DARI 11.sp
                             ),
                           ),
                         ],
@@ -163,11 +164,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
       ),
-      // 👆👆 SAMPAI SINI 👆👆
     );
   }
 
-  // ... (Fungsi _buildSection, _buildListTile, _showLanguageDialog TIDAK BERUBAH) ...
   Widget _buildSection({
     required String title,
     required IconData icon,
@@ -190,16 +189,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 top: Radius.circular(14),
               ),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h), // <-- Layout Sizer OK
             child: Row(
               children: [
                 Icon(icon, color: primary),
-                SizedBox(width: 2.5.w),
+                SizedBox(width: 2.5.w), // <-- Layout Sizer OK
                 Text(
                   title,
                   style: TextStyle(
                     color: primary,
-                    fontSize: 12.sp,
+                    fontSize: 15, // <-- GANTI DARI 12.sp
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -228,12 +227,12 @@ class _SettingsPageState extends State<SettingsPage> {
       title: Text(
         title,
         style: TextStyle(
-            fontWeight: FontWeight.w600, color: textMain, fontSize: 12.sp),
+            fontWeight: FontWeight.w600, color: textMain, fontSize: 16), // <-- GANTI DARI 12.sp
       ),
       subtitle: subtitle != null
-          ? Text(subtitle, style: TextStyle(color: textSub, fontSize: 10.sp))
+          ? Text(subtitle, style: TextStyle(color: textSub, fontSize: 14)) // <-- GANTI DARI 10.sp
           : null,
-      trailing: Icon(Icons.arrow_forward_ios, size: 12.sp, color: primary), // Ganti .dp ke .sp
+      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: primary), // <-- GANTI DARI 12.sp
       onTap: onTap,
     );
   }
@@ -252,7 +251,7 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text("Indonesia 🇮🇩", style: TextStyle(fontSize: 12.sp)),
+              title: Text("Indonesia 🇮🇩", style: TextStyle(fontSize: 15)), // <-- GANTI DARI 12.sp
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -264,7 +263,7 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             ListTile(
-              title: Text("English 🇬🇧", style: TextStyle(fontSize: 12.sp)),
+              title: Text("English 🇬🇧", style: TextStyle(fontSize: 15)), // <-- GANTI DARI 12.sp
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(

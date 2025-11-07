@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sizer/sizer.dart'; // <--- TAMBAHKAN IMPORT INI
+import 'package:sizer/sizer.dart';
+import 'package:go_router/go_router.dart';
 import 'theme_page.dart';
 
 class SplashPage extends StatefulWidget {
@@ -48,15 +49,16 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     Timer(const Duration(milliseconds: 3500), _checkLoginStatus);
   }
 
-  // (Fungsi _checkLoginStatus tidak berubah)
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final email = prefs.getString('current_user');
+
     if (!mounted) return;
+
     if (email != null && email.isNotEmpty) {
-      Navigator.pushReplacementNamed(context, '/dashboard', arguments: email);
+      context.go('/dashboard', extra: email);
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      context.go('/login');
     }
   }
 
@@ -86,21 +88,18 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                       borderRadius: BorderRadius.circular(24),
                       child: Image.asset(
                         "assets/logo.png",
-                        // Ganti height/width statis
-                        height: 30.h,
-                        width: 30.h,
+                        height: 30.h, // <-- Layout Sizer OK
+                        width: 30.h,  // <-- Layout Sizer OK
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.storefront,
-                          // Ganti size statis
-                          size: 30.h,
+                          size: 30.h, // <-- Layout Sizer OK
                           color: AppTheme.primaryColor,
                         ),
                       ),
                     ),
                   ),
-                  // Ganti SizedBox statis
-                  SizedBox(height: 3.h),
+                  SizedBox(height: 3.h), // <-- Layout Sizer OK
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -115,8 +114,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                             text,
                             style: theme.textTheme.titleLarge?.copyWith(
                               color: AppTheme.primaryColor,
-                              // Ganti fontSize statis
-                              fontSize: 28.sp,
+                              fontSize: 30, // <-- GANTI DARI 28.sp
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
                             ),
@@ -129,8 +127,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                           "|",
                           style: theme.textTheme.titleLarge?.copyWith(
                             color: AppTheme.primaryColor.withOpacity(0.8),
-                            // Ganti fontSize statis
-                            fontSize: 28.sp,
+                            fontSize: 30, // <-- GANTI DARI 28.sp
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -143,22 +140,19 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                // Ganti padding statis
-                padding: EdgeInsets.only(bottom: 5.h),
+                padding: EdgeInsets.only(bottom: 5.h), // <-- Layout Sizer OK
                 child: FadeTransition(
                   opacity: _bottomFadeAnimation,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const _ModernLoadingIndicator(),
-                      // Ganti SizedBox statis
-                      SizedBox(height: 2.h),
+                      SizedBox(height: 2.h), // <-- Layout Sizer OK
                       Text(
                         "created by Kelompok 3",
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppTheme.textSecondaryColor,
-                          // Ganti fontSize (opsional)
-                          fontSize: 10.sp,
+                          fontSize: 12, // <-- GANTI DARI 10.sp
                         ),
                       ),
                     ],
@@ -172,9 +166,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     );
   }
 }
-
-// (Widget _ModernLoadingIndicator tidak perlu diubah, 
-// ukurannya sudah relatif kecil, tapi kita bisa ubah sedikit)
 
 class _ModernLoadingIndicator extends StatefulWidget {
   const _ModernLoadingIndicator();
@@ -224,11 +215,9 @@ class _ModernLoadingIndicatorState extends State<_ModernLoadingIndicator>
         return ScaleTransition(
           scale: _animations[index],
           child: Padding(
-            // Ganti padding statis
-            padding: EdgeInsets.symmetric(horizontal: 1.w),
+            padding: EdgeInsets.symmetric(horizontal: 1.w), // <-- Layout Sizer OK
             child: CircleAvatar(
-              // Ganti radius statis
-              radius: 1.5.w,
+              radius: 1.5.w, // <-- Layout Sizer OK (kecil, tidak masalah)
               backgroundColor: AppTheme.primaryColor.withOpacity(0.8),
             ),
           ),
