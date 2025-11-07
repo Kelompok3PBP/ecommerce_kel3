@@ -24,11 +24,9 @@ class AppTheme {
     colorScheme: const ColorScheme.light(
       primary: primaryColor,
       secondary: secondaryColor,
-      background: backgroundColor,
       surface: cardColor,
       onPrimary: Colors.white,
       onSecondary: textPrimaryColor,
-      onBackground: textPrimaryColor,
       onSurface: textPrimaryColor,
     ),
     appBarTheme: const AppBarTheme(
@@ -92,11 +90,9 @@ class AppTheme {
     colorScheme: const ColorScheme.dark(
       primary: primaryColor,
       secondary: secondaryColor,
-      background: Color(0xFF121212),
       surface: Color(0xFF1E1E1E),
       onPrimary: Colors.white,
       onSecondary: Colors.white,
-      onBackground: Colors.white,
       onSurface: Colors.white,
     ),
     appBarTheme: const AppBarTheme(

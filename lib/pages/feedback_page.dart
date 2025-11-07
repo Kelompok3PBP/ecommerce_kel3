@@ -1,7 +1,6 @@
-// feedback_page.dart
-
-import 'package:flutter/material.dart';
-import 'theme_page.dart'; // import tema pusat
+import 'package:flutter/material.dart'; // <--- PASTIKAN INI ADA
+import 'package:sizer/sizer.dart';
+import 'theme_page.dart';
 
 class FeedbackPage extends StatefulWidget {
   const FeedbackPage({super.key});
@@ -19,19 +18,17 @@ class _FeedbackPageState extends State<FeedbackPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Berikan rating dan komentar terlebih dahulu'),
-          backgroundColor: AppTheme.primaryColor, // ✅ Ganti
+          backgroundColor: AppTheme.primaryColor,
         ),
       );
       return;
     }
-
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Feedback terkirim! Terima kasih ❤️'),
-        backgroundColor: Colors.green, // ✅ Ganti
+        backgroundColor: Colors.green,
       ),
     );
-
     setState(() {
       _rating = 0;
       _commentController.clear();
@@ -47,28 +44,27 @@ class _FeedbackPageState extends State<FeedbackPage> {
         title: const Text('Feedback Aplikasi'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(5.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Bantu kami menjadi lebih baik dengan feedback kamu',
-              style: theme.textTheme.bodyLarge?.copyWith( // ✅ Ganti
+              style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimaryColor,
+                fontSize: 13.sp,
               ),
             ),
-            const SizedBox(height: 16),
-
-            // ⭐ Rating
+            SizedBox(height: 2.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
                 return IconButton(
                   icon: Icon(
                     index < _rating ? Icons.star : Icons.star_border,
-                    color: AppTheme.secondaryColor, // ✅ Ganti
-                    size: 35,
+                    color: AppTheme.secondaryColor,
+                    size: 30.sp,
                   ),
                   onPressed: () {
                     setState(() {
@@ -78,30 +74,25 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 );
               }),
             ),
-
-            const SizedBox(height: 16),
-
-            // 📝 Input komentar
+            SizedBox(height: 2.h),
             TextField(
               controller: _commentController,
               maxLines: 3,
               decoration: const InputDecoration(
                 labelText: 'Tulis komentar kamu',
               ),
+              style: TextStyle(fontSize: 12.sp),
             ),
-
-            const SizedBox(height: 25),
-
-            // 📤 Tombol kirim
+            SizedBox(height: 3.h),
             Center(
               child: ElevatedButton(
                 onPressed: _submitFeedback,
-                style: theme.elevatedButtonTheme.style, // ✅ Ganti
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                style: theme.elevatedButtonTheme.style,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.2.h),
                   child: Text(
                     'Kirim Feedback',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.sp),
                   ),
                 ),
               ),

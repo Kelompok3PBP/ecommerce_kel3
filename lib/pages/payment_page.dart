@@ -1,9 +1,8 @@
-// payment_page.dart
-
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // <--- INI YANG HILANG
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sizer/sizer.dart';
 import '../bloc/cart_cubit.dart';
 
 class PaymentPage extends StatefulWidget {
@@ -17,6 +16,7 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   String? selectedMethod;
 
+  // (Fungsi formatRupiah tidak berubah)
   String formatRupiah(double price) {
     final format = NumberFormat.currency(
       locale: 'id_ID',
@@ -28,55 +28,58 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) {
-    // cart logic now via CartCubit
     return Scaffold(
       appBar: AppBar(title: const Text('Pembayaran')),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        // Ganti padding statis
+        padding: EdgeInsets.all(4.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Total Pembayaran: ${formatRupiah(widget.total)}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              // Ganti fontSize statis
+              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 24),
-            const Text(
+            // Ganti SizedBox statis
+            SizedBox(height: 3.h),
+            Text(
               'Pilih Metode Pembayaran:',
-              style: TextStyle(fontSize: 16),
+              // Ganti fontSize statis
+              style: TextStyle(fontSize: 13.sp),
             ),
             RadioListTile<String>(
               value: 'Transfer Bank',
               groupValue: selectedMethod,
-              title: const Text('Transfer Bank'),
+              title: Text('Transfer Bank', style: TextStyle(fontSize: 12.sp)), // Ganti fontSize
               onChanged: (v) => setState(() => selectedMethod = v),
             ),
             RadioListTile<String>(
               value: 'E-Wallet (OVO, DANA, GoPay)',
               groupValue: selectedMethod,
-              title: const Text('E-Wallet (OVO, DANA, GoPay)'),
+              title: Text('E-Wallet (OVO, DANA, GoPay)', style: TextStyle(fontSize: 12.sp)), // Ganti fontSize
               onChanged: (v) => setState(() => selectedMethod = v),
             ),
             RadioListTile<String>(
               value: 'Bayar di Tempat (COD)',
               groupValue: selectedMethod,
-              title: const Text('Bayar di Tempat (COD)'),
+              title: Text('Bayar di Tempat (COD)', style: TextStyle(fontSize: 12.sp)), // Ganti fontSize
               onChanged: (v) => setState(() => selectedMethod = v),
             ),
             const Spacer(),
             ElevatedButton(
               style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
-                // ✅ Ganti
-                minimumSize: MaterialStateProperty.all(
-                  const Size(double.infinity, 50),
-                ),
-              ),
+                    minimumSize: WidgetStateProperty.all(
+                      // Ganti height statis
+                      Size(double.infinity, 6.h),
+                    ),
+                  ),
               onPressed: selectedMethod == null
                   ? null
                   : () async {
                       context.read<CartCubit>().clear();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text('Pembayaran berhasil!'),
                           backgroundColor: Colors.green,
                         ),
@@ -93,9 +96,10 @@ class _PaymentPageState extends State<PaymentPage> {
                         );
                       }
                     },
-              child: const Text(
+              child: Text(
                 'Bayar Sekarang',
-                style: TextStyle(fontSize: 18),
+                // Ganti fontSize statis
+                style: TextStyle(fontSize: 14.sp),
               ),
             ),
           ],

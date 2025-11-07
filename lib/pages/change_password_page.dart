@@ -1,8 +1,7 @@
-// change_password_page.dart
-
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // <--- PASTIKAN INI ADA
 import 'package:shared_preferences/shared_preferences.dart';
-import 'theme_page.dart'; // ✅ panggil theme di sini
+import 'package:sizer/sizer.dart';
+import 'theme_page.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -21,7 +20,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text("Password tidak sama atau kosong"),
-          backgroundColor: AppTheme.primaryColor, // ✅ Ganti
+          backgroundColor: AppTheme.primaryColor,
         ),
       );
       return;
@@ -33,9 +32,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     if (!mounted) return;
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Password berhasil diubah"),
-        backgroundColor: Colors.green, // ✅ Ganti ke warna sukses
+      const SnackBar(
+        content: Text("Password berhasil diubah"),
+        backgroundColor: Colors.green,
       ),
     );
   }
@@ -47,7 +46,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         title: const Text("Ubah Password"),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(5.w),
         child: Column(
           children: [
             TextField(
@@ -57,7 +56,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 labelText: "Password Baru",
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 2.h),
             TextField(
               controller: confirmController,
               obscureText: true,
@@ -65,11 +64,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 labelText: "Konfirmasi Password",
               ),
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 4.h),
             ElevatedButton(
-              style: Theme.of(context).elevatedButtonTheme.style, // ✅ Ganti
+              style: Theme.of(context).elevatedButtonTheme.style,
               onPressed: _savePassword,
-              child: const Text("Simpan"),
+              child: Text(
+                "Simpan",
+                style: TextStyle(fontSize: 13.sp),
+              ),
             ),
           ],
         ),

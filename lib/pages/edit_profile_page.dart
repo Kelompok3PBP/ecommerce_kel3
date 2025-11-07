@@ -1,8 +1,7 @@
-// edit_profile_page.dart
-
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // <--- PASTIKAN INI ADA
 import 'package:shared_preferences/shared_preferences.dart';
-import 'theme_page.dart'; // pastikan path ini sesuai
+import 'package:sizer/sizer.dart';
+import 'theme_page.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String name;
@@ -45,7 +44,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Profil berhasil disimpan ✅"),
-        backgroundColor: Colors.green, // ✅ Beri warna sukses
+        backgroundColor: Colors.green,
       ),
     );
     Navigator.pop(context, true);
@@ -54,19 +53,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor, // ✅ Ganti
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         title: const Text("Edit Profil"),
-        // ✅ Warna otomatis dari tema
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(6.w),
           child: Container(
-            width: 400,
-            padding: const EdgeInsets.all(24),
+            width: 90.w,
+            padding: EdgeInsets.all(6.w),
             decoration: BoxDecoration(
-              color: AppTheme.cardColor, // ✅ Ganti
+              color: AppTheme.cardColor,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -80,29 +78,31 @@ class _EditProfilePageState extends State<EditProfilePage> {
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: "Nama",
-                    // ✅ Warna otomatis dari tema
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 2.5.h),
                 TextField(
                   controller: emailController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: "Email",
-                    // ✅ Warna otomatis dari tema
                   ),
                 ),
-                const SizedBox(height: 30),
+                SizedBox(height: 4.h),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    // ✅ Gunakan style dari tema
                     style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
-                      padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 14)),
-                    ),
+                          padding: WidgetStateProperty.all(
+                            EdgeInsets.symmetric(vertical: 1.8.h),
+                          ),
+                        ),
                     onPressed: _saveProfile,
-                    child: const Text("Simpan Perubahan"),
+                    child: Text(
+                      "Simpan Perubahan",
+                      style: TextStyle(fontSize: 13.sp),
+                    ),
                   ),
                 ),
               ],

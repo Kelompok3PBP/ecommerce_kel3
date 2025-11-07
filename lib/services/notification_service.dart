@@ -64,6 +64,7 @@ class NotificationService {
           priority: Priority.high,
         ),
       ),
+      // ignore: deprecated_member_use
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,

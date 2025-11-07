@@ -1,9 +1,8 @@
-// pages/dashboard_page.dart
-
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // <--- FIKS
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sizer/sizer.dart';
 import '../bloc/cart_cubit.dart';
 import '../bloc/product_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +12,7 @@ import 'detail_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
 import 'theme_provider.dart';
-import 'dart:io' show File;
+// import 'dart:io' show File; <-- HAPUS (FIKS Web Error)
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -31,7 +30,7 @@ class _DashboardPageState extends State<DashboardPage> {
   bool isLoading = true;
   String userName = "";
   String userEmail = "";
-  String? _imagePath;
+  // String? _imagePath; <-- HAPUS (FIKS Web Error)
   String? _webBase64;
 
   final NumberFormat currencyFormat = NumberFormat.currency(
@@ -44,7 +43,6 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _loadUserInfo();
-    // fetching handled by ProductCubit which is created in main
   }
 
   ImageProvider? _buildProfileImage() {
@@ -55,11 +53,9 @@ class _DashboardPageState extends State<DashboardPage> {
         return null;
       }
     }
-
-    if (_imagePath != null && File(_imagePath!).existsSync()) {
-      return FileImage(File(_imagePath!));
-    }
-
+    // if (_imagePath != null && File(_imagePath!).existsSync()) { // <-- HAPUS (FIKS Web Error)
+    //   return FileImage(File(_imagePath!));
+    // }
     return null;
   }
 
@@ -83,7 +79,7 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       userName = prefs.getString('user_name') ?? widget.email.split('@')[0];
       userEmail = prefs.getString('user_email') ?? widget.email;
-      _imagePath = prefs.getString('profile_picture_path');
+      // _imagePath = prefs.getString('profile_picture_path'); <-- HAPUS (FIKS Web Error)
       _webBase64 = prefs.getString('profile_picture_base64');
     });
   }
@@ -99,13 +95,20 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Hapus semua data user biar bersih
-
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    print("--- TOMBOL LOGOUT DITEKAN ---");
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      print("--- SharedPreferences DIBERSIHKAN ---");
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        print("--- NAVIGASI KE /login ---");
+      }
+    } catch (e) {
+      print("--- !!! ERROR SAAT LOGOUT: $e ---");
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -125,8 +128,6 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             },
           ),
-
-          // 🌟 Tambahkan Icon Keranjang (dengan badge jumlah item)
           Stack(
             alignment: Alignment.center,
             children: [
@@ -146,16 +147,16 @@ class _DashboardPageState extends State<DashboardPage> {
                     right: 6,
                     top: 8,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: EdgeInsets.all(1.w),
                       decoration: const BoxDecoration(
                         color: Colors.red,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         '${state.items.length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 9.sp,
                         ),
                       ),
                     ),
@@ -164,8 +165,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ],
           ),
-
-          // 🌙 Tombol mode gelap / terang
           IconButton(
             icon: Icon(
               themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay,
@@ -198,18 +197,40 @@ class _DashboardPageState extends State<DashboardPage> {
           return RefreshIndicator(
             color: Theme.of(context).primaryColor,
             onRefresh: () async => context.read<ProductCubit>().fetchProducts(),
-            child: GridView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: filteredProducts.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.6,
+            
+            child: Center( // <-- PERBAIKAN ADAPTIF
+              child: ConstrainedBox( // <-- PERBAIKAN ADAPTIF
+                constraints: const BoxConstraints(
+                  maxWidth: 1400, // <-- Batasi lebar grid
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    
+                    int crossAxisCount;
+                    if (constraints.maxWidth > 1200) {
+                      crossAxisCount = 6;
+                    } else if (constraints.maxWidth > 800) {
+                      crossAxisCount = 4;
+                    } else {
+                      crossAxisCount = 3; 
+                    }
+
+                    return GridView.builder(
+                      padding: EdgeInsets.all(3.w),
+                      itemCount: filteredProducts.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 3.w,
+                        mainAxisSpacing: 3.w,
+                        childAspectRatio: 0.6,
+                      ),
+                      itemBuilder: (context, index) {
+                        return _buildProductCard(filteredProducts[index]);
+                      },
+                    );
+                  },
+                ),
               ),
-              itemBuilder: (context, index) {
-                return _buildProductCard(filteredProducts[index]);
-              },
             ),
           );
         },
@@ -231,12 +252,13 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundColor: theme.cardColor,
               backgroundImage: _buildProfileImage(),
               child: _buildProfileImage() == null
-                  ? Icon(Icons.person, size: 40, color: theme.primaryColor)
+                  ? Icon(Icons.person,
+                      size: 30.sp, // <-- PERBAIKAN .dp KE .sp
+                      color: theme.primaryColor)
                   : null,
             ),
             decoration: BoxDecoration(color: theme.primaryColor),
           ),
-
           ListTile(
             leading: Icon(Icons.home, color: theme.primaryColor),
             title: Text("Home", style: theme.textTheme.bodyLarge),
@@ -287,7 +309,6 @@ class _DashboardPageState extends State<DashboardPage> {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          // Arahkan ke halaman detail produk (tidak otomatis menambahkan ke keranjang)
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => DetailPage(product: p)),
@@ -298,25 +319,25 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: EdgeInsets.all(2.w),
                 child: Image.network(
                   p.image,
                   fit: BoxFit.contain,
                   errorBuilder: (c, e, s) => Icon(
                     Icons.image,
-                    size: 80,
+                    size: 20.w,
                     color: theme.textTheme.bodyMedium?.color,
                   ),
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.symmetric(horizontal: 2.5.w),
               child: Text(
                 p.title,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  fontSize: 10.sp,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -324,16 +345,16 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(
-                left: 10,
-                right: 10,
-                top: 4,
-                bottom: 8,
+              padding: EdgeInsets.only(
+                left: 2.5.w,
+                right: 2.5.w,
+                top: 0.5.h,
+                bottom: 1.h,
               ),
               child: Text(
                 currencyFormat.format(p.price),
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.bold,
                   color: theme.primaryColor,
                 ),
@@ -361,7 +382,7 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
         iconTheme: IconThemeData(color: theme.primaryColor),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color),
+        hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13.sp),
         border: InputBorder.none,
       ),
       scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
@@ -370,17 +391,17 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
 
   @override
   List<Widget>? buildActions(BuildContext context) => [
-    IconButton(
-      icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
-      onPressed: () => query = '',
-    ),
-  ];
+        IconButton(
+          icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
+          onPressed: () => query = '',
+        ),
+      ];
 
   @override
   Widget? buildLeading(BuildContext context) => IconButton(
-    icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
-    onPressed: () => close(context, ''),
-  );
+        icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
+        onPressed: () => close(context, ''),
+      );
 
   @override
   Widget buildResults(BuildContext context) {
@@ -405,6 +426,7 @@ class _ProductSearchDelegate extends SearchDelegate<String> {
             results[index].title,
             style: TextStyle(
               color: Theme.of(context).textTheme.bodyLarge?.color,
+              fontSize: 12.sp,
             ),
           ),
           onTap: () {

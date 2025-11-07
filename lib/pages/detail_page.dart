@@ -1,14 +1,13 @@
-// pages/detail_page.dart
-
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // <--- FIKS
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:translator/translator.dart';
+import 'package:sizer/sizer.dart';
 import '../model/product.dart';
 import '../bloc/cart_cubit.dart';
 import 'theme_page.dart';
-import 'cart_page.dart'; // ✅ Tambahkan ini
+import 'cart_page.dart';
 
 class DetailPage extends StatefulWidget {
   final Product product;
@@ -36,7 +35,6 @@ class _DetailPageState extends State<DetailPage> {
       translatedTitle = widget.product.title;
       translatedDescription = widget.product.description;
     });
-
     try {
       final translator = GoogleTranslator();
       var titleTranslation = await translator.translate(
@@ -49,7 +47,6 @@ class _DetailPageState extends State<DetailPage> {
         from: 'en',
         to: 'id',
       );
-
       if (mounted) {
         setState(() {
           translatedTitle = titleTranslation.text;
@@ -103,6 +100,7 @@ class _DetailPageState extends State<DetailPage> {
     return format.format(price);
   }
 
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -110,8 +108,6 @@ class _DetailPageState extends State<DetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isTranslating ? "Memuat..." : translatedTitle),
-
-        // 🛒 Tambahkan ikon keranjang di kanan AppBar
         actions: [
           Stack(
             alignment: Alignment.center,
@@ -132,16 +128,16 @@ class _DetailPageState extends State<DetailPage> {
                     right: 6,
                     top: 8,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: EdgeInsets.all(1.w),
                       decoration: const BoxDecoration(
                         color: Colors.red,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         '${state.items.length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 9.sp,
                         ),
                       ),
                     ),
@@ -152,106 +148,115 @@ class _DetailPageState extends State<DetailPage> {
           ),
         ],
       ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Image.network(
-                widget.product.image,
-                height: 220,
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(height: 25),
-            Text(
-              translatedTitle,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor,
-              ),
-            ),
-            if (isTranslating)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: LinearProgressIndicator(color: AppTheme.primaryColor),
-              ),
-            const SizedBox(height: 10),
-            Chip(
-              label: Text(
-                translateCategory(widget.product.category),
-                style: TextStyle(color: AppTheme.textPrimaryColor),
-              ),
-              backgroundColor: AppTheme.secondaryColor.withOpacity(0.4),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              formatRupiah(widget.product.price),
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Beri Rating:",
-              style: TextStyle(fontSize: 16, color: AppTheme.textPrimaryColor),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                return IconButton(
-                  icon: Icon(
-                    index < userRating ? Icons.star : Icons.star_border,
-                    color: AppTheme.secondaryColor,
-                    size: 32,
+      
+      body: Center( // <-- PERBAIKAN ADAPTIF
+        child: ConstrainedBox( // <-- PERBAIKAN ADAPTIF
+          constraints: const BoxConstraints(
+            maxWidth: 900, 
+          ),
+          child: SingleChildScrollView( 
+            padding: EdgeInsets.all(5.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Image.network(
+                    widget.product.image,
+                    height: 28.h,
+                    fit: BoxFit.contain,
                   ),
-                  onPressed: () {
-                    setState(() => userRating = index + 1.0);
-                    _saveRating(userRating);
-                  },
-                );
-              }),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  translatedTitle,
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimaryColor,
+                  ),
+                ),
+                if (isTranslating)
+                  Padding(
+                    padding: EdgeInsets.only(top: 1.h),
+                    child: LinearProgressIndicator(color: AppTheme.primaryColor),
+                  ),
+                SizedBox(height: 1.5.h),
+                Chip(
+                  label: Text(
+                    translateCategory(widget.product.category),
+                    style: TextStyle(color: AppTheme.textPrimaryColor, fontSize: 11.sp),
+                  ),
+                  backgroundColor: AppTheme.secondaryColor.withOpacity(0.4),
+                ),
+                SizedBox(height: 1.5.h),
+                Text(
+                  formatRupiah(widget.product.price),
+                  style: TextStyle(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+                SizedBox(height: 2.5.h),
+                Text(
+                  "Beri Rating:",
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppTheme.textPrimaryColor
+                  ),
+                ),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  children: List.generate(5, (index) {
+                    return IconButton(
+                      icon: Icon(
+                        index < userRating ? Icons.star : Icons.star_border,
+                        color: AppTheme.secondaryColor,
+                        size: 28.sp, // <-- PERBAIKAN .dp KE .sp
+                      ),
+                      onPressed: () {
+                        setState(() => userRating = index + 1.0);
+                        _saveRating(userRating);
+                      },
+                    );
+                  }),
+                ),
+                SizedBox(height: 2.5.h),
+                Text(
+                  "Deskripsi:",
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimaryColor,
+                  ),
+                ),
+                SizedBox(height: 1.h),
+                Text(
+                  translatedDescription,
+                  textAlign: TextAlign.justify,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    height: 1.4,
+                    color: AppTheme.textSecondaryColor,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              "Deskripsi:",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              translatedDescription,
-              textAlign: TextAlign.justify,
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.4,
-                color: AppTheme.textSecondaryColor,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
-
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(4.w),
         child: ElevatedButton.icon(
           style: theme.elevatedButtonTheme.style?.copyWith(
-            minimumSize: MaterialStateProperty.all(
-              const Size(double.infinity, 50),
+            minimumSize: WidgetStateProperty.all(
+              Size(double.infinity, 6.h),
             ),
           ),
           icon: const Icon(Icons.add_shopping_cart),
-          label: const Text(
+          label: Text(
             "Tambah ke Keranjang",
-            style: TextStyle(fontSize: 18),
+            style: TextStyle(fontSize: 14.sp),
           ),
           onPressed: () {
             context.read<CartCubit>().add(widget.product);

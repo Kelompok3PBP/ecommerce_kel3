@@ -1,7 +1,6 @@
-// shared_preferences_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sizer/sizer.dart'; // <--- TAMBAHKAN IMPORT INI
 import 'theme_page.dart';
 
 class SharedPreferencesPage extends StatefulWidget {
@@ -20,6 +19,7 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
     _loadAllPrefs();
   }
 
+  // (Fungsi _loadAllPrefs dan _clearPrefs tidak berubah)
   Future<void> _loadAllPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final allKeys = prefs.getKeys();
@@ -52,9 +52,10 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
         ],
       ),
       body: data.isEmpty
-          ? const Center(child: Text("Belum ada data tersimpan"))
+          ? Center(child: Text("Belum ada data tersimpan", style: TextStyle(fontSize: 12.sp))) // Ganti size
           : ListView(
-              padding: const EdgeInsets.all(8),
+              // Ganti padding statis
+              padding: EdgeInsets.all(2.w),
               children: data.entries.map((entry) {
                 return Card(
                   shape: RoundedRectangleBorder(
@@ -64,11 +65,17 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
                   child: ListTile(
                     title: Text(
                       entry.key,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp, // Ganti size
+                      ),
                     ),
-                    subtitle: Text(entry.value.toString()),
+                    subtitle: Text(
+                      entry.value.toString(),
+                      style: TextStyle(fontSize: 10.sp), // Ganti size
+                    ),
                     leading:
-                        Icon(Icons.storage, color: AppTheme.primaryColor), // ✅ Ganti
+                        Icon(Icons.storage, color: AppTheme.primaryColor),
                   ),
                 );
               }).toList(),

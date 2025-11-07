@@ -1,13 +1,11 @@
-// pages/profile_page.dart
-
-import 'dart:io' show File;
-import 'dart:convert'; // untuk base64 web
+import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
+// 'dart:io' show File; <-- DIHAPUS
+// 'path_provider' dan 'path' juga tidak diperlukan untuk web
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sizer/sizer.dart';
 import 'change_password_page.dart';
 import 'edit_profile_page.dart';
 
@@ -21,8 +19,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String userName = "";
   String userEmail = "";
-  String? _imagePath;
-  String? _webBase64; // khusus web
+  // String? _imagePath; <-- DIHAPUS (Hanya untuk native)
+  String? _webBase64;
 
   @override
   void initState() {
@@ -36,62 +34,41 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         userName = prefs.getString('user_name') ?? 'User';
         userEmail = prefs.getString('user_email') ?? 'user@mail.com';
-        _imagePath = prefs.getString('profile_picture_path');
+        // _imagePath = prefs.getString('profile_picture_path'); <-- DIHAPUS
         _webBase64 = prefs.getString('profile_picture_base64');
       });
     }
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    if (mounted) Navigator.pop(context); // Tutup bottom sheet
-
+    if (mounted) Navigator.pop(context);
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? pickedFile = await picker.pickImage(
         source: source,
         imageQuality: 80,
       );
-
-      if (pickedFile == null) return; // Pengguna batal
-
+      if (pickedFile == null) return;
       final prefs = await SharedPreferences.getInstance();
 
-      if (kIsWeb) {
-        // ✅ WEB: simpan base64
-        final bytes = await pickedFile.readAsBytes();
-        final base64Image = base64Encode(bytes);
-        await prefs.setString('profile_picture_base64', base64Image);
-        await prefs.remove('profile_picture_path'); // bersihin sisa lama
+      // Hanya jalankan logika WEB
+      final bytes = await pickedFile.readAsBytes();
+      final base64Image = base64Encode(bytes);
+      await prefs.setString('profile_picture_base64', base64Image);
+      await prefs.remove('profile_picture_path'); 
 
-        if (mounted) {
-          setState(() {
-            _webBase64 = base64Image;
-            _imagePath = null;
-          });
-        }
-      } else {
-        // ✅ ANDROID / iOS: simpan file biasa
-        final appDir = await getApplicationDocumentsDirectory();
-        final fileName = path.basename(pickedFile.path);
-        final savedImagePath = path.join(appDir.path, fileName);
-        final savedImage = await File(pickedFile.path).copy(savedImagePath);
-
-        await prefs.setString('profile_picture_path', savedImage.path);
-        await prefs.remove('profile_picture_base64');
-
-        if (mounted) {
-          setState(() {
-            _imagePath = savedImage.path;
-            _webBase64 = null;
-          });
-        }
+      if (mounted) {
+        setState(() {
+          _webBase64 = base64Image;
+          // _imagePath = null; <-- DIHAPUS
+        });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Gagal mengambil gambar. Pastikan izin kamera/galeri diizinkan.',
+              'Gagal mengambil gambar.',
             ),
             backgroundColor: Colors.red,
           ),
@@ -123,7 +100,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   ImageProvider? _buildProfileImage() {
-    // ✅ WEB
+    // Hanya jalankan logika WEB
     if (kIsWeb && _webBase64 != null) {
       try {
         return MemoryImage(base64Decode(_webBase64!));
@@ -131,12 +108,7 @@ class _ProfilePageState extends State<ProfilePage> {
         return null;
       }
     }
-
-    // ✅ MOBILE
-    if (_imagePath != null && File(_imagePath!).existsSync()) {
-      return FileImage(File(_imagePath!));
-    }
-
+    // Bagian 'FileImage' dihapus
     return null;
   }
 
@@ -148,92 +120,101 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(title: const Text("Profil Saya")),
       body: RefreshIndicator(
         onRefresh: _loadProfile,
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Center(
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: theme.primaryColor.withOpacity(0.1),
-                    backgroundImage: _buildProfileImage(),
-                    child: _buildProfileImage() == null
-                        ? Icon(
-                            Icons.person,
-                            size: 60,
-                            color: theme.colorScheme.primary,
-                          )
-                        : null,
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: theme.primaryColor,
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.edit,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: _showImageSourceActionSheet,
+        child: Center( 
+          child: ConstrainedBox( 
+            constraints: const BoxConstraints(
+              maxWidth: 600, 
+            ),
+            child: ListView(
+              padding: EdgeInsets.all(6.w),
+              children: [
+                Center(
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 15.sp, 
+                        backgroundColor: theme.primaryColor.withOpacity(0.1),
+                        backgroundImage: _buildProfileImage(),
+                        child: _buildProfileImage() == null
+                            ? Icon(
+                                Icons.person,
+                                size: 15.sp, 
+                                color: theme.colorScheme.primary,
+                              )
+                            : null,
                       ),
-                    ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: CircleAvatar(
+                          radius: 5.sp, 
+                          backgroundColor: theme.primaryColor,
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 5.sp, 
+                            ),
+                            onPressed: _showImageSourceActionSheet,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              userName,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              userEmail,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-            const SizedBox(height: 32),
-            const Divider(),
-            ListTile(
-              leading: Icon(Icons.edit_note, color: theme.primaryColor),
-              title: const Text("Edit Profil"),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        EditProfilePage(name: userName, email: userEmail),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  userName,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18.sp,
                   ),
-                );
-                if (result == true && mounted) {
-                  _loadProfile();
-                }
-              },
+                ),
+                SizedBox(height: 1.h),
+                Text(
+                  userEmail,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.textTheme.bodyMedium?.color,
+                    fontSize: 12.sp,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                const Divider(),
+                ListTile(
+                  leading: Icon(Icons.edit_note, color: theme.primaryColor),
+                  title: Text("Edit Profil", style: TextStyle(fontSize: 13.sp)),
+                  trailing: Icon(Icons.arrow_forward_ios, size: 12.sp),
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            EditProfilePage(name: userName, email: userEmail),
+                      ),
+                    );
+                    if (result == true && mounted) {
+                      _loadProfile();
+                    }
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: Icon(Icons.lock_reset, color: theme.primaryColor),
+                  title: Text("Ubah Password", style: TextStyle(fontSize: 13.sp)),
+                  trailing: Icon(Icons.arrow_forward_ios, size: 12.sp),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
+                    );
+                  },
+                ),
+                const Divider(),
+              ],
             ),
-            const Divider(),
-            ListTile(
-              leading: Icon(Icons.lock_reset, color: theme.primaryColor),
-              title: const Text("Ubah Password"),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
-                );
-              },
-            ),
-            const Divider(),
-          ],
+          ),
         ),
       ),
     );

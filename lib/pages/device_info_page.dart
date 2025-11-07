@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // <--- PASTIKAN INI ADA
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:sizer/sizer.dart';
 
 class DeviceInfoPage extends StatefulWidget {
   const DeviceInfoPage({super.key});
@@ -22,7 +23,6 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
   Future<void> _initDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
     Map<String, dynamic> deviceData = {};
-
     {
       if (kIsWeb) {
         final info = await deviceInfo.webBrowserInfo;
@@ -62,7 +62,6 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
         deviceData = {"OS": "Unknown"};
       }
     }
-
     if (mounted) setState(() => _deviceData = deviceData);
   }
 
@@ -76,8 +75,14 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
               children: _deviceData.entries.map((e) {
                 return ListTile(
                   leading: const Icon(Icons.info_outline),
-                  title: Text(e.key),
-                  subtitle: Text(e.value.toString()),
+                  title: Text(
+                    e.key,
+                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    e.value.toString(),
+                    style: TextStyle(fontSize: 11.sp),
+                  ),
                 );
               }).toList(),
             ),
