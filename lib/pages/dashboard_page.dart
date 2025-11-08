@@ -21,9 +21,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  List<Product> products = [];
-  List<Product> filteredProducts = [];
-  bool isLoading = true;
+  List<Product> _filteredProducts = [];
   String userName = "";
   String userEmail = "";
   String? _webBase64;
@@ -38,11 +36,20 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _loadUserInfo();
+    context.read<ProductCubit>().fetchProducts();
   }
 
   ImageProvider? _buildProfileImage() {
     if (kIsWeb && _webBase64 != null) {
       try {
+        return MemoryImage(base64Decode(_webBase64!));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    if (!kIsWeb && _webBase64 != null) {
+       try {
         return MemoryImage(base64Decode(_webBase64!));
       } catch (_) {
         return null;
@@ -68,37 +75,42 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userName = prefs.getString('user_name') ?? widget.email.split('@')[0];
-      userEmail = prefs.getString('user_email') ?? widget.email;
-      _webBase64 = prefs.getString('profile_picture_base64');
-    });
+    if (mounted) {
+      setState(() {
+        userName = prefs.getString('user_name') ?? widget.email.split('@')[0];
+        userEmail = prefs.getString('user_email') ?? widget.email;
+        _webBase64 = prefs.getString('profile_picture_base64');
+      });
+    }
   }
 
   void _searchProducts(String query) {
+    final allProducts = context.read<ProductCubit>().state.products;
     setState(() {
-      final searchQuery = query.toLowerCase();
-      // Selalu filter dari list produk asli
-      filteredProducts = products.where((p) {
-        return p.title.toLowerCase().contains(searchQuery) ||
-            translateCategory(p.category).toLowerCase().contains(searchQuery);
-      }).toList();
+      if (query.isEmpty) {
+        _filteredProducts = allProducts;
+      } else {
+        final searchQuery = query.toLowerCase();
+        _filteredProducts = allProducts.where((p) {
+          return p.title.toLowerCase().contains(searchQuery) ||
+              translateCategory(p.category).toLowerCase().contains(searchQuery);
+        }).toList();
+      }
     });
   }
 
   Future<void> _logout() async {
-    print("--- TOMBOL LOGOUT DITEKAN ---");
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      await prefs.setBool('is_logged_in', false);
-      print("--- SharedPreferences DIBERSIHKAN ---");
+      await prefs.remove('current_user');
+      await prefs.remove('user_name');
+      await prefs.remove('user_email');
+      await prefs.setBool('is_logged_in', false); 
       if (mounted) {
         context.go('/login');
-        print("--- NAVIGASI KE /login ---");
       }
     } catch (e) {
-      print("--- !!! ERROR SAAT LOGOUT: $e ---");
+      print("Error saat logout: $e");
     }
   }
 
@@ -114,9 +126,10 @@ class _DashboardPageState extends State<DashboardPage> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () async {
+              final allProducts = context.read<ProductCubit>().state.products;
               final String? query = await showSearch<String?>(
                 context: context,
-                delegate: _ProductSearchDelegate(products), 
+                delegate: _ProductSearchDelegate(allProducts),
               );
               if (query != null) {
                 _searchProducts(query);
@@ -127,10 +140,9 @@ class _DashboardPageState extends State<DashboardPage> {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.shopping_cart_outlined),
+                icon: const Icon(Icons.shopping_cart_outlined, size: 28),
                 onPressed: () {
-                  // 👇👇👇 1. PERBAIKAN DI SINI 👇👇👇
-                  context.go('/cart');
+                  context.push('/cart');
                 },
               ),
               BlocBuilder<CartCubit, CartState>(
@@ -140,22 +152,24 @@ class _DashboardPageState extends State<DashboardPage> {
                     right: 8,
                     top: 8,
                     child: Container(
-                      padding: const EdgeInsets.fromLTRB(5, 2, 5, 2), 
-                      decoration: BoxDecoration(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
                         color: Colors.red,
-                        borderRadius: BorderRadius.circular(10.0), 
+                        shape: BoxShape.circle,
                       ),
                       constraints: const BoxConstraints(
                         minWidth: 16,
                         minHeight: 16,
                       ),
-                      child: Text(
-                        '${state.items.length}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
+                      child: Center(
+                        child: Text(
+                          '${state.items.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
                   );
@@ -173,9 +187,16 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      body: BlocBuilder<ProductCubit, ProductState>(
+      body: BlocConsumer<ProductCubit, ProductState>(
+        listener: (context, state) {
+          if (!state.loading && state.error == null) {
+            setState(() {
+              _filteredProducts = state.products;
+            });
+          }
+        },
         builder: (context, state) {
-          if (state.loading) {
+          if (state.loading && state.products.isEmpty) {
             return Center(
               child: CircularProgressIndicator(
                 color: Theme.of(context).primaryColor,
@@ -186,16 +207,11 @@ class _DashboardPageState extends State<DashboardPage> {
           if (state.error != null) {
             return Center(child: Text('Error: ${state.error}'));
           }
-          
-          products = state.products;
-          if (filteredProducts.isEmpty) {
-             filteredProducts = products;
-          }
 
           return RefreshIndicator(
             color: Theme.of(context).primaryColor,
             onRefresh: () async {
-              _searchProducts(""); // Reset filter saat refresh
+              _searchProducts(""); 
               await context.read<ProductCubit>().fetchProducts();
             },
             child: Center(
@@ -216,7 +232,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                     return GridView.builder(
                       padding: EdgeInsets.all(3.w),
-                      itemCount: filteredProducts.length, 
+                      itemCount: _filteredProducts.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
                         crossAxisSpacing: 3.w,
@@ -224,7 +240,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         childAspectRatio: 0.6,
                       ),
                       itemBuilder: (context, index) {
-                        return _buildProductCard(filteredProducts[index]);
+                        return _buildProductCard(_filteredProducts[index]);
                       },
                     );
                   },
@@ -252,8 +268,7 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundImage: _buildProfileImage(),
               child: _buildProfileImage() == null
                   ? Icon(Icons.person,
-                      size: 40, 
-                      color: theme.primaryColor)
+                      size: 40, color: theme.primaryColor)
                   : null,
             ),
             decoration: BoxDecoration(color: theme.primaryColor),
@@ -266,13 +281,9 @@ class _DashboardPageState extends State<DashboardPage> {
           ListTile(
             leading: Icon(Icons.person, color: theme.primaryColor),
             title: Text("Profile", style: theme.textTheme.bodyLarge),
-            onTap: () { // <-- Hapus async
+            onTap: () {
               Navigator.pop(context);
-              // 👇👇👇 2. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
-              context.go('/profile');
-              // Kita tidak bisa 'await' context.go()
-              // Jadi, _loadUserInfo() tidak akan jalan otomatis saat kembali
-              // User harus refresh manual
+              context.push('/profile').then((_) => _loadUserInfo()); 
             },
           ),
           ListTile(
@@ -280,8 +291,7 @@ class _DashboardPageState extends State<DashboardPage> {
             title: Text("Settings", style: theme.textTheme.bodyLarge),
             onTap: () {
               Navigator.pop(context);
-              // 👇👇👇 3. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
-              context.go('/settings');
+              context.push('/settings');
             },
           ),
           const Divider(),
@@ -310,8 +320,7 @@ class _DashboardPageState extends State<DashboardPage> {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          // 👇👇👇 4. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
-          context.go('/detail/${p.id}');
+          context.push('/detail/${p.id}');
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -366,7 +375,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-// Delegate tidak diubah, sudah benar
 class _ProductSearchDelegate extends SearchDelegate<String?> {
   final List<Product> products;
   _ProductSearchDelegate(this.products); 

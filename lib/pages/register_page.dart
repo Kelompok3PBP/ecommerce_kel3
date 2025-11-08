@@ -79,9 +79,8 @@ class _RegisterPageState extends State<RegisterPage> {
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
           child: SizedBox(
-            width: 450, // <-- ConstrainedBox-mu sudah benar
+            width: 450, 
             child: Card(
-              margin: EdgeInsets.symmetric(horizontal: 4.w),
               color: AppTheme.cardColor,
               elevation: 8,
               shape: RoundedRectangleBorder(
@@ -95,25 +94,25 @@ class _RegisterPageState extends State<RegisterPage> {
                     children: [
                       Image.asset(
                         "assets/logo.png",
-                        height: 18.h, // <-- Layout Sizer OK
-                        width: 18.h,  // <-- Layout Sizer OK
+                        height: 18.h, 
+                        width: 18.h,  
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.shopping_bag,
-                          size: 25.w, // <-- Layout Sizer OK
+                          size: 25.w, 
                           color: AppTheme.primaryColor,
                         ),
                       ),
-                      SizedBox(height: 2.h), // <-- Layout Sizer OK
+                      SizedBox(height: 2.h), 
                       Text(
                         "Daftar Akun belanja.in",
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryColor,
-                          fontSize: 22, // <-- GANTI DARI 18.sp
+                          fontSize: 22, 
                         ),
                       ),
-                      SizedBox(height: 3.h), // <-- Layout Sizer OK
+                      SizedBox(height: 3.h), 
                       TextFormField(
                         controller: _emailController,
                         decoration: InputDecoration(
@@ -136,7 +135,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 2.h), // <-- Layout Sizer OK
+                      SizedBox(height: 2.h), 
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
@@ -168,7 +167,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 2.h), // <-- Layout Sizer OK
+                      SizedBox(height: 2.h), 
                       TextFormField(
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
@@ -201,14 +200,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 4.h), // <-- Layout Sizer OK
+                      SizedBox(height: 4.h), 
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _register,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
-                            padding: EdgeInsets.symmetric(vertical: 2.h), // <-- Layout Sizer OK
+                            padding: EdgeInsets.symmetric(vertical: 2.h), 
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -218,12 +217,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: theme.colorScheme.onPrimary,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16, // <-- GANTI DARI 14.sp
+                              fontSize: 16, 
                             ),
                           ),
                         ),
                       ),
-                      SizedBox(height: 2.5.h), // <-- Layout Sizer OK
+                      SizedBox(height: 2.5.h), 
                       GestureDetector(
                         onTap: () => context.pop(),
                         child: Text.rich(
@@ -231,7 +230,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             text: "Sudah punya akun? ",
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: AppTheme.textPrimaryColor,
-                              fontSize: 14, // <-- GANTI DARI 11.sp
+                              fontSize: 14, 
                             ),
                             children: [
                               TextSpan(
@@ -241,7 +240,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   fontWeight: FontWeight.bold,
                                   decoration: TextDecoration.underline,
                                   decorationColor: AppTheme.secondaryColor,
-                                  fontSize: 14, // <-- GANTI DARI 11.sp
+                                  fontSize: 14, 
                                 ),
                               ),
                             ],

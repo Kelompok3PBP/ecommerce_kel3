@@ -1,21 +1,17 @@
-// pages/theme_page.dart
-
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // 🎨 Warna utama aplikasi
-  static const Color primaryColor = Color(0xFF800000); // Maroon elegan
+  static const Color primaryColor = Color(0xFF800000); 
   static const Color secondaryColor = Color(
     0xFFD4A373,
-  ); // Beige keemasan lembut
-  static const Color backgroundColor = Color(0xFFFDFBF7); // Putih krem lembut
-  static const Color cardColor = Color(0xFFFFFFFF); // Putih bersih
-  static const Color textPrimaryColor = Color(0xFF2E2E2E); // Abu gelap natural
+  ); 
+  static const Color backgroundColor = Color(0xFFFDFBF7);
+  static const Color cardColor = Color(0xFFFFFFFF);
+  static const Color textPrimaryColor = Color(0xFF2E2E2E);
   static const Color textSecondaryColor = Color(
     0xFF7A7A7A,
-  ); // Abu lembut netral
+  ); 
 
-  // 🌕 Tema Terang
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     primaryColor: primaryColor,
@@ -81,12 +77,11 @@ class AppTheme {
     ),
   );
 
-  // ⚫ Tema Gelap
   static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     primaryColor: primaryColor,
-    scaffoldBackgroundColor: const Color(0xFF121212), // Latar belakang gelap
-    cardColor: const Color(0xFF1E1E1E), // Warna kartu sedikit lebih terang
+    scaffoldBackgroundColor: const Color(0xFF121212), 
+    cardColor: const Color(0xFF1E1E1E), 
     colorScheme: const ColorScheme.dark(
       primary: primaryColor,
       secondary: secondaryColor,
@@ -96,7 +91,7 @@ class AppTheme {
       onSurface: Colors.white,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1E1E1E), // AppBar gelap
+      backgroundColor: Color(0xFF1E1E1E), 
       foregroundColor: Colors.white,
       elevation: 2,
       centerTitle: true,

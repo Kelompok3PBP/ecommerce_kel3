@@ -31,8 +31,9 @@ class ProductState {
       loading: loading ?? this.loading,
       products: products ?? this.products,
       error: error != null ? error() : this.error,
-      selectedProduct:
-          selectedProduct != null ? selectedProduct() : this.selectedProduct,
+      selectedProduct: selectedProduct != null
+          ? selectedProduct()
+          : this.selectedProduct,
       loadingSelected: loadingSelected ?? this.loadingSelected,
     );
   }
@@ -50,18 +51,22 @@ class ProductCubit extends Cubit<ProductState> {
     try {
       final raw = await _apiService.getProducts();
       final products = raw.map((j) => Product.fromJson(j)).toList();
-      emit(state.copyWith(
-          loading: false, products: products, error: () => null));
+      emit(
+        state.copyWith(loading: false, products: products, error: () => null),
+      );
     } catch (e) {
       emit(state.copyWith(loading: false, error: () => e.toString()));
     }
   }
 
   Future<void> fetchProductById(int id) async {
-    emit(state.copyWith(
+    emit(
+      state.copyWith(
         loadingSelected: true,
         error: () => null,
-        selectedProduct: () => null));
+        selectedProduct: () => null,
+      ),
+    );
 
     try {
       Product? foundProduct;
@@ -79,17 +84,21 @@ class ProductCubit extends Cubit<ProductState> {
         productToEmit = Product.fromJson(raw);
       }
 
-      emit(state.copyWith(
-        loadingSelected: false,
-        selectedProduct: () => productToEmit,
-        error: () => null,
-      ));
+      emit(
+        state.copyWith(
+          loadingSelected: false,
+          selectedProduct: () => productToEmit,
+          error: () => null,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        loadingSelected: false,
-        error: () => e.toString(),
-        selectedProduct: () => null,
-      ));
+      emit(
+        state.copyWith(
+          loadingSelected: false,
+          error: () => e.toString(),
+          selectedProduct: () => null,
+        ),
+      );
     }
   }
 }

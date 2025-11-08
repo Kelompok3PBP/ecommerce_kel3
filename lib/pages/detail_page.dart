@@ -79,7 +79,7 @@ class _DetailPageState extends State<DetailPage> {
                   IconButton(
                     icon: const Icon(
                       Icons.shopping_cart_outlined,
-                      size: 28, // ✅ ikon diperbesar
+                      size: 28, 
                     ),
                     onPressed: () {
                       context.push('/cart');
@@ -106,7 +106,7 @@ class _DetailPageState extends State<DetailPage> {
                               '${state.items.length}',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 10, // ✅ ukuran teks diperkecil
+                                fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

@@ -1,3 +1,5 @@
+// pages/change_password_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
@@ -13,10 +15,9 @@ class ChangePasswordPage extends StatefulWidget {
 class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final TextEditingController passController = TextEditingController();
   final TextEditingController confirmController = TextEditingController();
-
   Future<void> _savePassword() async {
-    if (passController.text != confirmController.text ||
-        passController.text.isEmpty) {
+    final newPassword = passController.text;
+    if (newPassword.isEmpty || newPassword != confirmController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text("Password tidak sama atau kosong"),
@@ -27,7 +28,37 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_password', passController.text);
+    final String? email = prefs.getString('current_user');
+    if (email == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Sesi tidak ditemukan, silakan login ulang"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    List<String> registeredUsers = prefs.getStringList('registered_users') ?? [];
+    int userIndex = -1;
+
+    for (int i = 0; i < registeredUsers.length; i++) {
+      final parts = registeredUsers[i].split(':');
+      if (parts.length == 2 && parts[0] == email) {
+        userIndex = i; 
+        break;
+      }
+    }
+
+    if (userIndex != -1) {
+      registeredUsers.removeAt(userIndex); 
+      registeredUsers.add("$email:$newPassword"); 
+      await prefs.setStringList('registered_users', registeredUsers); 
+    } 
+    else {
+      print("Error: Gagal menemukan user $email di registered_users");
+    }
+
 
     if (!mounted) return;
     context.pop();
@@ -46,7 +77,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         title: const Text("Ubah Password"),
       ),
       body: Padding(
-        padding: EdgeInsets.all(5.w), // <-- Layout Sizer OK
+        padding: EdgeInsets.all(5.w), 
         child: Column(
           children: [
             TextField(
@@ -56,7 +87,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 labelText: "Password Baru",
               ),
             ),
-            SizedBox(height: 2.h), // <-- Layout Sizer OK
+            SizedBox(height: 2.h), 
             TextField(
               controller: confirmController,
               obscureText: true,
@@ -64,13 +95,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 labelText: "Konfirmasi Password",
               ),
             ),
-            SizedBox(height: 4.h), // <-- Layout Sizer OK
+            SizedBox(height: 4.h), 
             ElevatedButton(
               style: Theme.of(context).elevatedButtonTheme.style,
               onPressed: _savePassword,
               child: Text(
                 "Simpan",
-                style: TextStyle(fontSize: 16), // <-- GANTI DARI 13.sp
+                style: TextStyle(fontSize: 16), 
               ),
             ),
           ],

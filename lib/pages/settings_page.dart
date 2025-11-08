@@ -46,12 +46,12 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: background,
       appBar: AppBar(title: const Text("Pengaturan")),
       body: Center(
-        child: ConstrainedBox( // <-- Adaptif OK
+        child: ConstrainedBox( 
           constraints: const BoxConstraints(
             maxWidth: 700,
           ),
           child: ListView(
-            padding: EdgeInsets.all(4.w), // <-- Layout Sizer OK
+            padding: EdgeInsets.all(4.w), 
             children: [
               _buildSection(
                 icon: Icons.notifications,
@@ -61,7 +61,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   SwitchListTile(
                     activeThumbColor: primary,
                     title: Text("Notifikasi",
-                        style: TextStyle(color: textMain, fontSize: 16)), // <-- GANTI DARI 12.sp
+                        style: TextStyle(color: textMain, fontSize: 16)), 
                     secondary: Icon(Icons.notifications, color: primary),
                     value: notif,
                     onChanged: (val) async {
@@ -83,7 +83,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 2.h), // <-- Layout Sizer OK
+              SizedBox(height: 2.h), 
               _buildSection(
                 icon: Icons.info_outline,
                 title: "Informasi Aplikasi",
@@ -107,18 +107,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       context.push('/feedback');
                     },
                   ),
-                  _buildListTile(
-                    icon: Icons.storage,
-                    title: "Developer: SharedPreferences",
-                    subtitle: "Lihat data mentah Shared Preferences",
-                    theme: theme,
-                    onTap: () {
-                      context.push('/shared-prefs');
-                    },
-                  ),
                 ],
               ),
-              SizedBox(height: 2.h), // <-- Layout Sizer OK
+              SizedBox(height: 2.h), 
               _buildSection(
                 icon: Icons.settings,
                 title: "Lainnya",
@@ -148,10 +139,10 @@ class _SettingsPageState extends State<SettingsPage> {
                             "© 2025 Kelompok 3\nAll rights reserved.",
                         children: [
                           Padding(
-                            padding: EdgeInsets.only(top: 1.5.h), // <-- Layout Sizer OK
+                            padding: EdgeInsets.only(top: 1.5.h),
                             child: Text(
                               "Belanja.in adalah platform e-commerce...",
-                              style: TextStyle(color: textSub, fontSize: 14), // <-- GANTI DARI 11.sp
+                              style: TextStyle(color: textSub, fontSize: 14),
                             ),
                           ),
                         ],
@@ -189,16 +180,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 top: Radius.circular(14),
               ),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h), // <-- Layout Sizer OK
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
             child: Row(
               children: [
                 Icon(icon, color: primary),
-                SizedBox(width: 2.5.w), // <-- Layout Sizer OK
+                SizedBox(width: 2.5.w),
                 Text(
                   title,
                   style: TextStyle(
                     color: primary,
-                    fontSize: 15, // <-- GANTI DARI 12.sp
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -227,12 +218,12 @@ class _SettingsPageState extends State<SettingsPage> {
       title: Text(
         title,
         style: TextStyle(
-            fontWeight: FontWeight.w600, color: textMain, fontSize: 16), // <-- GANTI DARI 12.sp
+            fontWeight: FontWeight.w600, color: textMain, fontSize: 16),
       ),
       subtitle: subtitle != null
-          ? Text(subtitle, style: TextStyle(color: textSub, fontSize: 14)) // <-- GANTI DARI 10.sp
+          ? Text(subtitle, style: TextStyle(color: textSub, fontSize: 14))
           : null,
-      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: primary), // <-- GANTI DARI 12.sp
+      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: primary),
       onTap: onTap,
     );
   }
@@ -251,7 +242,7 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text("Indonesia 🇮🇩", style: TextStyle(fontSize: 15)), // <-- GANTI DARI 12.sp
+              title: Text("Indonesia 🇮🇩", style: TextStyle(fontSize: 15)),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -263,7 +254,7 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             ListTile(
-              title: Text("English 🇬🇧", style: TextStyle(fontSize: 15)), // <-- GANTI DARI 12.sp
+              title: Text("English 🇬🇧", style: TextStyle(fontSize: 15)),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
