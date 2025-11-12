@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
           child: SizedBox(
-            width: 450, // <-- ConstrainedBox-mu sudah benar
+            width: 450,
             child: Card(
               elevation: 8,
               shape: RoundedRectangleBorder(
@@ -104,15 +104,15 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Image.asset(
                         "assets/logo.png",
-                        height: 18.h, // <-- Layout Sizer OK
-                        width: 18.h, // <-- Layout Sizer OK
+                        height: 18.h,
+                        width: 18.h,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.shopping_bag,
-                          size: 25.w, // <-- Layout Sizer OK
+                          size: 25.w,
                           color: theme.colorScheme.primary,
                         ),
                       ),
-                      SizedBox(height: 2.h), // <-- Layout Sizer OK
+                      SizedBox(height: 2.h),
                       Text(
                         context.t('welcome') + ' ' + context.t('login_title'),
                         textAlign: TextAlign.center,
@@ -122,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                           fontSize: 22,
                         ),
                       ),
-                      SizedBox(height: 3.h), // <-- Layout Sizer OK
+                      SizedBox(height: 3.h),
                       TextFormField(
                         controller: _emailController,
                         decoration: InputDecoration(
@@ -143,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 2.h), // <-- Layout Sizer OK
+                      SizedBox(height: 2.h),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
@@ -174,15 +174,13 @@ class _LoginPageState extends State<LoginPage> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 4.h), // <-- Layout Sizer OK
+                      SizedBox(height: 4.h),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _login,
                           style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 2.h,
-                            ), // <-- Layout Sizer OK
+                            padding: EdgeInsets.symmetric(vertical: 2.h),
                           ),
                           child: Text(
                             context.t('login_button'),
@@ -194,7 +192,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 2.5.h), // <-- Layout Sizer OK
+                      SizedBox(height: 2.5.h),
                       GestureDetector(
                         onTap: () {
                           context.push('/register');

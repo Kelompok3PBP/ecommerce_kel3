@@ -54,7 +54,6 @@ class _ProfilePageState extends State<ProfilePage> {
       final prefs = await SharedPreferences.getInstance();
 
       if (kIsWeb) {
-        // --- LOGIKA UNTUK WEB ---
         final bytes = await pickedFile.readAsBytes();
         final base64Image = base64Encode(bytes);
         await prefs.setString('profile_picture_base64', base64Image);

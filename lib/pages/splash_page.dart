@@ -88,18 +88,18 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                       borderRadius: BorderRadius.circular(24),
                       child: Image.asset(
                         "assets/logo.png",
-                        height: 30.h, // <-- Layout Sizer OK
-                        width: 30.h, // <-- Layout Sizer OK
+                        height: 30.h,
+                        width: 30.h,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.storefront,
-                          size: 30.h, // <-- Layout Sizer OK
+                          size: 30.h,
                           color: AppTheme.primaryColor,
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 3.h), // <-- Layout Sizer OK
+                  SizedBox(height: 3.h),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -114,7 +114,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                             text,
                             style: theme.textTheme.titleLarge?.copyWith(
                               color: AppTheme.primaryColor,
-                              fontSize: 30, // <-- GANTI DARI 28.sp
+                              fontSize: 30,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
                             ),
@@ -127,7 +127,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                           "|",
                           style: theme.textTheme.titleLarge?.copyWith(
                             color: AppTheme.primaryColor.withOpacity(0.8),
-                            fontSize: 30, // <-- GANTI DARI 28.sp
+                            fontSize: 30,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -140,19 +140,19 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: EdgeInsets.only(bottom: 5.h), // <-- Layout Sizer OK
+                padding: EdgeInsets.only(bottom: 5.h),
                 child: FadeTransition(
                   opacity: _bottomFadeAnimation,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const _ModernLoadingIndicator(),
-                      SizedBox(height: 2.h), // <-- Layout Sizer OK
+                      SizedBox(height: 2.h),
                       Text(
                         "created by Kelompok 3",
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppTheme.textSecondaryColor,
-                          fontSize: 12, // <-- GANTI DARI 10.sp
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -215,11 +215,9 @@ class _ModernLoadingIndicatorState extends State<_ModernLoadingIndicator>
         return ScaleTransition(
           scale: _animations[index],
           child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 1.w,
-            ), // <-- Layout Sizer OK
+            padding: EdgeInsets.symmetric(horizontal: 1.w),
             child: CircleAvatar(
-              radius: 1.5.w, // <-- Layout Sizer OK (kecil, tidak masalah)
+              radius: 1.5.w,
               backgroundColor: AppTheme.primaryColor.withOpacity(0.8),
             ),
           ),

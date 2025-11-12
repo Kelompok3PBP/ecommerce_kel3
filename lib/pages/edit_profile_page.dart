@@ -1,5 +1,3 @@
-// pages/edit_profile_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
@@ -79,8 +77,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(title: Text(context.t('edit_profile'))),
       body: Center(
         child: SingleChildScrollView(
@@ -89,7 +88,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             constraints: const BoxConstraints(maxWidth: 600),
             padding: EdgeInsets.all(6.w),
             decoration: BoxDecoration(
-              color: AppTheme.cardColor,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(

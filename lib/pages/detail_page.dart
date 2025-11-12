@@ -9,7 +9,6 @@ import '../model/product.dart';
 import '../bloc/cart_cubit.dart';
 import '../bloc/product_cubit.dart';
 import 'theme_page.dart';
-import '../services/localization_extension.dart';
 
 class DetailPage extends StatefulWidget {
   final String productId;
@@ -228,8 +227,8 @@ class _DetailPageState extends State<DetailPage> {
                 ),
               ),
               icon: const Icon(Icons.add_shopping_cart),
-              label: Text(
-                context.t('add_to_cart'),
+              label: const Text(
+                "Tambah ke Keranjang",
                 style: TextStyle(fontSize: 16),
               ),
               onPressed: product == null
@@ -239,7 +238,7 @@ class _DetailPageState extends State<DetailPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            '${product.title} - ${context.t('add_to_cart')}',
+                            "${product.title} ditambahkan ke keranjang",
                           ),
                           backgroundColor: AppTheme.secondaryColor,
                         ),

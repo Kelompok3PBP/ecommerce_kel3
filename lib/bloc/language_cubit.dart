@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LanguageState {
-  final String languageCode; // 'id', 'en', 'es', 'fr', 'de', 'ja', 'zh'
+  final String languageCode;
   final String languageName;
   final String flag;
 

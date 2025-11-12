@@ -14,13 +14,11 @@ class OrderModel {
        _total = total,
        _createdAt = createdAt ?? DateTime.now();
 
-  // Getters
   int? get id => _id;
   List<Map<String, dynamic>> get items => List.unmodifiable(_items);
   double get total => _total;
   DateTime get createdAt => _createdAt;
 
-  // Setters
   set setId(int? v) => _id = v;
   set setItems(List<Map<String, dynamic>> v) => _items = v;
   set setTotal(double v) => _total = v;

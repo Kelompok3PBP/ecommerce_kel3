@@ -66,7 +66,6 @@ class _RegisterPageState extends State<RegisterPage> {
             duration: Duration(seconds: 2),
           ),
         );
-        // Delay sebelum pop untuk memastikan SnackBar terlihat
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
           context.pop();
@@ -79,14 +78,14 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: theme.colorScheme.surface,
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
           child: SizedBox(
             width: 450,
             child: Card(
-              color: AppTheme.cardColor,
+              color: theme.cardColor,
               elevation: 8,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -105,7 +104,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.shopping_bag,
                           size: 25.w,
-                          color: AppTheme.primaryColor,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
                       SizedBox(height: 2.h),
@@ -114,7 +113,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
+                          color: theme.colorScheme.primary,
                           fontSize: 22,
                         ),
                       ),
@@ -125,7 +124,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           labelText: 'Email',
                           prefixIcon: Icon(
                             Icons.email,
-                            color: AppTheme.primaryColor,
+                            color: theme.colorScheme.primary,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -150,14 +149,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           labelText: 'Password',
                           prefixIcon: Icon(
                             Icons.lock,
-                            color: AppTheme.primaryColor,
+                            color: theme.colorScheme.primary,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_off
                                   : Icons.visibility,
-                              color: AppTheme.primaryColor,
+                              color: theme.colorScheme.primary,
                             ),
                             onPressed: () {
                               setState(() {
@@ -184,14 +183,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           labelText: 'Konfirmasi Password',
                           prefixIcon: Icon(
                             Icons.lock_outline,
-                            color: AppTheme.primaryColor,
+                            color: theme.colorScheme.primary,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword
                                   ? Icons.visibility_off
                                   : Icons.visibility,
-                              color: AppTheme.primaryColor,
+                              color: theme.colorScheme.primary,
                             ),
                             onPressed: () {
                               setState(() {
@@ -217,7 +216,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: ElevatedButton(
                           onPressed: _register,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
+                            backgroundColor: theme.colorScheme.primary,
                             padding: EdgeInsets.symmetric(vertical: 2.h),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -240,17 +239,17 @@ class _RegisterPageState extends State<RegisterPage> {
                           TextSpan(
                             text: "Sudah punya akun? ",
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textPrimaryColor,
+                              color: theme.textTheme.bodyLarge?.color,
                               fontSize: 14,
                             ),
                             children: [
                               TextSpan(
                                 text: "Login",
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: AppTheme.secondaryColor,
+                                  color: theme.colorScheme.secondary,
                                   fontWeight: FontWeight.bold,
                                   decoration: TextDecoration.underline,
-                                  decorationColor: AppTheme.secondaryColor,
+                                  decorationColor: theme.colorScheme.secondary,
                                   fontSize: 14,
                                 ),
                               ),

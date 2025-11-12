@@ -32,7 +32,6 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(loading: false, loggedIn: logged, email: email));
   }
 
-  /// This helper clears saved login and notifies listeners.
   Future<void> logout() async {
     emit(state.copyWith(loading: true));
     final prefs = await SharedPreferences.getInstance();

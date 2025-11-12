@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
-// Blocs & Services
 import 'bloc/cart_cubit.dart';
 import 'bloc/product_cubit.dart';
 import 'bloc/language_cubit.dart';
@@ -14,17 +13,14 @@ import 'bloc/order_cubit.dart';
 import 'services/api_service.dart';
 import 'services/notification_service.dart';
 
-// Theme
 import 'pages/theme_page.dart';
 import 'pages/theme_provider.dart';
 
-// Router
-import 'app_router.dart'; // <-- Import router baru kita
+import 'app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService().initNotification();
-  // Kita tidak perlu cek login di sini, GoRouter yang akan handle
 
   runApp(
     MultiProvider(
@@ -52,23 +48,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        // Listen to LanguageCubit to rebuild when language changes
         return BlocListener<LanguageCubit, LanguageState>(
-          listener: (context, state) {
-            // Language changed, no action needed here (rebuild happens automatically)
-          },
+          listener: (context, state) {},
           child: Sizer(
             builder: (context, orientation, deviceType) {
               return MaterialApp.router(
                 title: 'Belanja.in',
                 debugShowCheckedModeBanner: false,
 
-                // Tema
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
                 themeMode: themeProvider.themeMode,
-
-                // Gunakan routerConfig dari GoRouter
                 routerConfig: AppRouter.router,
               );
             },

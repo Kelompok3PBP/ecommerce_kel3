@@ -45,10 +45,7 @@ class _PaymentPageState extends State<PaymentPage> {
             RadioListTile<String>(
               value: 'Transfer Bank',
               groupValue: selectedMethod,
-              title: Text(
-                'Transfer Bank',
-                style: TextStyle(fontSize: 15),
-              ),
+              title: Text('Transfer Bank', style: TextStyle(fontSize: 15)),
               onChanged: (v) => setState(() => selectedMethod = v),
             ),
             RadioListTile<String>(
@@ -79,7 +76,6 @@ class _PaymentPageState extends State<PaymentPage> {
               onPressed: selectedMethod == null
                   ? null
                   : () async {
-                      // Prepare receipt data from cart (best-effort using dynamic access)
                       final prefs = await SharedPreferences.getInstance();
                       final email = prefs.getString('current_user') ?? '';
                       final name = prefs.getString('current_user_name') ?? '';
@@ -92,7 +88,8 @@ class _PaymentPageState extends State<PaymentPage> {
                       try {
                         final cartState = context.read<CartCubit>().state;
                         final dynamic dyn = cartState;
-                        final dynamic cartItems = dyn.items ?? dyn.cartItems ?? dyn.products ?? [];
+                        final dynamic cartItems =
+                            dyn.items ?? dyn.cartItems ?? dyn.products ?? [];
 
                         for (var ci in (cartItems as List)) {
                           final dynamic it = ci;
@@ -100,7 +97,8 @@ class _PaymentPageState extends State<PaymentPage> {
                           final pname = it.productName ?? it.name ?? '';
                           final pimg = it.productImage ?? it.image ?? '';
                           final qty = it.quantity ?? it.qty ?? 1;
-                          final price = (it.price ?? it.unitPrice ?? 0).toDouble();
+                          final price = (it.price ?? it.unitPrice ?? 0)
+                              .toDouble();
                           final sub = (it.subtotal ?? (price * qty)).toDouble();
 
                           items.add({
@@ -114,14 +112,15 @@ class _PaymentPageState extends State<PaymentPage> {
                           subtotal += sub;
                         }
                       } catch (_) {
-                        // fallback: no items available
                         items = [];
                         subtotal = widget.total;
                       }
 
-                      // build receipt map
-                      final orderId = DateTime.now().millisecondsSinceEpoch.toString();
-                      final orderDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+                      final orderId = DateTime.now().millisecondsSinceEpoch
+                          .toString();
+                      final orderDate = DateFormat(
+                        'yyyy-MM-dd HH:mm:ss',
+                      ).format(DateTime.now());
                       final receiptMap = {
                         'order_id': orderId,
                         'order_date': orderDate,
@@ -142,7 +141,6 @@ class _PaymentPageState extends State<PaymentPage> {
                         'installment_amount': 0,
                       };
 
-                      // clear cart then navigate to receipt page with data
                       context.read<CartCubit>().clear();
 
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -153,7 +151,10 @@ class _PaymentPageState extends State<PaymentPage> {
                       );
 
                       if (mounted) {
-                        context.go('/purchase-receipt/$orderId', extra: receiptMap);
+                        context.go(
+                          '/purchase-receipt/$orderId',
+                          extra: receiptMap,
+                        );
                       }
                     },
               child: Text(context.t('pay_now'), style: TextStyle(fontSize: 16)),

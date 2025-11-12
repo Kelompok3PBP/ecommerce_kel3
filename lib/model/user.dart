@@ -17,14 +17,12 @@ class UserModel {
        _avatarUrl = avatarUrl,
        _createdAt = createdAt;
 
-  // Getters
   int? get id => _id;
   String get name => _name;
   String get email => _email;
   String? get avatarUrl => _avatarUrl;
   DateTime? get createdAt => _createdAt;
 
-  // Setters (encapsulation)
   set setId(int? v) => _id = v;
   set setName(String v) => _name = v;
   set setEmail(String v) => _email = v;

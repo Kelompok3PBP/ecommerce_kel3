@@ -2,14 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// Bloc & Services for addresses
 import 'bloc/address_cubit.dart';
 import 'services/address_service.dart';
-
-// Service
 import 'services/auth_service.dart';
-
-// Pages
 import 'pages/receipt_page.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
@@ -102,7 +97,7 @@ class AppRouter {
           return EditProfilePage(name: data['name']!, email: data['email']!);
         },
       ),
-            GoRoute(
+      GoRoute(
         path: '/purchase-receipt/:orderId',
         builder: (context, state) {
           final orderId = state.pathParameters['orderId'] ?? '';

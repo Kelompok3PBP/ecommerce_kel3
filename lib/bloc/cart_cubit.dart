@@ -97,9 +97,7 @@ class CartCubit extends Cubit<CartState> {
         );
         final qty = j['qty'] ?? 1;
         items[p] = qty;
-      } catch (_) {
-        // skip malformed
-      }
+      } catch (_) {}
     }
     emit(state.copyWith(items: items));
   }

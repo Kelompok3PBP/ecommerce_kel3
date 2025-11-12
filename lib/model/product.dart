@@ -27,7 +27,6 @@ class Product {
        _rating = rating,
        _ratingCount = ratingCount;
 
-  // 🔹 Getter
   int get id => _id;
   String get title => _title;
   double get price => _price;
@@ -37,7 +36,6 @@ class Product {
   double get rating => _rating;
   int get ratingCount => _ratingCount;
 
-  // 🔹 Setter (kalau mau ubah field)
   set id(int value) => _id = value;
   set title(String value) => _title = value;
   set price(double value) => _price = value;
@@ -47,7 +45,6 @@ class Product {
   set rating(double value) => _rating = value;
   set ratingCount(int value) => _ratingCount = value;
 
-  // 🔹 Factory: fromJson
   factory Product.fromJson(Map<String, dynamic> json) {
     final ratingData = json['rating'] ?? {};
     return Product(
@@ -66,7 +63,6 @@ class Product {
     );
   }
 
-  // 🔹 toJson
   Map<String, dynamic> toJson() {
     return {
       'id': _id,
@@ -79,7 +75,6 @@ class Product {
     };
   }
 
-  // 🔹 Override equality dan hashcode
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;

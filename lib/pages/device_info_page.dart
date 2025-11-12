@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:sizer/sizer.dart';
-import '../services/localization_extension.dart';
 
 class DeviceInfoPage extends StatefulWidget {
   const DeviceInfoPage({super.key});
@@ -69,24 +69,22 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.t('device_info'))),
+      appBar: AppBar(title: const Text("Device Info")),
       body: _deviceData.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
               children: _deviceData.entries.map((e) {
                 return ListTile(
-                  leading: Icon(Icons.info_outline, size: 18.sp),
+                  leading: const Icon(Icons.info_outline),
                   title: Text(
                     e.key,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
+
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
                     e.value.toString(),
-                    style: TextStyle(fontSize: 11.sp),
+
+                    style: TextStyle(fontSize: 14),
                   ),
                 );
               }).toList(),

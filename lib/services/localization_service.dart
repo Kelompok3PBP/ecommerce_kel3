@@ -1,7 +1,6 @@
 class AppLocalizations {
   static const Map<String, Map<String, String>> translations = {
     'id': {
-      // Navigation & Common
       'home': 'Beranda',
       'dashboard': 'Dashboard',
       'cart': 'Keranjang',
@@ -21,7 +20,6 @@ class AppLocalizations {
       'yes': 'Ya',
       'no': 'Tidak',
 
-      // Register Page
       'register_title': 'Daftar Akun belanja.in',
       'email': 'Email',
       'password': 'Password',
@@ -37,20 +35,17 @@ class AppLocalizations {
       'confirm_password_empty': 'Konfirmasi password tidak boleh kosong',
       'password_mismatch': 'Password tidak cocok',
 
-      // Login Page
       'login_title': 'Masuk ke belanja.in',
       'login_button': 'Masuk',
       'no_account': 'Belum punya akun?',
       'login_success': 'Login berhasil!',
       'login_failed': 'Email atau password salah',
 
-      // Dashboard
       'welcome': 'Selamat datang',
       'products': 'Produk',
       'no_products': 'Tidak ada produk',
       'search': 'Cari produk...',
 
-      // Cart
       'cart_empty': 'Keranjang kosong',
       'cart_total': 'Total',
       'checkout': 'Checkout',
@@ -59,7 +54,6 @@ class AppLocalizations {
       'quantity': 'Jumlah',
       'price': 'Harga',
 
-      // Profile
       'my_profile': 'Profil Saya',
       'edit_profile': 'Edit Profil',
       'change_password': 'Ubah Password',
@@ -68,7 +62,6 @@ class AppLocalizations {
       'new_password': 'Password Baru',
       'profile_updated': 'Profil berhasil diperbarui',
 
-      // Settings
       'app_settings': 'Pengaturan Aplikasi',
       'language': 'Bahasa',
       'select_language': 'Pilih Bahasa',
@@ -89,14 +82,12 @@ class AppLocalizations {
       'theme_changed': 'Tema berhasil diubah',
       'language_changed': 'Bahasa berhasil diubah',
 
-      // Payment
       'payment': 'Pembayaran',
       'payment_method': 'Metode Pembayaran',
       'pay_now': 'Bayar Sekarang',
       'payment_success': 'Pembayaran berhasil',
       'payment_failed': 'Pembayaran gagal',
 
-      // Common Messages
       'loading': 'Memuat...',
       'error': 'Terjadi kesalahan',
       'success': 'Berhasil',
@@ -690,12 +681,10 @@ class AppLocalizations {
     },
   };
 
-  /// Get translated string for current language
   static String t(String key, {String languageCode = 'id'}) {
     return translations[languageCode]?[key] ?? key;
   }
 
-  /// Get all available languages
   static Map<String, Map<String, String>> getLanguages() {
     return {
       'id': {'name': 'Indonesia', 'flag': '🇮🇩'},

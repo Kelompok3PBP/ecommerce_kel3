@@ -22,7 +22,6 @@ class PurchaseReceiptPage extends StatelessWidget {
     final h = size.height;
     final w = size.width;
 
-    // Semua ukuran disesuaikan ke tinggi layar agar pas 1 halaman
     final iconSize = h * 0.18;
     final fontLarge = h * 0.035;
     final fontMedium = h * 0.025;
@@ -37,7 +36,7 @@ class PurchaseReceiptPage extends StatelessWidget {
       ),
       body: Center(
         child: Container(
-          width: w > 500 ? 500 : w, // batasi lebar maksimal
+          width: w > 500 ? 500 : w,
           height: h,
           padding: EdgeInsets.symmetric(
             horizontal: w * 0.06,
@@ -46,7 +45,6 @@ class PurchaseReceiptPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // ===== Bagian Atas =====
               Column(
                 children: [
                   Container(
@@ -56,8 +54,11 @@ class PurchaseReceiptPage extends StatelessWidget {
                       color: Colors.green[100],
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.check_circle,
-                        color: Colors.green, size: iconSize),
+                    child: Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: iconSize,
+                    ),
                   ),
                   SizedBox(height: h * 0.01),
                   Text(
@@ -78,7 +79,6 @@ class PurchaseReceiptPage extends StatelessWidget {
                 ],
               ),
 
-              // ===== Informasi =====
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -90,20 +90,25 @@ class PurchaseReceiptPage extends StatelessWidget {
                       padding: cardPadding,
                       children: [
                         _buildInfo('Nama', receipt.customerName, fontSmall),
-                        _buildInfo('Status', receipt.paymentStatus, fontSmall,
-                            isSuccess: true),
                         _buildInfo(
-                            'Metode', receipt.paymentMethod, fontSmall),
+                          'Status',
+                          receipt.paymentStatus,
+                          fontSmall,
+                          isSuccess: true,
+                        ),
+                        _buildInfo('Metode', receipt.paymentMethod, fontSmall),
                         _buildInfo('Tanggal', receipt.orderDate, fontSmall),
-                        _buildInfo('Total',
-                            'Rp${receipt.totalAmount.toString()}', fontSmall),
+                        _buildInfo(
+                          'Total',
+                          'Rp${receipt.totalAmount.toString()}',
+                          fontSmall,
+                        ),
                       ],
                     ),
                   ],
                 ),
               ),
 
-              // ===== Tombol =====
               Row(
                 children: [
                   Expanded(
@@ -111,7 +116,8 @@ class PurchaseReceiptPage extends StatelessWidget {
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Download akan diimplementasi')),
+                            content: Text('Download akan diimplementasi'),
+                          ),
                         );
                       },
                       icon: const Icon(Icons.download),
@@ -165,9 +171,10 @@ class PurchaseReceiptPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-                style:
-                    TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700)),
+            Text(
+              title,
+              style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 5),
             ...children,
           ],
@@ -176,15 +183,21 @@ class PurchaseReceiptPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfo(String label, String value, double fontSize,
-      {bool isSuccess = false}) {
+  Widget _buildInfo(
+    String label,
+    String value,
+    double fontSize, {
+    bool isSuccess = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(fontSize: fontSize, color: Colors.grey[700])),
+          Text(
+            label,
+            style: TextStyle(fontSize: fontSize, color: Colors.grey[700]),
+          ),
           Flexible(
             child: Text(
               value,

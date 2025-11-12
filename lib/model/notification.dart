@@ -14,13 +14,11 @@ class NotificationModel {
        _body = body,
        _time = time ?? DateTime.now();
 
-  // Getters
   int? get id => _id;
   String get title => _title;
   String get body => _body;
   DateTime get time => _time;
 
-  // Setters
   set setId(int? v) => _id = v;
   set setTitle(String v) => _title = v;
   set setBody(String v) => _body = v;

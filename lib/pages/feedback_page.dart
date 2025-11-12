@@ -43,7 +43,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
     return Scaffold(
       appBar: AppBar(title: Text(context.t('feedback'))),
       body: Padding(
-        padding: EdgeInsets.all(5.w), // <-- Layout Sizer OK
+        padding: EdgeInsets.all(5.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -52,10 +52,10 @@ class _FeedbackPageState extends State<FeedbackPage> {
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimaryColor,
-                fontSize: 16, // <-- GANTI DARI 13.sp
+                fontSize: 16,
               ),
             ),
-            SizedBox(height: 2.h), // <-- Layout Sizer OK
+            SizedBox(height: 2.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
@@ -63,7 +63,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   icon: Icon(
                     index < _rating ? Icons.star : Icons.star_border,
                     color: AppTheme.secondaryColor,
-                    size: 40, // <-- GANTI DARI 30.sp
+                    size: 40,
                   ),
                   onPressed: () {
                     setState(() {
@@ -73,16 +73,16 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 );
               }),
             ),
-            SizedBox(height: 2.h), // <-- Layout Sizer OK
+            SizedBox(height: 2.h),
             TextField(
               controller: _commentController,
               maxLines: 3,
               decoration: InputDecoration(
                 labelText: context.t('send_feedback'),
               ),
-              style: TextStyle(fontSize: 15), // <-- GANTI DARI 12.sp
+              style: TextStyle(fontSize: 15),
             ),
-            SizedBox(height: 3.h), // <-- Layout Sizer OK
+            SizedBox(height: 3.h),
             Center(
               child: ElevatedButton(
                 onPressed: _submitFeedback,
@@ -91,7 +91,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   padding: EdgeInsets.symmetric(
                     horizontal: 5.w,
                     vertical: 1.2.h,
-                  ), // <-- Layout Sizer OK
+                  ),
                   child: Text(
                     context.t('send_feedback'),
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),

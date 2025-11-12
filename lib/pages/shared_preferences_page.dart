@@ -56,7 +56,7 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
               child: Text(context.t('info'), style: TextStyle(fontSize: 16)),
             )
           : ListView(
-              padding: EdgeInsets.all(2.w), // <-- Layout Sizer OK
+              padding: EdgeInsets.all(2.w),
               children: data.entries.map((entry) {
                 return Card(
                   shape: RoundedRectangleBorder(
@@ -68,12 +68,12 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
                       entry.key,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 15, // <-- GANTI DARI 12.sp
+                        fontSize: 15,
                       ),
                     ),
                     subtitle: Text(
                       entry.value.toString(),
-                      style: TextStyle(fontSize: 14), // <-- GANTI DARI 10.sp
+                      style: TextStyle(fontSize: 14),
                     ),
                     leading: Icon(Icons.storage, color: AppTheme.primaryColor),
                   ),

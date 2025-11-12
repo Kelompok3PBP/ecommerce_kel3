@@ -5,7 +5,7 @@ import '../model/product.dart';
 
 class Order {
   final int id;
-  final List<Map<String, dynamic>> items; // product json + qty
+  final List<Map<String, dynamic>> items;
   final double total;
   final DateTime createdAt;
 

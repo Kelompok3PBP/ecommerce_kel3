@@ -27,7 +27,6 @@ class CartPage extends StatelessWidget {
       appBar: AppBar(title: Text(context.t('cart'))),
       body: Center(
         child: ConstrainedBox(
-          // <-- Adaptif OK
           constraints: const BoxConstraints(maxWidth: 800),
           child: BlocBuilder<CartCubit, CartState>(
             builder: (context, state) {
@@ -40,7 +39,7 @@ class CartPage extends StatelessWidget {
                 );
               }
               return ListView.builder(
-                padding: EdgeInsets.all(3.w), // <-- Layout Sizer OK
+                padding: EdgeInsets.all(3.w),
                 itemCount: state.items.length,
                 itemBuilder: (context, index) {
                   final entry = state.items.entries.elementAt(index);
@@ -48,9 +47,7 @@ class CartPage extends StatelessWidget {
                   final qty = entry.value;
 
                   return Card(
-                    margin: EdgeInsets.symmetric(
-                      vertical: 1.h,
-                    ), // <-- Layout Sizer OK
+                    margin: EdgeInsets.symmetric(vertical: 1.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
@@ -58,25 +55,23 @@ class CartPage extends StatelessWidget {
                       ),
                     ),
                     child: ListTile(
-                      contentPadding: EdgeInsets.all(
-                        3.w,
-                      ), // <-- Layout Sizer OK
+                      contentPadding: EdgeInsets.all(3.w),
                       leading: Image.network(
                         product.image,
-                        width: 15.w, // <-- Layout Sizer OK
+                        width: 15.w,
                         fit: BoxFit.contain,
                       ),
                       title: Text(
                         product.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 15), // <-- GANTI DARI 11.sp
+                        style: TextStyle(fontSize: 15),
                       ),
                       subtitle: Text(
                         formatRupiah(product.price * qty),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14, // <-- GANTI DARI 11.sp
+                          fontSize: 14,
                         ),
                       ),
                       trailing: Row(
@@ -86,22 +81,17 @@ class CartPage extends StatelessWidget {
                             icon: Icon(
                               Icons.remove_circle_outline,
                               color: AppTheme.primaryColor,
-                              size: 28, // <-- GANTI DARI 20.sp
+                              size: 28,
                             ),
                             onPressed: () =>
                                 context.read<CartCubit>().decrease(product),
                           ),
-                          Text(
-                            '$qty',
-                            style: TextStyle(
-                              fontSize: 16,
-                            ), // <-- GANTI DARI 13.sp
-                          ),
+                          Text('$qty', style: TextStyle(fontSize: 16)),
                           IconButton(
                             icon: Icon(
                               Icons.add_circle_outline,
                               color: AppTheme.secondaryColor,
-                              size: 28, // <-- GANTI DARI 20.sp
+                              size: 28,
                             ),
                             onPressed: () =>
                                 context.read<CartCubit>().add(product),
@@ -122,7 +112,7 @@ class CartPage extends StatelessWidget {
             builder: (context, state) {
               if (state.items.isEmpty) return const SizedBox.shrink();
               return Container(
-                padding: EdgeInsets.all(4.w), // <-- Layout Sizer OK
+                padding: EdgeInsets.all(4.w),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [

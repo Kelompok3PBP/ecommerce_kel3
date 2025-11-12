@@ -28,15 +28,16 @@ class NotificationService {
   }) async {
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'default_channel',
-      'Belanjain.in Notifications',
-      channelDescription: 'Notifikasi dari aplikasi Belanjain.in',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+          'default_channel',
+          'Belanjain.in Notifications',
+          channelDescription: 'Notifikasi dari aplikasi Belanjain.in',
+          importance: Importance.high,
+          priority: Priority.high,
+        );
 
-    const NotificationDetails notificationDetails =
-        NotificationDetails(android: androidDetails);
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+    );
 
     await flutterLocalNotificationsPlugin.show(
       0,
@@ -64,7 +65,6 @@ class NotificationService {
           priority: Priority.high,
         ),
       ),
-      // ignore: deprecated_member_use
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
