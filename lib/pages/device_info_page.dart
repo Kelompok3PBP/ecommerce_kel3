@@ -73,19 +73,20 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
       body: _deviceData.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
               children: _deviceData.entries.map((e) {
                 return ListTile(
-                  leading: const Icon(Icons.info_outline),
+                  leading: Icon(Icons.info_outline, size: 18.sp),
                   title: Text(
                     e.key,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.bold,
-                    ), // <-- GANTI DARI 12.sp
+                    ),
                   ),
                   subtitle: Text(
                     e.value.toString(),
-                    style: TextStyle(fontSize: 14), // <-- GANTI DARI 11.sp
+                    style: TextStyle(fontSize: 11.sp),
                   ),
                 );
               }).toList(),

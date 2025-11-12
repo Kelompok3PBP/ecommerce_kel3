@@ -138,7 +138,13 @@ class _ProfilePageState extends State<ProfilePage> {
     final profileImage = _buildProfileImage();
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.t('my_profile'))),
+      appBar: AppBar(
+        title: Text(context.t('my_profile')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: _loadProfile,
         child: Center(
@@ -217,6 +223,18 @@ class _ProfilePageState extends State<ProfilePage> {
                     if (result == true && mounted) {
                       _loadProfile();
                     }
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: Icon(Icons.location_on, color: theme.primaryColor),
+                  title: Text(
+                    context.t('Alamat'),
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    context.go('/addresses');
                   },
                 ),
                 const Divider(),

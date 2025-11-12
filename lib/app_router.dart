@@ -1,7 +1,10 @@
-// app_router.dart
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+// Bloc & Services for addresses
+import 'bloc/address_cubit.dart';
+import 'services/address_service.dart';
 
 // Service
 import 'services/auth_service.dart';
@@ -20,6 +23,7 @@ import 'pages/change_password_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/device_info_page.dart';
 import 'pages/feedback_page.dart';
+import 'pages/address_list_page.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -64,6 +68,17 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: '/addresses',
+        builder: (context, state) => BlocProvider(
+          create: (context) => AddressCubit(AddressService())..fetchAll(),
+          child: const AddressListPage(),
+        ),
+      ),
+      GoRoute(
         path: '/detail/:id',
         builder: (context, state) {
           final String productId = state.pathParameters['id'] ?? '0';
@@ -77,10 +92,6 @@ class AppRouter {
           final total = state.extra as double? ?? 0.0;
           return PaymentPage(total: total);
         },
-      ),
-      GoRoute(
-        path: '/profile',
-        builder: (context, state) => const ProfilePage(),
       ),
       GoRoute(
         path: '/edit-profile',

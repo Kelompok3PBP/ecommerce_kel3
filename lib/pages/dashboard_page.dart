@@ -27,6 +27,9 @@ class _DashboardPageState extends State<DashboardPage> {
   String userEmail = "";
   String? _webBase64;
 
+  String _selectedSort = 'default';
+  String? _selectedCategoryFilter;
+
   final NumberFormat currencyFormat = NumberFormat.currency(
     locale: 'id_ID',
     symbol: 'Rp ',
@@ -97,6 +100,30 @@ class _DashboardPageState extends State<DashboardPage> {
               translateCategory(p.category).toLowerCase().contains(searchQuery);
         }).toList();
       }
+    });
+  }
+
+  void _applySortAndFilter() {
+    final allProducts = context.read<ProductCubit>().state.products;
+
+    List<Product> filtered = allProducts;
+    if (_selectedCategoryFilter != null &&
+        _selectedCategoryFilter!.isNotEmpty) {
+      filtered = filtered
+          .where(
+            (p) => translateCategory(p.category) == _selectedCategoryFilter,
+          )
+          .toList();
+    }
+
+    if (_selectedSort == 'price_asc') {
+      filtered.sort((a, b) => a.price.compareTo(b.price));
+    } else if (_selectedSort == 'price_desc') {
+      filtered.sort((a, b) => b.price.compareTo(a.price));
+    }
+
+    setState(() {
+      _filteredProducts = filtered;
     });
   }
 
@@ -216,34 +243,114 @@ class _DashboardPageState extends State<DashboardPage> {
               await context.read<ProductCubit>().fetchProducts();
             },
             child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1400),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    int crossAxisCount;
-                    if (constraints.maxWidth > 1200) {
-                      crossAxisCount = 6;
-                    } else if (constraints.maxWidth > 800) {
-                      crossAxisCount = 4;
-                    } else {
-                      crossAxisCount = 3;
-                    }
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 3.w,
+                      vertical: 1.h,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _selectedSort,
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'default',
+                                child: Text('Default'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'price_asc',
+                                child: Text('Harga: Termurah'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'price_desc',
+                                child: Text('Harga: Termahal'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedSort = value!;
+                              });
+                              _applySortAndFilter();
+                            },
+                          ),
+                        ),
+                        SizedBox(width: 3.w),
+                        Expanded(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            hint: const Text('Kategori'),
+                            value: _selectedCategoryFilter,
+                            items: [
+                              const DropdownMenuItem(
+                                value: '',
+                                child: Text('Semua Kategori'),
+                              ),
+                              ...context
+                                  .read<ProductCubit>()
+                                  .state
+                                  .products
+                                  .map((p) => translateCategory(p.category))
+                                  .toSet()
+                                  .map(
+                                    (cat) => DropdownMenuItem(
+                                      value: cat,
+                                      child: Text(cat),
+                                    ),
+                                  )
+                                  .toList(),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedCategoryFilter = (value == ''
+                                    ? null
+                                    : value);
+                              });
+                              _applySortAndFilter();
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1400),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          int crossAxisCount;
+                          if (constraints.maxWidth > 1200) {
+                            crossAxisCount = 6;
+                          } else if (constraints.maxWidth > 800) {
+                            crossAxisCount = 4;
+                          } else {
+                            crossAxisCount = 3;
+                          }
 
-                    return GridView.builder(
-                      padding: EdgeInsets.all(3.w),
-                      itemCount: _filteredProducts.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: 3.w,
-                        mainAxisSpacing: 3.w,
-                        childAspectRatio: 0.6,
+                          return GridView.builder(
+                            padding: EdgeInsets.all(3.w),
+                            itemCount: _filteredProducts.length,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  crossAxisSpacing: 3.w,
+                                  mainAxisSpacing: 3.w,
+                                  childAspectRatio: 0.6,
+                                ),
+                            itemBuilder: (context, index) {
+                              return _buildProductCard(
+                                _filteredProducts[index],
+                              );
+                            },
+                          );
+                        },
                       ),
-                      itemBuilder: (context, index) {
-                        return _buildProductCard(_filteredProducts[index]);
-                      },
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
