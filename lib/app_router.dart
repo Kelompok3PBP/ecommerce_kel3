@@ -10,6 +10,7 @@ import 'services/address_service.dart';
 import 'services/auth_service.dart';
 
 // Pages
+import 'pages/receipt_page.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
@@ -99,6 +100,17 @@ class AppRouter {
           final data =
               state.extra as Map<String, String>? ?? {'name': '', 'email': ''};
           return EditProfilePage(name: data['name']!, email: data['email']!);
+        },
+      ),
+            GoRoute(
+        path: '/purchase-receipt/:orderId',
+        builder: (context, state) {
+          final orderId = state.pathParameters['orderId'] ?? '';
+          final receiptData = state.extra as Map<String, dynamic>?;
+          return PurchaseReceiptPage(
+            orderId: orderId,
+            receiptData: receiptData,
+          );
         },
       ),
       GoRoute(
