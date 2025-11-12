@@ -5,6 +5,7 @@ import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
 import '../bloc/cart_cubit.dart';
 import 'theme_page.dart';
+import '../services/localization_extension.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -23,19 +24,18 @@ class CartPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Keranjang Belanja')),
+      appBar: AppBar(title: Text(context.t('cart'))),
       body: Center(
-        child: ConstrainedBox( // <-- Adaptif OK
-          constraints: const BoxConstraints(
-            maxWidth: 800,
-          ),
+        child: ConstrainedBox(
+          // <-- Adaptif OK
+          constraints: const BoxConstraints(maxWidth: 800),
           child: BlocBuilder<CartCubit, CartState>(
             builder: (context, state) {
               if (state.items.isEmpty) {
                 return Center(
                   child: Text(
-                    'Keranjang masih kosong 🛍️',
-                    style: TextStyle(fontSize: 18), // <-- GANTI DARI 14.sp
+                    context.t('cart_empty') + ' 🛍️',
+                    style: TextStyle(fontSize: 18),
                   ),
                 );
               }
@@ -48,7 +48,9 @@ class CartPage extends StatelessWidget {
                   final qty = entry.value;
 
                   return Card(
-                    margin: EdgeInsets.symmetric(vertical: 1.h), // <-- Layout Sizer OK
+                    margin: EdgeInsets.symmetric(
+                      vertical: 1.h,
+                    ), // <-- Layout Sizer OK
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
@@ -56,7 +58,9 @@ class CartPage extends StatelessWidget {
                       ),
                     ),
                     child: ListTile(
-                      contentPadding: EdgeInsets.all(3.w), // <-- Layout Sizer OK
+                      contentPadding: EdgeInsets.all(
+                        3.w,
+                      ), // <-- Layout Sizer OK
                       leading: Image.network(
                         product.image,
                         width: 15.w, // <-- Layout Sizer OK
@@ -89,7 +93,9 @@ class CartPage extends StatelessWidget {
                           ),
                           Text(
                             '$qty',
-                            style: TextStyle(fontSize: 16), // <-- GANTI DARI 13.sp
+                            style: TextStyle(
+                              fontSize: 16,
+                            ), // <-- GANTI DARI 13.sp
                           ),
                           IconButton(
                             icon: Icon(
@@ -97,7 +103,8 @@ class CartPage extends StatelessWidget {
                               color: AppTheme.secondaryColor,
                               size: 28, // <-- GANTI DARI 20.sp
                             ),
-                            onPressed: () => context.read<CartCubit>().add(product),
+                            onPressed: () =>
+                                context.read<CartCubit>().add(product),
                           ),
                         ],
                       ),
@@ -130,9 +137,9 @@ class CartPage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Total: ${formatRupiah(state.total)}',
+                      '${context.t('cart_total')}: ${formatRupiah(state.total)}',
                       style: TextStyle(
-                        fontSize: 18, // <-- GANTI DARI 14.sp
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryColor,
                       ),
@@ -143,8 +150,8 @@ class CartPage extends StatelessWidget {
                         context.push('/payment', extra: state.total);
                       },
                       child: Text(
-                        'Checkout',
-                        style: TextStyle(fontSize: 15), // <-- GANTI DARI 12.sp
+                        context.t('checkout'),
+                        style: TextStyle(fontSize: 15),
                       ),
                     ),
                   ],

@@ -27,7 +27,7 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
-    debugLogDiagnostics: true, 
+    debugLogDiagnostics: true,
 
     redirect: (BuildContext context, GoRouterState state) async {
       final bool loggedIn = await AuthService.isLoggedIn();
@@ -45,19 +45,13 @@ class AppRouter {
         await AuthService.getLoggedInEmail();
         return '/dashboard';
       }
-      
+
       return null;
     },
 
     routes: <RouteBase>[
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashPage(),
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginPage(),
-      ),
+      GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
@@ -70,16 +64,13 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: '/detail/:id', 
+        path: '/detail/:id',
         builder: (context, state) {
           final String productId = state.pathParameters['id'] ?? '0';
           return DetailPage(productId: productId);
         },
       ),
-      GoRoute(
-        path: '/cart',
-        builder: (context, state) => const CartPage(),
-      ),
+      GoRoute(path: '/cart', builder: (context, state) => const CartPage()),
       GoRoute(
         path: '/payment',
         builder: (context, state) {
@@ -94,12 +85,9 @@ class AppRouter {
       GoRoute(
         path: '/edit-profile',
         builder: (context, state) {
-          final data = state.extra as Map<String, String>? ??
-              {'name': '', 'email': ''};
-          return EditProfilePage(
-            name: data['name']!,
-            email: data['email']!,
-          );
+          final data =
+              state.extra as Map<String, String>? ?? {'name': '', 'email': ''};
+          return EditProfilePage(name: data['name']!, email: data['email']!);
         },
       ),
       GoRoute(
@@ -118,13 +106,6 @@ class AppRouter {
         path: '/feedback',
         builder: (context, state) => const FeedbackPage(),
       ),
-      
-      // ▼▼▼ RUTE INI SUDAH DIHAPUS ▼▼▼
-      // GoRoute(
-      //   path: '/shared-prefs',
-      //   builder: (context, state) => const SharedPreferencesPage(),
-      // ),
-      // ▲▲▲ RUTE INI SUDAH DIHAPUS ▲▲▲
     ],
   );
 }

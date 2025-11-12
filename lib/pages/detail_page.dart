@@ -9,6 +9,7 @@ import '../model/product.dart';
 import '../bloc/cart_cubit.dart';
 import '../bloc/product_cubit.dart';
 import 'theme_page.dart';
+import '../services/localization_extension.dart';
 
 class DetailPage extends StatefulWidget {
   final String productId;
@@ -77,10 +78,7 @@ class _DetailPageState extends State<DetailPage> {
                 alignment: Alignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.shopping_cart_outlined,
-                      size: 28, 
-                    ),
+                    icon: const Icon(Icons.shopping_cart_outlined, size: 28),
                     onPressed: () {
                       context.push('/cart');
                     },
@@ -225,12 +223,13 @@ class _DetailPageState extends State<DetailPage> {
             padding: EdgeInsets.all(4.w),
             child: ElevatedButton.icon(
               style: theme.elevatedButtonTheme.style?.copyWith(
-                minimumSize:
-                    WidgetStateProperty.all(Size(double.infinity, 6.h)),
+                minimumSize: WidgetStateProperty.all(
+                  Size(double.infinity, 6.h),
+                ),
               ),
               icon: const Icon(Icons.add_shopping_cart),
-              label: const Text(
-                "Tambah ke Keranjang",
+              label: Text(
+                context.t('add_to_cart'),
                 style: TextStyle(fontSize: 16),
               ),
               onPressed: product == null
@@ -239,8 +238,9 @@ class _DetailPageState extends State<DetailPage> {
                       context.read<CartCubit>().add(product);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content:
-                              Text("${product.title} ditambahkan ke keranjang"),
+                          content: Text(
+                            '${product.title} - ${context.t('add_to_cart')}',
+                          ),
                           backgroundColor: AppTheme.secondaryColor,
                         ),
                       );

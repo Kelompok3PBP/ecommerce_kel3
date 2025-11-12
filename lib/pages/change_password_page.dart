@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
 import 'theme_page.dart';
+import '../services/localization_extension.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -20,7 +21,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     if (newPassword.isEmpty || newPassword != confirmController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Password tidak sama atau kosong"),
+          content: Text(context.t('password_mismatch')),
           backgroundColor: AppTheme.primaryColor,
         ),
       );
@@ -32,39 +33,38 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     if (email == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Sesi tidak ditemukan, silakan login ulang"),
+          content: Text(context.t('error')),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    List<String> registeredUsers = prefs.getStringList('registered_users') ?? [];
+    List<String> registeredUsers =
+        prefs.getStringList('registered_users') ?? [];
     int userIndex = -1;
 
     for (int i = 0; i < registeredUsers.length; i++) {
       final parts = registeredUsers[i].split(':');
       if (parts.length == 2 && parts[0] == email) {
-        userIndex = i; 
+        userIndex = i;
         break;
       }
     }
 
     if (userIndex != -1) {
-      registeredUsers.removeAt(userIndex); 
-      registeredUsers.add("$email:$newPassword"); 
-      await prefs.setStringList('registered_users', registeredUsers); 
-    } 
-    else {
+      registeredUsers.removeAt(userIndex);
+      registeredUsers.add("$email:$newPassword");
+      await prefs.setStringList('registered_users', registeredUsers);
+    } else {
       print("Error: Gagal menemukan user $email di registered_users");
     }
-
 
     if (!mounted) return;
     context.pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Password berhasil diubah"),
+      SnackBar(
+        content: Text(context.t('success')),
         backgroundColor: Colors.green,
       ),
     );
@@ -73,36 +73,29 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Ubah Password"),
-      ),
+      appBar: AppBar(title: Text(context.t('change_password'))),
       body: Padding(
-        padding: EdgeInsets.all(5.w), 
+        padding: EdgeInsets.all(5.w),
         child: Column(
           children: [
             TextField(
               controller: passController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: "Password Baru",
-              ),
+              decoration: InputDecoration(labelText: context.t('new_password')),
             ),
-            SizedBox(height: 2.h), 
+            SizedBox(height: 2.h),
             TextField(
               controller: confirmController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: "Konfirmasi Password",
+              decoration: InputDecoration(
+                labelText: context.t('confirm_password'),
               ),
             ),
-            SizedBox(height: 4.h), 
+            SizedBox(height: 4.h),
             ElevatedButton(
               style: Theme.of(context).elevatedButtonTheme.style,
               onPressed: _savePassword,
-              child: Text(
-                "Simpan",
-                style: TextStyle(fontSize: 16), 
-              ),
+              child: Text(context.t('save'), style: TextStyle(fontSize: 16)),
             ),
           ],
         ),

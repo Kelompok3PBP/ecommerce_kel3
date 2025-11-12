@@ -63,9 +63,14 @@ class _RegisterPageState extends State<RegisterPage> {
           const SnackBar(
             content: Text("Registrasi berhasil! Silakan login."),
             backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
           ),
         );
-        context.pop();
+        // Delay sebelum pop untuk memastikan SnackBar terlihat
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          context.pop();
+        }
       }
     }
   }
@@ -79,12 +84,13 @@ class _RegisterPageState extends State<RegisterPage> {
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
           child: SizedBox(
-            width: 450, 
+            width: 450,
             child: Card(
               color: AppTheme.cardColor,
               elevation: 8,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
                 child: Form(
@@ -94,31 +100,33 @@ class _RegisterPageState extends State<RegisterPage> {
                     children: [
                       Image.asset(
                         "assets/logo.png",
-                        height: 18.h, 
-                        width: 18.h,  
+                        height: 18.h,
+                        width: 18.h,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.shopping_bag,
-                          size: 25.w, 
+                          size: 25.w,
                           color: AppTheme.primaryColor,
                         ),
                       ),
-                      SizedBox(height: 2.h), 
+                      SizedBox(height: 2.h),
                       Text(
                         "Daftar Akun belanja.in",
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryColor,
-                          fontSize: 22, 
+                          fontSize: 22,
                         ),
                       ),
-                      SizedBox(height: 3.h), 
+                      SizedBox(height: 3.h),
                       TextFormField(
                         controller: _emailController,
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          prefixIcon:
-                              Icon(Icons.email, color: AppTheme.primaryColor),
+                          prefixIcon: Icon(
+                            Icons.email,
+                            color: AppTheme.primaryColor,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -128,21 +136,22 @@ class _RegisterPageState extends State<RegisterPage> {
                           if (value == null || value.isEmpty) {
                             return 'Email tidak boleh kosong';
                           }
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                              .hasMatch(value)) {
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                             return 'Masukkan email yang valid';
                           }
                           return null;
                         },
                       ),
-                      SizedBox(height: 2.h), 
+                      SizedBox(height: 2.h),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon:
-                              Icon(Icons.lock, color: AppTheme.primaryColor),
+                          prefixIcon: Icon(
+                            Icons.lock,
+                            color: AppTheme.primaryColor,
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -167,14 +176,16 @@ class _RegisterPageState extends State<RegisterPage> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 2.h), 
+                      SizedBox(height: 2.h),
                       TextFormField(
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
                         decoration: InputDecoration(
                           labelText: 'Konfirmasi Password',
-                          prefixIcon: Icon(Icons.lock_outline,
-                              color: AppTheme.primaryColor),
+                          prefixIcon: Icon(
+                            Icons.lock_outline,
+                            color: AppTheme.primaryColor,
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword
@@ -200,14 +211,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 4.h), 
+                      SizedBox(height: 4.h),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _register,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
-                            padding: EdgeInsets.symmetric(vertical: 2.h), 
+                            padding: EdgeInsets.symmetric(vertical: 2.h),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -217,12 +228,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: theme.colorScheme.onPrimary,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16, 
+                              fontSize: 16,
                             ),
                           ),
                         ),
                       ),
-                      SizedBox(height: 2.5.h), 
+                      SizedBox(height: 2.5.h),
                       GestureDetector(
                         onTap: () => context.pop(),
                         child: Text.rich(
@@ -230,7 +241,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             text: "Sudah punya akun? ",
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: AppTheme.textPrimaryColor,
-                              fontSize: 14, 
+                              fontSize: 14,
                             ),
                             children: [
                               TextSpan(
@@ -240,7 +251,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   fontWeight: FontWeight.bold,
                                   decoration: TextDecoration.underline,
                                   decorationColor: AppTheme.secondaryColor,
-                                  fontSize: 14, 
+                                  fontSize: 14,
                                 ),
                               ),
                             ],

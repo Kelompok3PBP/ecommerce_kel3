@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
 import 'theme_page.dart';
+import '../services/localization_extension.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String name;
@@ -38,11 +39,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final prefs = await SharedPreferences.getInstance();
     final String newName = nameController.text;
     final String newEmail = emailController.text;
-    final String oldEmail = widget.email; 
+    final String oldEmail = widget.email;
 
     await prefs.setString('user_name', newName);
     await prefs.setString('user_email', newEmail);
-    await prefs.setString('current_user', newEmail); 
+    await prefs.setString('current_user', newEmail);
 
     if (newEmail != oldEmail) {
       List<String> registeredUsers =
@@ -53,37 +54,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
       for (int i = 0; i < registeredUsers.length; i++) {
         final parts = registeredUsers[i].split(':');
         if (parts.length == 2 && parts[0] == oldEmail) {
-          userPassword = parts[1]; 
-          userIndex = i; 
+          userPassword = parts[1];
+          userIndex = i;
           break;
         }
       }
 
       if (userIndex != -1) {
-        registeredUsers.removeAt(userIndex); 
-        registeredUsers.add("$newEmail:$userPassword"); 
-        await prefs.setStringList(
-          'registered_users',
-          registeredUsers,
-        ); 
+        registeredUsers.removeAt(userIndex);
+        registeredUsers.add("$newEmail:$userPassword");
+        await prefs.setStringList('registered_users', registeredUsers);
       }
     }
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Profil berhasil disimpan ✅"),
+      SnackBar(
+        content: Text(context.t('profile_updated') + ' ✅'),
         backgroundColor: Colors.green,
       ),
     );
-    context.pop(true); 
+    context.pop(true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(title: const Text("Edit Profil")),
+      appBar: AppBar(title: Text(context.t('edit_profile'))),
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(6.w),
@@ -105,12 +103,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: "Nama"),
+                  decoration: InputDecoration(labelText: context.t('name')),
                 ),
                 SizedBox(height: 2.5.h),
                 TextField(
                   controller: emailController,
-                  decoration: const InputDecoration(labelText: "Email"),
+                  decoration: InputDecoration(labelText: context.t('email')),
                 ),
                 SizedBox(height: 4.h),
                 SizedBox(
@@ -124,7 +122,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                     onPressed: _saveProfile,
                     child: Text(
-                      "Simpan Perubahan",
+                      context.t('save'),
                       style: TextStyle(fontSize: 16),
                     ),
                   ),

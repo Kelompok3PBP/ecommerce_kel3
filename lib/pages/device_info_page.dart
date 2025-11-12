@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:sizer/sizer.dart';
+import '../services/localization_extension.dart';
 
 class DeviceInfoPage extends StatefulWidget {
   const DeviceInfoPage({super.key});
@@ -68,7 +69,7 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Device Info")),
+      appBar: AppBar(title: Text(context.t('device_info'))),
       body: _deviceData.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -77,7 +78,10 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
                   leading: const Icon(Icons.info_outline),
                   title: Text(
                     e.key,
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold), // <-- GANTI DARI 12.sp
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ), // <-- GANTI DARI 12.sp
                   ),
                   subtitle: Text(
                     e.value.toString(),

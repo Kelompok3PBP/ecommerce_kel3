@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'theme_page.dart';
+import '../services/localization_extension.dart';
 
 class SharedPreferencesPage extends StatefulWidget {
   const SharedPreferencesPage({super.key});
@@ -35,23 +36,25 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     _loadAllPrefs();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Semua data SharedPreferences dihapus 🗑️")),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.t('success') + ' 🗑️')));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Data Shared Preferences"),
+        title: Text(context.t('app_info')),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadAllPrefs),
           IconButton(icon: const Icon(Icons.delete), onPressed: _clearPrefs),
         ],
       ),
       body: data.isEmpty
-          ? Center(child: Text("Belum ada data tersimpan", style: TextStyle(fontSize: 16))) // <-- GANTI DARI 12.sp
+          ? Center(
+              child: Text(context.t('info'), style: TextStyle(fontSize: 16)),
+            )
           : ListView(
               padding: EdgeInsets.all(2.w), // <-- Layout Sizer OK
               children: data.entries.map((entry) {
@@ -72,8 +75,7 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
                       entry.value.toString(),
                       style: TextStyle(fontSize: 14), // <-- GANTI DARI 10.sp
                     ),
-                    leading:
-                        Icon(Icons.storage, color: AppTheme.primaryColor),
+                    leading: Icon(Icons.storage, color: AppTheme.primaryColor),
                   ),
                 );
               }).toList(),

@@ -12,6 +12,7 @@ import '../bloc/cart_cubit.dart';
 import '../bloc/product_cubit.dart';
 import '../model/product.dart';
 import 'theme_provider.dart';
+import '../services/localization_extension.dart';
 
 class DashboardPage extends StatefulWidget {
   final String email;
@@ -49,7 +50,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     if (!kIsWeb && _webBase64 != null) {
-       try {
+      try {
         return MemoryImage(base64Decode(_webBase64!));
       } catch (_) {
         return null;
@@ -105,7 +106,7 @@ class _DashboardPageState extends State<DashboardPage> {
       await prefs.remove('current_user');
       await prefs.remove('user_name');
       await prefs.remove('user_email');
-      await prefs.setBool('is_logged_in', false); 
+      await prefs.setBool('is_logged_in', false);
       if (mounted) {
         context.go('/login');
       }
@@ -121,7 +122,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       drawer: _buildDrawer(context),
       appBar: AppBar(
-        title: const Text("Dashboard"),
+        title: Text(context.t('dashboard')),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -205,20 +206,18 @@ class _DashboardPageState extends State<DashboardPage> {
           }
 
           if (state.error != null) {
-            return Center(child: Text('Error: ${state.error}'));
+            return Center(child: Text('${context.t('error')}: ${state.error}'));
           }
 
           return RefreshIndicator(
             color: Theme.of(context).primaryColor,
             onRefresh: () async {
-              _searchProducts(""); 
+              _searchProducts("");
               await context.read<ProductCubit>().fetchProducts();
             },
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 1400,
-                ),
+                constraints: const BoxConstraints(maxWidth: 1400),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     int crossAxisCount;
@@ -267,28 +266,30 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundColor: theme.cardColor,
               backgroundImage: _buildProfileImage(),
               child: _buildProfileImage() == null
-                  ? Icon(Icons.person,
-                      size: 40, color: theme.primaryColor)
+                  ? Icon(Icons.person, size: 40, color: theme.primaryColor)
                   : null,
             ),
             decoration: BoxDecoration(color: theme.primaryColor),
           ),
           ListTile(
             leading: Icon(Icons.home, color: theme.primaryColor),
-            title: Text("Home", style: theme.textTheme.bodyLarge),
+            title: Text(context.t('home'), style: theme.textTheme.bodyLarge),
             onTap: () => Navigator.pop(context),
           ),
           ListTile(
             leading: Icon(Icons.person, color: theme.primaryColor),
-            title: Text("Profile", style: theme.textTheme.bodyLarge),
+            title: Text(context.t('profile'), style: theme.textTheme.bodyLarge),
             onTap: () {
               Navigator.pop(context);
-              context.push('/profile').then((_) => _loadUserInfo()); 
+              context.push('/profile').then((_) => _loadUserInfo());
             },
           ),
           ListTile(
             leading: Icon(Icons.settings, color: theme.primaryColor),
-            title: Text("Settings", style: theme.textTheme.bodyLarge),
+            title: Text(
+              context.t('settings'),
+              style: theme.textTheme.bodyLarge,
+            ),
             onTap: () {
               Navigator.pop(context);
               context.push('/settings');
@@ -298,7 +299,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ListTile(
             leading: Icon(Icons.logout, color: theme.colorScheme.secondary),
             title: Text(
-              "Logout",
+              context.t('logout'),
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.secondary,
                 fontWeight: FontWeight.bold,
@@ -377,7 +378,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
 class _ProductSearchDelegate extends SearchDelegate<String?> {
   final List<Product> products;
-  _ProductSearchDelegate(this.products); 
+  _ProductSearchDelegate(this.products);
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -389,8 +390,10 @@ class _ProductSearchDelegate extends SearchDelegate<String?> {
         iconTheme: IconThemeData(color: theme.primaryColor),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        hintStyle:
-            TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 16),
+        hintStyle: TextStyle(
+          color: theme.textTheme.bodyMedium?.color,
+          fontSize: 16,
+        ),
         border: InputBorder.none,
       ),
       scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
@@ -399,24 +402,24 @@ class _ProductSearchDelegate extends SearchDelegate<String?> {
 
   @override
   List<Widget>? buildActions(BuildContext context) => [
-        IconButton(
-          icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
-          onPressed: () { 
-            query = '';
-            showSuggestions(context);
-          },
-        ),
-      ];
+    IconButton(
+      icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
+      onPressed: () {
+        query = '';
+        showSuggestions(context);
+      },
+    ),
+  ];
 
   @override
   Widget? buildLeading(BuildContext context) => IconButton(
-        icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
-        onPressed: () => close(context, null), 
-      );
+    icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
+    onPressed: () => close(context, null),
+  );
 
   @override
   Widget buildResults(BuildContext context) {
-    close(context, query); 
+    close(context, query);
     return Container();
   }
 
@@ -441,7 +444,7 @@ class _ProductSearchDelegate extends SearchDelegate<String?> {
           ),
           onTap: () {
             query = results[index].title;
-            close(context, query); 
+            close(context, query);
           },
         );
       },

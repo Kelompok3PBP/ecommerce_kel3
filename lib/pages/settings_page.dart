@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
+import '../bloc/language_cubit.dart';
+import '../services/localization_service.dart';
+import '../services/localization_extension.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -44,24 +48,24 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       backgroundColor: background,
-      appBar: AppBar(title: const Text("Pengaturan")),
+      appBar: AppBar(title: Text(context.t('app_settings'))),
       body: Center(
-        child: ConstrainedBox( 
-          constraints: const BoxConstraints(
-            maxWidth: 700,
-          ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
           child: ListView(
-            padding: EdgeInsets.all(4.w), 
+            padding: EdgeInsets.all(4.w),
             children: [
               _buildSection(
                 icon: Icons.notifications,
-                title: "Notifikasi",
+                title: context.t('notifications'),
                 theme: theme,
                 children: [
                   SwitchListTile(
                     activeThumbColor: primary,
-                    title: Text("Notifikasi",
-                        style: TextStyle(color: textMain, fontSize: 16)), 
+                    title: Text(
+                      context.t('notifications'),
+                      style: TextStyle(color: textMain, fontSize: 16),
+                    ),
                     secondary: Icon(Icons.notifications, color: primary),
                     value: notif,
                     onChanged: (val) async {
@@ -72,8 +76,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         SnackBar(
                           content: Text(
                             val
-                                ? 'Notifikasi Diaktifkan 🔔'
-                                : 'Notifikasi Dimatikan 🔕',
+                                ? context.t('notifications_enabled')
+                                : context.t('notifications_disabled'),
                           ),
                           duration: const Duration(seconds: 1),
                           backgroundColor: secondary,
@@ -83,16 +87,16 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 2.h), 
+              SizedBox(height: 2.h),
               _buildSection(
                 icon: Icons.info_outline,
-                title: "Informasi Aplikasi",
+                title: context.t('app_info'),
                 theme: theme,
                 children: [
                   _buildListTile(
                     icon: Icons.devices,
-                    title: "Device Info",
-                    subtitle: "Lihat detail perangkat kamu",
+                    title: context.t('device_info'),
+                    subtitle: context.t('view_device_info'),
                     theme: theme,
                     onTap: () {
                       context.push('/device-info');
@@ -100,8 +104,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   _buildListTile(
                     icon: Icons.feedback,
-                    title: "Feedback",
-                    subtitle: "Berikan masukan untuk aplikasi ini",
+                    title: context.t('feedback'),
+                    subtitle: context.t('send_feedback'),
                     theme: theme,
                     onTap: () {
                       context.push('/feedback');
@@ -109,16 +113,16 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 2.h), 
+              SizedBox(height: 2.h),
               _buildSection(
                 icon: Icons.settings,
-                title: "Lainnya",
+                title: context.t('settings'),
                 theme: theme,
                 children: [
                   _buildListTile(
                     icon: Icons.language,
-                    title: "Bahasa",
-                    subtitle: "Pilih bahasa aplikasi",
+                    title: context.t('language'),
+                    subtitle: context.t('select_language'),
                     theme: theme,
                     onTap: () {
                       _showLanguageDialog(context, primary, secondary);
@@ -126,8 +130,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   _buildListTile(
                     icon: Icons.info,
-                    title: "Tentang Aplikasi",
-                    subtitle: "Informasi versi & deskripsi aplikasi",
+                    title: context.t('about_app'),
+                    subtitle: context.t('app_info'),
                     theme: theme,
                     onTap: () {
                       showAboutDialog(
@@ -135,13 +139,12 @@ class _SettingsPageState extends State<SettingsPage> {
                         applicationName: "Belanja.in",
                         applicationVersion: "1.0.0",
                         applicationIcon: Icon(Icons.storefront, color: primary),
-                        applicationLegalese:
-                            "© 2025 Kelompok 3\nAll rights reserved.",
+                        applicationLegalese: context.t('all_rights_reserved'),
                         children: [
                           Padding(
                             padding: EdgeInsets.only(top: 1.5.h),
                             child: Text(
-                              "Belanja.in adalah platform e-commerce...",
+                              context.t('app_description'),
                               style: TextStyle(color: textSub, fontSize: 14),
                             ),
                           ),
@@ -218,7 +221,10 @@ class _SettingsPageState extends State<SettingsPage> {
       title: Text(
         title,
         style: TextStyle(
-            fontWeight: FontWeight.w600, color: textMain, fontSize: 16),
+          fontWeight: FontWeight.w600,
+          color: textMain,
+          fontSize: 16,
+        ),
       ),
       subtitle: subtitle != null
           ? Text(subtitle, style: TextStyle(color: textSub, fontSize: 14))
@@ -233,39 +239,47 @@ class _SettingsPageState extends State<SettingsPage> {
     Color primary,
     Color secondary,
   ) {
+    final languages = AppLocalizations.getLanguages();
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text("Pilih Bahasa", style: TextStyle(color: primary)),
+        title: Text(
+          AppLocalizations.t(
+            'select_language',
+            languageCode: context.read<LanguageCubit>().state.languageCode,
+          ),
+          style: TextStyle(color: primary),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text("Indonesia 🇮🇩", style: TextStyle(fontSize: 15)),
+          children: languages.entries.map((entry) {
+            final code = entry.key;
+            final langData = entry.value;
+            final name = langData['name'] ?? '';
+            final flag = langData['flag'] ?? '';
+
+            return ListTile(
+              title: Text('$name $flag', style: const TextStyle(fontSize: 15)),
               onTap: () {
+                context.read<LanguageCubit>().changeLanguage(code, name, flag);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     backgroundColor: secondary,
-                    content: const Text('Bahasa diatur ke Indonesia 🇮🇩'),
+                    content: Text(
+                      AppLocalizations.t(
+                        'language_changed',
+                        languageCode: code,
+                      ),
+                    ),
+                    duration: const Duration(seconds: 2),
                   ),
                 );
               },
-            ),
-            ListTile(
-              title: Text("English 🇬🇧", style: TextStyle(fontSize: 15)),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: secondary,
-                    content: const Text('Language set to English 🇬🇧'),
-                  ),
-                );
-              },
-            ),
-          ],
+            );
+          }).toList(),
         ),
       ),
     );

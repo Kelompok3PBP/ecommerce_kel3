@@ -1,13 +1,14 @@
 import 'dart:convert';
-import 'dart:io'; 
+import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart'; 
+import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
+import '../services/localization_extension.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -18,8 +19,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String userName = "";
   String userEmail = "";
-  String? _imagePath; 
-  String? _webBase64; 
+  String? _imagePath;
+  String? _webBase64;
 
   @override
   void initState() {
@@ -57,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
         final bytes = await pickedFile.readAsBytes();
         final base64Image = base64Encode(bytes);
         await prefs.setString('profile_picture_base64', base64Image);
-        await prefs.remove('profile_picture_path'); 
+        await prefs.remove('profile_picture_path');
         if (mounted) {
           setState(() {
             _webBase64 = base64Image;
@@ -74,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ).copy(savedImagePath);
 
         await prefs.setString('profile_picture_path', savedImage.path);
-        await prefs.remove('profile_picture_base64'); 
+        await prefs.remove('profile_picture_base64');
 
         if (mounted) {
           setState(() {
@@ -86,10 +87,8 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Gagal mengambil gambar. Pastikan izin telah diberikan.',
-            ),
+          SnackBar(
+            content: Text(context.t('error')),
             backgroundColor: Colors.red,
           ),
         );
@@ -139,7 +138,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final profileImage = _buildProfileImage();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Profil Saya")),
+      appBar: AppBar(title: Text(context.t('my_profile'))),
       body: RefreshIndicator(
         onRefresh: _loadProfile,
         child: Center(
@@ -154,10 +153,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       CircleAvatar(
                         radius: 60,
                         backgroundColor: theme.primaryColor.withOpacity(0.1),
-                        backgroundImage: profileImage, 
-                        child:
-                            profileImage ==
-                                null 
+                        backgroundImage: profileImage,
+                        child: profileImage == null
                             ? Icon(
                                 Icons.person,
                                 size: 60,
@@ -206,11 +203,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 const Divider(),
                 ListTile(
                   leading: Icon(Icons.edit_note, color: theme.primaryColor),
-                  title: Text("Edit Profil", style: TextStyle(fontSize: 16)),
+                  title: Text(
+                    context.t('edit_profile'),
+                    style: TextStyle(fontSize: 16),
+                  ),
                   trailing: Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () async {
                     final result = await context.push(
-                      '/edit-profile', 
+                      '/edit-profile',
                       extra: {'name': userName, 'email': userEmail},
                     );
 
@@ -222,12 +222,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 const Divider(),
                 ListTile(
                   leading: Icon(Icons.lock_reset, color: theme.primaryColor),
-                  title: Text("Ubah Password", style: TextStyle(fontSize: 16)),
+                  title: Text(
+                    context.t('change_password'),
+                    style: TextStyle(fontSize: 16),
+                  ),
                   trailing: Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    context.push(
-                      '/change-password',
-                    ); 
+                    context.push('/change-password');
                   },
                 ),
                 const Divider(),

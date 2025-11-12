@@ -1,28 +1,55 @@
 class Product {
-  final int id;
-  final String title;
-  final double price;
-  final String description;
-  final String category;
-  final String image;
-  final double rating;
-  final int ratingCount;
+  int _id;
+  String _title;
+  double _price;
+  String _description;
+  String _category;
+  String _image;
+  double _rating;
+  int _ratingCount;
 
+  // 🔹 Constructor
   Product({
-    required this.id,
-    required this.title,
-    required this.price,
-    required this.description,
-    required this.category,
-    required this.image,
-    required this.rating,
-    required this.ratingCount,
-  });
+    required int id,
+    required String title,
+    required double price,
+    required String description,
+    required String category,
+    required String image,
+    required double rating,
+    required int ratingCount,
+  }) : _id = id,
+       _title = title,
+       _price = price,
+       _description = description,
+       _category = category,
+       _image = image,
+       _rating = rating,
+       _ratingCount = ratingCount;
 
-  /// Convert JSON → Model
+  // 🔹 Getter
+  int get id => _id;
+  String get title => _title;
+  double get price => _price;
+  String get description => _description;
+  String get category => _category;
+  String get image => _image;
+  double get rating => _rating;
+  int get ratingCount => _ratingCount;
+
+  // 🔹 Setter (kalau mau ubah field)
+  set id(int value) => _id = value;
+  set title(String value) => _title = value;
+  set price(double value) => _price = value;
+  set description(String value) => _description = value;
+  set category(String value) => _category = value;
+  set image(String value) => _image = value;
+  set rating(double value) => _rating = value;
+  set ratingCount(int value) => _ratingCount = value;
+
+  // 🔹 Factory: fromJson
   factory Product.fromJson(Map<String, dynamic> json) {
     final ratingData = json['rating'] ?? {};
-
     return Product(
       id: json['id'] ?? 0,
       title: json['title'] ?? 'Produk Tanpa Nama',
@@ -39,25 +66,26 @@ class Product {
     );
   }
 
-  /// Convert Model → JSON (buat post/put)
+  // 🔹 toJson
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'title': title,
-      'price': price,
-      'description': description,
-      'category': category,
-      'image': image,
-      'rating': {'rate': rating, 'count': ratingCount},
+      'id': _id,
+      'title': _title,
+      'price': _price,
+      'description': _description,
+      'category': _category,
+      'image': _image,
+      'rating': {'rate': _rating, 'count': _ratingCount},
     };
   }
 
+  // 🔹 Override equality dan hashcode
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is Product && other.id == id;
+    return other is Product && other._id == _id;
   }
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode => _id.hashCode;
 }

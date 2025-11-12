@@ -20,7 +20,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late Animation<double> _bottomFadeAnimation;
 
   final String _appName = "belanja in";
-  final _duration = const Duration(milliseconds: 2200);
+  final _duration = const Duration(milliseconds: 2500);
 
   @override
   void initState() {
@@ -89,7 +89,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                       child: Image.asset(
                         "assets/logo.png",
                         height: 30.h, // <-- Layout Sizer OK
-                        width: 30.h,  // <-- Layout Sizer OK
+                        width: 30.h, // <-- Layout Sizer OK
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.storefront,
@@ -215,7 +215,9 @@ class _ModernLoadingIndicatorState extends State<_ModernLoadingIndicator>
         return ScaleTransition(
           scale: _animations[index],
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 1.w), // <-- Layout Sizer OK
+            padding: EdgeInsets.symmetric(
+              horizontal: 1.w,
+            ), // <-- Layout Sizer OK
             child: CircleAvatar(
               radius: 1.5.w, // <-- Layout Sizer OK (kecil, tidak masalah)
               backgroundColor: AppTheme.primaryColor.withOpacity(0.8),
