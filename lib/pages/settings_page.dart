@@ -48,7 +48,16 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       backgroundColor: background,
-      appBar: AppBar(title: Text(context.t('app_settings'))),
+      appBar: AppBar(
+        title: Text(context.t('app_settings')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Navigasi kembali ke dashboard pakai GoRouter
+            context.go('/dashboard');
+          },
+        ),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 700),

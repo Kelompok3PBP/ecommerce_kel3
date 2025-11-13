@@ -12,7 +12,6 @@ import '../bloc/cart_cubit.dart';
 import '../bloc/product_cubit.dart';
 import '../model/product.dart';
 import 'theme_provider.dart';
-import '../services/localization_extension.dart';
 
 class DashboardPage extends StatefulWidget {
   final String email;
@@ -22,13 +21,12 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  List<Product> _filteredProducts = [];
+  List<Product> products = [];
+  List<Product> filteredProducts = [];
+  bool isLoading = true;
   String userName = "";
   String userEmail = "";
   String? _webBase64;
-
-  String _selectedSort = 'default';
-  String? _selectedCategoryFilter;
 
   final NumberFormat currencyFormat = NumberFormat.currency(
     locale: 'id_ID',
@@ -40,19 +38,10 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _loadUserInfo();
-    context.read<ProductCubit>().fetchProducts();
   }
 
   ImageProvider? _buildProfileImage() {
     if (kIsWeb && _webBase64 != null) {
-      try {
-        return MemoryImage(base64Decode(_webBase64!));
-      } catch (_) {
-        return null;
-      }
-    }
-
-    if (!kIsWeb && _webBase64 != null) {
       try {
         return MemoryImage(base64Decode(_webBase64!));
       } catch (_) {
@@ -79,66 +68,37 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        userName = prefs.getString('user_name') ?? widget.email.split('@')[0];
-        userEmail = prefs.getString('user_email') ?? widget.email;
-        _webBase64 = prefs.getString('profile_picture_base64');
-      });
-    }
-  }
-
-  void _searchProducts(String query) {
-    final allProducts = context.read<ProductCubit>().state.products;
     setState(() {
-      if (query.isEmpty) {
-        _filteredProducts = allProducts;
-      } else {
-        final searchQuery = query.toLowerCase();
-        _filteredProducts = allProducts.where((p) {
-          return p.title.toLowerCase().contains(searchQuery) ||
-              translateCategory(p.category).toLowerCase().contains(searchQuery);
-        }).toList();
-      }
+      userName = prefs.getString('user_name') ?? widget.email.split('@')[0];
+      userEmail = prefs.getString('user_email') ?? widget.email;
+      _webBase64 = prefs.getString('profile_picture_base64');
     });
   }
 
-  void _applySortAndFilter() {
-    final allProducts = context.read<ProductCubit>().state.products;
-
-    List<Product> filtered = allProducts;
-    if (_selectedCategoryFilter != null &&
-        _selectedCategoryFilter!.isNotEmpty) {
-      filtered = filtered
-          .where(
-            (p) => translateCategory(p.category) == _selectedCategoryFilter,
-          )
-          .toList();
-    }
-
-    if (_selectedSort == 'price_asc') {
-      filtered.sort((a, b) => a.price.compareTo(b.price));
-    } else if (_selectedSort == 'price_desc') {
-      filtered.sort((a, b) => b.price.compareTo(a.price));
-    }
-
+  void _searchProducts(String query) {
     setState(() {
-      _filteredProducts = filtered;
+      final searchQuery = query.toLowerCase();
+      // Selalu filter dari list produk asli
+      filteredProducts = products.where((p) {
+        return p.title.toLowerCase().contains(searchQuery) ||
+            translateCategory(p.category).toLowerCase().contains(searchQuery);
+      }).toList();
     });
   }
 
   Future<void> _logout() async {
+    print("--- TOMBOL LOGOUT DITEKAN ---");
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('current_user');
-      await prefs.remove('user_name');
-      await prefs.remove('user_email');
+      await prefs.clear();
       await prefs.setBool('is_logged_in', false);
+      print("--- SharedPreferences DIBERSIHKAN ---");
       if (mounted) {
         context.go('/login');
+        print("--- NAVIGASI KE /login ---");
       }
     } catch (e) {
-      print("Error saat logout: $e");
+      print("--- !!! ERROR SAAT LOGOUT: $e ---");
     }
   }
 
@@ -149,15 +109,14 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       drawer: _buildDrawer(context),
       appBar: AppBar(
-        title: Text(context.t('dashboard')),
+        title: const Text("Dashboard"),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () async {
-              final allProducts = context.read<ProductCubit>().state.products;
               final String? query = await showSearch<String?>(
                 context: context,
-                delegate: _ProductSearchDelegate(allProducts),
+                delegate: _ProductSearchDelegate(products), 
               );
               if (query != null) {
                 _searchProducts(query);
@@ -168,9 +127,10 @@ class _DashboardPageState extends State<DashboardPage> {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.shopping_cart_outlined, size: 28),
+                icon: const Icon(Icons.shopping_cart_outlined),
                 onPressed: () {
-                  context.push('/cart');
+                  // 👇👇👇 1. PERBAIKAN DI SINI 👇👇👇
+                  context.go('/cart');
                 },
               ),
               BlocBuilder<CartCubit, CartState>(
@@ -180,24 +140,22 @@ class _DashboardPageState extends State<DashboardPage> {
                     right: 8,
                     top: 8,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
+                      padding: const EdgeInsets.fromLTRB(5, 2, 5, 2), 
+                      decoration: BoxDecoration(
                         color: Colors.red,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(10.0), 
                       ),
                       constraints: const BoxConstraints(
                         minWidth: 16,
                         minHeight: 16,
                       ),
-                      child: Center(
-                        child: Text(
-                          '${state.items.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      child: Text(
+                        '${state.items.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   );
@@ -215,16 +173,9 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      body: BlocConsumer<ProductCubit, ProductState>(
-        listener: (context, state) {
-          if (!state.loading && state.error == null) {
-            setState(() {
-              _filteredProducts = state.products;
-            });
-          }
-        },
+      body: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, state) {
-          if (state.loading && state.products.isEmpty) {
+          if (state.loading) {
             return Center(
               child: CircularProgressIndicator(
                 color: Theme.of(context).primaryColor,
@@ -233,124 +184,51 @@ class _DashboardPageState extends State<DashboardPage> {
           }
 
           if (state.error != null) {
-            return Center(child: Text('${context.t('error')}: ${state.error}'));
+            return Center(child: Text('Error: ${state.error}'));
+          }
+          
+          products = state.products;
+          if (filteredProducts.isEmpty) {
+             filteredProducts = products;
           }
 
           return RefreshIndicator(
             color: Theme.of(context).primaryColor,
             onRefresh: () async {
-              _searchProducts("");
+              _searchProducts(""); // Reset filter saat refresh
               await context.read<ProductCubit>().fetchProducts();
             },
             child: Center(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 3.w,
-                      vertical: 1.h,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: _selectedSort,
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'default',
-                                child: Text('Default'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'price_asc',
-                                child: Text('Harga: Termurah'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'price_desc',
-                                child: Text('Harga: Termahal'),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedSort = value!;
-                              });
-                              _applySortAndFilter();
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 3.w),
-                        Expanded(
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            hint: const Text('Kategori'),
-                            value: _selectedCategoryFilter,
-                            items: [
-                              const DropdownMenuItem(
-                                value: '',
-                                child: Text('Semua Kategori'),
-                              ),
-                              ...context
-                                  .read<ProductCubit>()
-                                  .state
-                                  .products
-                                  .map((p) => translateCategory(p.category))
-                                  .toSet()
-                                  .map(
-                                    (cat) => DropdownMenuItem(
-                                      value: cat,
-                                      child: Text(cat),
-                                    ),
-                                  )
-                                  .toList(),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedCategoryFilter = (value == ''
-                                    ? null
-                                    : value);
-                              });
-                              _applySortAndFilter();
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1400),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          int crossAxisCount;
-                          if (constraints.maxWidth > 1200) {
-                            crossAxisCount = 6;
-                          } else if (constraints.maxWidth > 800) {
-                            crossAxisCount = 4;
-                          } else {
-                            crossAxisCount = 3;
-                          }
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 1400,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    int crossAxisCount;
+                    if (constraints.maxWidth > 1200) {
+                      crossAxisCount = 6;
+                    } else if (constraints.maxWidth > 800) {
+                      crossAxisCount = 4;
+                    } else {
+                      crossAxisCount = 3;
+                    }
 
-                          return GridView.builder(
-                            padding: EdgeInsets.all(3.w),
-                            itemCount: _filteredProducts.length,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: crossAxisCount,
-                                  crossAxisSpacing: 3.w,
-                                  mainAxisSpacing: 3.w,
-                                  childAspectRatio: 0.6,
-                                ),
-                            itemBuilder: (context, index) {
-                              return _buildProductCard(
-                                _filteredProducts[index],
-                              );
-                            },
-                          );
-                        },
+                    return GridView.builder(
+                      padding: EdgeInsets.all(3.w),
+                      itemCount: filteredProducts.length, 
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 3.w,
+                        mainAxisSpacing: 3.w,
+                        childAspectRatio: 0.6,
                       ),
-                    ),
-                  ),
-                ],
+                      itemBuilder: (context, index) {
+                        return _buildProductCard(filteredProducts[index]);
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           );
@@ -373,40 +251,44 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundColor: theme.cardColor,
               backgroundImage: _buildProfileImage(),
               child: _buildProfileImage() == null
-                  ? Icon(Icons.person, size: 40, color: theme.primaryColor)
+                  ? Icon(Icons.person,
+                      size: 40, 
+                      color: theme.primaryColor)
                   : null,
             ),
             decoration: BoxDecoration(color: theme.primaryColor),
           ),
           ListTile(
             leading: Icon(Icons.home, color: theme.primaryColor),
-            title: Text(context.t('home'), style: theme.textTheme.bodyLarge),
+            title: Text("Home", style: theme.textTheme.bodyLarge),
             onTap: () => Navigator.pop(context),
           ),
           ListTile(
             leading: Icon(Icons.person, color: theme.primaryColor),
-            title: Text(context.t('profile'), style: theme.textTheme.bodyLarge),
-            onTap: () {
+            title: Text("Profile", style: theme.textTheme.bodyLarge),
+            onTap: () { // <-- Hapus async
               Navigator.pop(context);
-              context.push('/profile').then((_) => _loadUserInfo());
+              // 👇👇👇 2. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
+              context.go('/profile');
+              // Kita tidak bisa 'await' context.go()
+              // Jadi, _loadUserInfo() tidak akan jalan otomatis saat kembali
+              // User harus refresh manual
             },
           ),
           ListTile(
             leading: Icon(Icons.settings, color: theme.primaryColor),
-            title: Text(
-              context.t('settings'),
-              style: theme.textTheme.bodyLarge,
-            ),
+            title: Text("Settings", style: theme.textTheme.bodyLarge),
             onTap: () {
               Navigator.pop(context);
-              context.push('/settings');
+              // 👇👇👇 3. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
+              context.go('/settings');
             },
           ),
           const Divider(),
           ListTile(
             leading: Icon(Icons.logout, color: theme.colorScheme.secondary),
             title: Text(
-              context.t('logout'),
+              "Logout",
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.secondary,
                 fontWeight: FontWeight.bold,
@@ -428,7 +310,8 @@ class _DashboardPageState extends State<DashboardPage> {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          context.push('/detail/${p.id}');
+          // 👇👇👇 4. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
+          context.go('/detail/${p.id}');
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -483,9 +366,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
+// Delegate tidak diubah, sudah benar
 class _ProductSearchDelegate extends SearchDelegate<String?> {
   final List<Product> products;
-  _ProductSearchDelegate(this.products);
+  _ProductSearchDelegate(this.products); 
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -497,10 +381,8 @@ class _ProductSearchDelegate extends SearchDelegate<String?> {
         iconTheme: IconThemeData(color: theme.primaryColor),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(
-          color: theme.textTheme.bodyMedium?.color,
-          fontSize: 16,
-        ),
+        hintStyle:
+            TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 16),
         border: InputBorder.none,
       ),
       scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
@@ -509,24 +391,24 @@ class _ProductSearchDelegate extends SearchDelegate<String?> {
 
   @override
   List<Widget>? buildActions(BuildContext context) => [
-    IconButton(
-      icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
-      onPressed: () {
-        query = '';
-        showSuggestions(context);
-      },
-    ),
-  ];
+        IconButton(
+          icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
+          onPressed: () { 
+            query = '';
+            showSuggestions(context);
+          },
+        ),
+      ];
 
   @override
   Widget? buildLeading(BuildContext context) => IconButton(
-    icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
-    onPressed: () => close(context, null),
-  );
+        icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
+        onPressed: () => close(context, null), 
+      );
 
   @override
   Widget buildResults(BuildContext context) {
-    close(context, query);
+    close(context, query); 
     return Container();
   }
 
@@ -551,7 +433,7 @@ class _ProductSearchDelegate extends SearchDelegate<String?> {
           ),
           onTap: () {
             query = results[index].title;
-            close(context, query);
+            close(context, query); 
           },
         );
       },
