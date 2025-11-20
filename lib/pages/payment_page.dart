@@ -30,7 +30,13 @@ class _PaymentPageState extends State<PaymentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.t('payment'))),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/cart'),
+        ),
+        title: Text(context.t('payment')),
+      ),
       body: Padding(
         padding: EdgeInsets.all(4.w),
         child: Column(

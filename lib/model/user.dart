@@ -62,4 +62,8 @@ class UserModel {
       createdAt: createdAt ?? _createdAt,
     );
   }
+
+  /// A small polymorphic example method. Subclasses can override this
+  /// to provide specialized descriptions.
+  String describe() => 'User: $_name (${_email})';
 }

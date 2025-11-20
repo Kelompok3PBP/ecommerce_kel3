@@ -59,13 +59,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     }
 
     if (!mounted) return;
-    context.pop();
+    // Show success message first so it appears even after returning to the profile
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(context.t('success')),
         backgroundColor: Colors.green,
       ),
     );
+    // Return to the previous page (profile)
+    context.pop();
   }
 
   @override

@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../model/receipt.dart';
 
 class PurchaseReceiptPage extends StatelessWidget {
   final String orderId;
   final Map<String, dynamic>? receiptData;
 
-  const PurchaseReceiptPage({
-    super.key,
-    required this.orderId,
-    this.receiptData,
-  });
+  PurchaseReceiptPage({super.key, required this.orderId, this.receiptData});
+
+  final currency = NumberFormat.currency(
+    locale: 'id',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -22,129 +27,63 @@ class PurchaseReceiptPage extends StatelessWidget {
     final h = size.height;
     final w = size.width;
 
-    final iconSize = h * 0.18;
-    final fontLarge = h * 0.035;
-    final fontMedium = h * 0.025;
-    final fontSmall = h * 0.02;
-    final cardPadding = h * 0.015;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Receipt Pembelian'),
-        centerTitle: true,
-        elevation: 0,
-      ),
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(title: const Text("Struk Pembelian"), elevation: 0),
       body: Center(
         child: Container(
-          width: w > 500 ? 500 : w,
-          height: h,
-          padding: EdgeInsets.symmetric(
-            horizontal: w * 0.06,
-            vertical: h * 0.02,
-          ),
+          constraints: const BoxConstraints(maxWidth: 500),
+          padding: const EdgeInsets.all(18),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                children: [
-                  Container(
-                    width: iconSize * 1.3,
-                    height: iconSize * 1.3,
-                    decoration: BoxDecoration(
-                      color: Colors.green[100],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: iconSize,
-                    ),
-                  ),
-                  SizedBox(height: h * 0.01),
-                  Text(
-                    'Pembelian Berhasil!',
-                    style: TextStyle(
-                      fontSize: fontLarge,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
-                    ),
-                  ),
-                  Text(
-                    'Order ID: ${receipt.orderId}',
-                    style: TextStyle(
-                      fontSize: fontMedium,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ),
+              _buildSuccessHeader(h),
+
+              const SizedBox(height: 18),
 
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildSectionCard(
-                      title: 'Informasi Pembelian',
-                      fontSize: fontMedium,
-                      fontSmall: fontSmall,
-                      padding: cardPadding,
-                      children: [
-                        _buildInfo('Nama', receipt.customerName, fontSmall),
-                        _buildInfo(
-                          'Status',
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildCard("Informasi Pembelian", [
+                        _info("Nama", receipt.customerName),
+                        _info("Tanggal", receipt.orderDate),
+                        _info("Metode", receipt.paymentMethod),
+                        _info(
+                          "Status",
                           receipt.paymentStatus,
-                          fontSmall,
-                          isSuccess: true,
+                          color: Colors.green,
                         ),
-                        _buildInfo('Metode', receipt.paymentMethod, fontSmall),
-                        _buildInfo('Tanggal', receipt.orderDate, fontSmall),
-                        _buildInfo(
-                          'Total',
-                          'Rp${receipt.totalAmount.toString()}',
-                          fontSmall,
+                        _info(
+                          "Total",
+                          currency.format(receipt.totalAmount),
+                          isBold: true,
                         ),
-                      ],
-                    ),
-                  ],
+                      ]),
+                    ],
+                  ),
                 ),
               ),
+
+              const SizedBox(height: 10),
 
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Download akan diimplementasi'),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.download),
-                      label: Text(
-                        "Download",
-                        style: TextStyle(fontSize: fontSmall),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: fontSmall),
-                      ),
+                      onPressed: () => _downloadPDF(receipt),
+                      icon: const Icon(Icons.picture_as_pdf),
+                      label: const Text("Download PDF"),
                     ),
                   ),
-                  SizedBox(width: w * 0.03),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => context.go('/dashboard'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
-                        padding: EdgeInsets.symmetric(vertical: fontSmall),
+                        foregroundColor: Colors.white,
                       ),
-                      child: Text(
-                        "Selesai",
-                        style: TextStyle(
-                          fontSize: fontSmall,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: const Text("Selesai"),
                     ),
                   ),
                 ],
@@ -156,26 +95,53 @@ class PurchaseReceiptPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionCard({
-    required String title,
-    required List<Widget> children,
-    required double fontSize,
-    required double fontSmall,
-    required double padding,
-  }) {
+  // -----------------------------------------------------
+  // UI COMPONENTS
+  // -----------------------------------------------------
+
+  Widget _buildSuccessHeader(double h) {
+    return Column(
+      children: [
+        Container(
+          width: h * 0.15,
+          height: h * 0.15,
+          decoration: BoxDecoration(
+            color: Colors.green[100],
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.check_circle_rounded,
+            color: Colors.green[700],
+            size: h * 0.12,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          "Pembelian Berhasil!",
+          style: TextStyle(
+            fontSize: h * 0.03,
+            fontWeight: FontWeight.bold,
+            color: Colors.green[700],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCard(String title, List<Widget> children) {
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 3,
       child: Padding(
-        padding: EdgeInsets.all(padding),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 10),
             ...children,
           ],
         ),
@@ -183,37 +149,108 @@ class PurchaseReceiptPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfo(
+  Widget _info(
     String label,
-    String value,
-    double fontSize, {
-    bool isSuccess = false,
+    String value, {
+    bool isBold = false,
+    Color? color,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Text(label, style: const TextStyle(color: Colors.black54)),
           Text(
-            label,
-            style: TextStyle(fontSize: fontSize, color: Colors.grey[700]),
-          ),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.w600,
-                color: isSuccess ? Colors.green : Colors.black,
-              ),
+            value,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+              color: color ?? Colors.black,
             ),
           ),
         ],
       ),
     );
   }
+
+  // -----------------------------------------------------
+  // PDF GENERATOR
+  // -----------------------------------------------------
+
+  Future<void> _downloadPDF(PurchaseReceipt receipt) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        margin: const pw.EdgeInsets.all(24),
+        build: (pw.Context ctx) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Center(
+                child: pw.Text(
+                  "STRUK PEMBELIAN",
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 16),
+              pw.Divider(),
+
+              _pdfRow("Order ID", receipt.orderId),
+              _pdfRow("Nama", receipt.customerName),
+              _pdfRow("Tanggal", receipt.orderDate),
+              _pdfRow("Metode", receipt.paymentMethod),
+              _pdfRow("Status", receipt.paymentStatus),
+              pw.SizedBox(height: 10),
+              _pdfRow(
+                "Total",
+                currency.format(receipt.totalAmount),
+                bold: true,
+              ),
+
+              pw.Divider(),
+              pw.SizedBox(height: 24),
+              pw.Center(
+                child: pw.Text(
+                  "Terima kasih telah melakukan pembelian!",
+                  style: const pw.TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.sharePdf(
+      bytes: await pdf.save(),
+      filename: "Struk_${receipt.orderId}.pdf",
+    );
+  }
+
+  pw.Widget _pdfRow(String label, String value, {bool bold = false}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 4),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(label, style: const pw.TextStyle(fontSize: 12)),
+          pw.Text(
+            value,
+            style: pw.TextStyle(
+              fontSize: 12,
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // MOCK DATA -----------------------------------------
 
   PurchaseReceipt _generateMockReceipt() {
     return PurchaseReceipt(

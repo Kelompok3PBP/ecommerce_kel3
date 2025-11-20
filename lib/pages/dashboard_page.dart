@@ -12,10 +12,12 @@ import '../bloc/cart_cubit.dart';
 import '../bloc/product_cubit.dart';
 import '../model/product.dart';
 import 'theme_provider.dart';
+import '../services/localization_extension.dart';
 
 class DashboardPage extends StatefulWidget {
   final String email;
   const DashboardPage({super.key, required this.email});
+
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
@@ -23,10 +25,13 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   List<Product> products = [];
   List<Product> filteredProducts = [];
-  bool isLoading = true;
+  String _currentQuery = "";
+  String? _categoryFilter;
+  String _sortMode = 'none';
   String userName = "";
   String userEmail = "";
   String? _webBase64;
+  late TextEditingController _searchController;
 
   final NumberFormat currencyFormat = NumberFormat.currency(
     locale: 'id_ID',
@@ -38,6 +43,13 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _loadUserInfo();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   ImageProvider? _buildProfileImage() {
@@ -53,14 +65,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
   String translateCategory(String category) {
     switch (category.toLowerCase()) {
-      case "electronics":
-        return "Elektronik";
-      case "jewelery":
-        return "Perhiasan";
+      case 'electronics':
+        return 'Elektronik';
+      case 'jewelery':
+        return 'Perhiasan';
       case "men's clothing":
-        return "Pakaian Pria";
+        return 'Pakaian Pria';
       case "women's clothing":
-        return "Pakaian Wanita";
+        return 'Pakaian Wanita';
       default:
         return category;
     }
@@ -77,29 +89,55 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _searchProducts(String query) {
     setState(() {
-      final searchQuery = query.toLowerCase();
-      // Selalu filter dari list produk asli
-      filteredProducts = products.where((p) {
-        return p.title.toLowerCase().contains(searchQuery) ||
-            translateCategory(p.category).toLowerCase().contains(searchQuery);
-      }).toList();
+      _currentQuery = query;
+      _applyFilters();
     });
   }
 
-  Future<void> _logout() async {
-    print("--- TOMBOL LOGOUT DITEKAN ---");
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      await prefs.setBool('is_logged_in', false);
-      print("--- SharedPreferences DIBERSIHKAN ---");
-      if (mounted) {
-        context.go('/login');
-        print("--- NAVIGASI KE /login ---");
-      }
-    } catch (e) {
-      print("--- !!! ERROR SAAT LOGOUT: $e ---");
+  void _applyFilters() {
+    final q = _currentQuery.trim().toLowerCase();
+
+    Iterable<Product> result = products;
+
+    // Apply category filter (strict match)
+    if (_categoryFilter != null && _categoryFilter!.isNotEmpty) {
+      result = result.where(
+        (p) => p.category.toLowerCase() == _categoryFilter!.toLowerCase(),
+      );
     }
+
+    // Apply search: if a category is active, search only in title (so empty result may show), otherwise search title + translated category
+    if (q.isNotEmpty) {
+      if (_categoryFilter == null) {
+        result = result.where(
+          (p) =>
+              p.title.toLowerCase().contains(q) ||
+              translateCategory(p.category).toLowerCase().contains(q),
+        );
+      } else {
+        result = result.where((p) => p.title.toLowerCase().contains(q));
+      }
+    }
+
+    // Apply sorting
+    if (_sortMode == 'price_asc') {
+      final list = result.toList();
+      list.sort((a, b) => a.price.compareTo(b.price));
+      result = list;
+    } else if (_sortMode == 'price_desc') {
+      final list = result.toList();
+      list.sort((a, b) => b.price.compareTo(a.price));
+      result = list;
+    }
+
+    filteredProducts = result.toList();
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    await prefs.setBool('is_logged_in', false);
+    if (mounted) context.go('/login');
   }
 
   @override
@@ -109,29 +147,14 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       drawer: _buildDrawer(context),
       appBar: AppBar(
-        title: const Text("Dashboard"),
+        title: Text(context.t('dashboard')),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () async {
-              final String? query = await showSearch<String?>(
-                context: context,
-                delegate: _ProductSearchDelegate(products), 
-              );
-              if (query != null) {
-                _searchProducts(query);
-              }
-            },
-          ),
           Stack(
             alignment: Alignment.center,
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart_outlined),
-                onPressed: () {
-                  // 👇👇👇 1. PERBAIKAN DI SINI 👇👇👇
-                  context.go('/cart');
-                },
+                onPressed: () => context.go('/cart'),
               ),
               BlocBuilder<CartCubit, CartState>(
                 builder: (context, state) {
@@ -140,10 +163,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     right: 8,
                     top: 8,
                     child: Container(
-                      padding: const EdgeInsets.fromLTRB(5, 2, 5, 2), 
+                      padding: const EdgeInsets.fromLTRB(5, 2, 5, 2),
                       decoration: BoxDecoration(
                         color: Colors.red,
-                        borderRadius: BorderRadius.circular(10.0), 
+                        borderRadius: BorderRadius.circular(10.0),
                       ),
                       constraints: const BoxConstraints(
                         minWidth: 16,
@@ -167,42 +190,34 @@ class _DashboardPageState extends State<DashboardPage> {
             icon: Icon(
               themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay,
             ),
-            onPressed: () {
-              themeProvider.toggleTheme(!themeProvider.isDarkMode);
-            },
+            onPressed: () =>
+                themeProvider.toggleTheme(!themeProvider.isDarkMode),
           ),
         ],
       ),
       body: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, state) {
-          if (state.loading) {
+          if (state.loading)
             return Center(
               child: CircularProgressIndicator(
                 color: Theme.of(context).primaryColor,
               ),
             );
-          }
-
-          if (state.error != null) {
+          if (state.error != null)
             return Center(child: Text('Error: ${state.error}'));
-          }
-          
+
           products = state.products;
-          if (filteredProducts.isEmpty) {
-             filteredProducts = products;
-          }
+          _applyFilters();
 
           return RefreshIndicator(
             color: Theme.of(context).primaryColor,
             onRefresh: () async {
-              _searchProducts(""); // Reset filter saat refresh
+              _searchProducts("");
               await context.read<ProductCubit>().fetchProducts();
             },
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 1400,
-                ),
+                constraints: const BoxConstraints(maxWidth: 1400),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     int crossAxisCount;
@@ -214,18 +229,161 @@ class _DashboardPageState extends State<DashboardPage> {
                       crossAxisCount = 3;
                     }
 
-                    return GridView.builder(
-                      padding: EdgeInsets.all(3.w),
-                      itemCount: filteredProducts.length, 
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: 3.w,
-                        mainAxisSpacing: 3.w,
-                        childAspectRatio: 0.6,
-                      ),
-                      itemBuilder: (context, index) {
-                        return _buildProductCard(filteredProducts[index]);
-                      },
+                    final cats = products
+                        .map((p) => p.category)
+                        .toSet()
+                        .toList();
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 3.w,
+                            vertical: 2.w,
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: context.t('search'),
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              suffixIcon: _currentQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(Icons.clear),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        _searchProducts('');
+                                      },
+                                    )
+                                  : null,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              isDense: true,
+                            ),
+                            onChanged: (v) => _searchProducts(v),
+                          ),
+                        ),
+
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 3.w,
+                            vertical: 1.w,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value:
+                                      (_sortMode == 'price_asc' ||
+                                          _sortMode == 'price_desc')
+                                      ? _sortMode
+                                      : 'none',
+                                  decoration: InputDecoration(
+                                    labelText: context.t('urutkan'),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    isDense: true,
+                                  ),
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: 'none',
+                                      child: Text(context.t('default')),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'price_asc',
+                                      child: Text(context.t('Harga Terendah')),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'price_desc',
+                                      child: Text(context.t('Harga Tertinggi')),
+                                    ),
+                                  ],
+                                  onChanged: (val) {
+                                    setState(() {
+                                      if (val == 'none') {
+                                        _sortMode = 'none';
+                                        _categoryFilter = null;
+                                      } else {
+                                        _sortMode = val ?? 'none';
+                                        _categoryFilter = null;
+                                      }
+                                      _applyFilters();
+                                    });
+                                  },
+                                ),
+                              ),
+                              SizedBox(width: 3.w),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _categoryFilter ?? 'all',
+                                  decoration: InputDecoration(
+                                    labelText: context.t('kategori'),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    isDense: true,
+                                  ),
+                                  items:
+                                      [
+                                        DropdownMenuItem(
+                                          value: 'all',
+                                          child: Text(context.t('default')),
+                                        ),
+                                      ] +
+                                      cats
+                                          .map(
+                                            (c) => DropdownMenuItem(
+                                              value: c,
+                                              child: Text(translateCategory(c)),
+                                            ),
+                                          )
+                                          .toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      if (val == null || val == 'all') {
+                                        _categoryFilter = null;
+                                        _sortMode = 'none';
+                                      } else {
+                                        _categoryFilter = val;
+                                        _sortMode = 'category';
+                                      }
+                                      _applyFilters();
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: 1.h),
+
+                        Expanded(
+                          child: filteredProducts.isEmpty
+                              ? Center(child: Text(context.t('no_products')))
+                              : GridView.builder(
+                                  padding: EdgeInsets.all(3.w),
+                                  itemCount: filteredProducts.length,
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: crossAxisCount,
+                                        crossAxisSpacing: 3.w,
+                                        mainAxisSpacing: 3.w,
+                                        childAspectRatio: 0.6,
+                                      ),
+                                  itemBuilder: (context, index) {
+                                    return _buildProductCard(
+                                      filteredProducts[index],
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -251,36 +409,32 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundColor: theme.cardColor,
               backgroundImage: _buildProfileImage(),
               child: _buildProfileImage() == null
-                  ? Icon(Icons.person,
-                      size: 40, 
-                      color: theme.primaryColor)
+                  ? Icon(Icons.person, size: 40, color: theme.primaryColor)
                   : null,
             ),
             decoration: BoxDecoration(color: theme.primaryColor),
           ),
           ListTile(
             leading: Icon(Icons.home, color: theme.primaryColor),
-            title: Text("Home", style: theme.textTheme.bodyLarge),
+            title: Text(context.t('home'), style: theme.textTheme.bodyLarge),
             onTap: () => Navigator.pop(context),
           ),
           ListTile(
             leading: Icon(Icons.person, color: theme.primaryColor),
-            title: Text("Profile", style: theme.textTheme.bodyLarge),
-            onTap: () { // <-- Hapus async
+            title: Text(context.t('profile'), style: theme.textTheme.bodyLarge),
+            onTap: () {
               Navigator.pop(context);
-              // 👇👇👇 2. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
               context.go('/profile');
-              // Kita tidak bisa 'await' context.go()
-              // Jadi, _loadUserInfo() tidak akan jalan otomatis saat kembali
-              // User harus refresh manual
             },
           ),
           ListTile(
             leading: Icon(Icons.settings, color: theme.primaryColor),
-            title: Text("Settings", style: theme.textTheme.bodyLarge),
+            title: Text(
+              context.t('settings'),
+              style: theme.textTheme.bodyLarge,
+            ),
             onTap: () {
               Navigator.pop(context);
-              // 👇👇👇 3. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
               context.go('/settings');
             },
           ),
@@ -288,7 +442,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ListTile(
             leading: Icon(Icons.logout, color: theme.colorScheme.secondary),
             title: Text(
-              "Logout",
+              context.t('logout'),
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.secondary,
                 fontWeight: FontWeight.bold,
@@ -309,10 +463,7 @@ class _DashboardPageState extends State<DashboardPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {
-          // 👇👇👇 4. PERBAIKAN DI SINI (ganti ke go) 👇👇👇
-          context.go('/detail/${p.id}');
-        },
+        onTap: () => context.go('/detail/${p.id}'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -362,81 +513,6 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-// Delegate tidak diubah, sudah benar
-class _ProductSearchDelegate extends SearchDelegate<String?> {
-  final List<Product> products;
-  _ProductSearchDelegate(this.products); 
-
-  @override
-  ThemeData appBarTheme(BuildContext context) {
-    final theme = Theme.of(context);
-    return theme.copyWith(
-      appBarTheme: theme.appBarTheme.copyWith(
-        backgroundColor: theme.cardColor,
-        foregroundColor: theme.textTheme.bodyLarge?.color,
-        iconTheme: IconThemeData(color: theme.primaryColor),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        hintStyle:
-            TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 16),
-        border: InputBorder.none,
-      ),
-      scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
-    );
-  }
-
-  @override
-  List<Widget>? buildActions(BuildContext context) => [
-        IconButton(
-          icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
-          onPressed: () { 
-            query = '';
-            showSuggestions(context);
-          },
-        ),
-      ];
-
-  @override
-  Widget? buildLeading(BuildContext context) => IconButton(
-        icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
-        onPressed: () => close(context, null), 
-      );
-
-  @override
-  Widget buildResults(BuildContext context) {
-    close(context, query); 
-    return Container();
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    final results = products.where((p) {
-      final q = query.toLowerCase();
-      return p.title.toLowerCase().contains(q) ||
-          p.category.toLowerCase().contains(q);
-    }).toList();
-
-    return ListView.builder(
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          title: Text(
-            results[index].title,
-            style: TextStyle(
-              color: Theme.of(context).textTheme.bodyLarge?.color,
-              fontSize: 15,
-            ),
-          ),
-          onTap: () {
-            query = results[index].title;
-            close(context, query); 
-          },
-        );
-      },
     );
   }
 }

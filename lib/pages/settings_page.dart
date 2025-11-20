@@ -161,6 +161,16 @@ class _SettingsPageState extends State<SettingsPage> {
                       );
                     },
                   ),
+                  _buildListTile(
+                    icon: Icons.group,
+                    title: 'About Us',
+                    subtitle: 'Team member names',
+                    theme: theme,
+                    onTap: () {
+                      // Navigate to About page via GoRouter
+                      context.go('/about');
+                    },
+                  ),
                 ],
               ),
             ],

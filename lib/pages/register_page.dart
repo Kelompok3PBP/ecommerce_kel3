@@ -68,7 +68,8 @@ class _RegisterPageState extends State<RegisterPage> {
         );
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
-          context.pop();
+          // Ensure we navigate to the login route explicitly so the route is correct
+          context.go('/login');
         }
       }
     }
@@ -234,7 +235,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       SizedBox(height: 2.5.h),
                       GestureDetector(
-                        onTap: () => context.pop(),
+                        onTap: () => context.go('/login'),
                         child: Text.rich(
                           TextSpan(
                             text: "Sudah punya akun? ",

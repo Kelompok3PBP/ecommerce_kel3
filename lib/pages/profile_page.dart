@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -43,6 +44,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _pickImage(ImageSource source) async {
     if (mounted) Navigator.pop(context);
+
+    // On web we don't need permission checks
+    if (!kIsWeb) {
+      final granted = await _ensurePermissionForSource(source);
+      if (!granted) return;
+    }
+
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? pickedFile = await picker.pickImage(
@@ -93,6 +101,72 @@ class _ProfilePageState extends State<ProfilePage> {
         );
       }
     }
+  }
+
+  Future<bool> _ensurePermissionForSource(ImageSource source) async {
+    PermissionStatus status;
+
+    if (source == ImageSource.camera) {
+      status = await Permission.camera.status;
+      if (!status.isGranted) {
+        status = await Permission.camera.request();
+      }
+    } else {
+      // Gallery: on Android request storage (or photos on iOS 14+)
+      if (Platform.isAndroid) {
+        status = await Permission.storage.status;
+        if (!status.isGranted) {
+          status = await Permission.storage.request();
+        }
+      } else if (Platform.isIOS) {
+        status = await Permission.photos.status;
+        if (!status.isGranted) {
+          status = await Permission.photos.request();
+        }
+      } else {
+        // Fallback: ask for storage
+        status = await Permission.storage.status;
+        if (!status.isGranted) {
+          status = await Permission.storage.request();
+        }
+      }
+    }
+
+    if (status.isGranted) return true;
+
+    if (status.isPermanentlyDenied) {
+      if (mounted) {
+        final open = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(context.t('permission_denied')),
+            content: Text(context.t('permission_denied_explain')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(context.t('cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(context.t('open_settings')),
+              ),
+            ],
+          ),
+        );
+
+        if (open == true) await openAppSettings();
+      }
+      return false;
+    }
+
+    // Denied (not permanent)
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.t('permission_required'))));
+    }
+
+    return false;
   }
 
   void _showImageSourceActionSheet() {

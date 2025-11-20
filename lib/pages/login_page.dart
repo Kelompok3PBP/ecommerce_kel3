@@ -195,7 +195,8 @@ class _LoginPageState extends State<LoginPage> {
                       SizedBox(height: 2.5.h),
                       GestureDetector(
                         onTap: () {
-                          context.push('/register');
+                          // Use go to change the URL to /register (consistent router navigation)
+                          context.go('/register');
                         },
                         child: Text.rich(
                           TextSpan(

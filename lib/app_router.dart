@@ -17,9 +17,12 @@ import 'pages/profile_page.dart';
 import 'pages/edit_profile_page.dart';
 import 'pages/change_password_page.dart';
 import 'pages/settings_page.dart';
+import 'pages/about_page.dart';
 import 'pages/device_info_page.dart';
 import 'pages/feedback_page.dart';
 import 'pages/address_list_page.dart';
+import 'pages/map_page.dart';
+import 'pages/shared_preferences_page.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -51,14 +54,8 @@ class AppRouter {
       return null;
     },
     routes: <RouteBase>[
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashPage(),
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginPage(),
-      ),
+      GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
@@ -88,10 +85,7 @@ class AppRouter {
           return DetailPage(productId: productId);
         },
       ),
-      GoRoute(
-        path: '/cart',
-        builder: (context, state) => const CartPage(),
-      ),
+      GoRoute(path: '/cart', builder: (context, state) => const CartPage()),
       GoRoute(
         path: '/payment',
         builder: (context, state) {
@@ -113,7 +107,8 @@ class AppRouter {
       GoRoute(
         path: '/edit-profile',
         builder: (context, state) {
-          final data = state.extra as Map<String, String>? ?? {'name': '', 'email': ''};
+          final data =
+              state.extra as Map<String, String>? ?? {'name': '', 'email': ''};
           return EditProfilePage(name: data['name']!, email: data['email']!);
         },
       ),
@@ -125,6 +120,7 @@ class AppRouter {
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
       ),
+      GoRoute(path: '/about', builder: (context, state) => const AboutPage()),
       GoRoute(
         path: '/device-info',
         builder: (context, state) => const DeviceInfoPage(),
@@ -132,6 +128,11 @@ class AppRouter {
       GoRoute(
         path: '/feedback',
         builder: (context, state) => const FeedbackPage(),
+      ),
+      GoRoute(path: '/map', builder: (context, state) => const MapPickerPage()),
+      GoRoute(
+        path: '/shared-preferences',
+        builder: (context, state) => const SharedPreferencesPage(),
       ),
     ],
   );

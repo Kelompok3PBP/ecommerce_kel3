@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sizer/sizer.dart';
+import 'package:go_router/go_router.dart';
 import '../bloc/address_cubit.dart';
 import '../model/address.dart';
 
@@ -93,6 +94,8 @@ class _AddressFormPageState extends State<AddressFormPage> {
               child: ListView(
                 children: [
                   SizedBox(height: spacingSmall),
+
+                  // LABEL
                   TextFormField(
                     controller: labelController,
                     decoration: InputDecoration(
@@ -106,7 +109,10 @@ class _AddressFormPageState extends State<AddressFormPage> {
                         v == null || v.isEmpty ? 'Wajib diisi' : null,
                     style: TextStyle(fontSize: fieldFontSize),
                   ),
+
                   SizedBox(height: spacingSmall),
+
+                  // STREET
                   TextFormField(
                     controller: streetController,
                     decoration: InputDecoration(
@@ -120,7 +126,10 @@ class _AddressFormPageState extends State<AddressFormPage> {
                         v == null || v.isEmpty ? 'Wajib diisi' : null,
                     style: TextStyle(fontSize: fieldFontSize),
                   ),
+
                   SizedBox(height: spacingSmall),
+
+                  // CITY
                   TextFormField(
                     controller: cityController,
                     decoration: InputDecoration(
@@ -134,7 +143,10 @@ class _AddressFormPageState extends State<AddressFormPage> {
                         v == null || v.isEmpty ? 'Wajib diisi' : null,
                     style: TextStyle(fontSize: fieldFontSize),
                   ),
+
                   SizedBox(height: spacingSmall),
+
+                  // POSTAL CODE
                   TextFormField(
                     controller: postalController,
                     decoration: InputDecoration(
@@ -148,7 +160,10 @@ class _AddressFormPageState extends State<AddressFormPage> {
                         v == null || v.isEmpty ? 'Wajib diisi' : null,
                     style: TextStyle(fontSize: fieldFontSize),
                   ),
+
                   SizedBox(height: spacingSmall),
+
+                  // PHONE
                   TextFormField(
                     controller: phoneController,
                     decoration: InputDecoration(
@@ -162,7 +177,35 @@ class _AddressFormPageState extends State<AddressFormPage> {
                         v == null || v.isEmpty ? 'Wajib diisi' : null,
                     style: TextStyle(fontSize: fieldFontSize),
                   ),
+
                   SizedBox(height: spacingLarge),
+
+                  // ➕ GOOGLE MAP PICKER BUTTON
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final result =
+                          await context.push('/map') as Map<String, dynamic>?;
+
+                      if (result != null) {
+                        setState(() {
+                          streetController.text = result['street'] ?? '';
+                          cityController.text = result['city'] ?? '';
+                          postalController.text = result['postal'] ?? '';
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.location_on),
+                    label: const Text("Pilih Lokasi di Maps"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueGrey,
+                      foregroundColor: Colors.white,
+                      minimumSize: Size(double.infinity, buttonHeight),
+                    ),
+                  ),
+
+                  SizedBox(height: spacingLarge),
+
+                  // SUBMIT BUTTON
                   SizedBox(
                     width: double.infinity,
                     height: buttonHeight,

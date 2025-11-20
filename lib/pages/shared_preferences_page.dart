@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
+import 'package:go_router/go_router.dart';
 import 'theme_page.dart';
 import '../services/localization_extension.dart';
 

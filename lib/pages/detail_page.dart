@@ -71,6 +71,10 @@ class _DetailPageState extends State<DetailPage> {
 
         return Scaffold(
           appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/dashboard'),
+            ),
             title: Text(product?.title ?? "Memuat..."),
             actions: [
               Stack(
@@ -79,7 +83,8 @@ class _DetailPageState extends State<DetailPage> {
                   IconButton(
                     icon: const Icon(Icons.shopping_cart_outlined, size: 28),
                     onPressed: () {
-                      context.push('/cart');
+                      // Use go to keep navigation consistent with Dashboard
+                      context.go('/cart');
                     },
                   ),
                   BlocBuilder<CartCubit, CartState>(

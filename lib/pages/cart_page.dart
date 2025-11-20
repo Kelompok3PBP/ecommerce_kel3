@@ -24,7 +24,13 @@ class CartPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.t('cart'))),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
+        title: Text(context.t('cart')),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -137,7 +143,9 @@ class CartPage extends StatelessWidget {
                     ElevatedButton(
                       style: theme.elevatedButtonTheme.style,
                       onPressed: () {
-                        context.push('/payment', extra: state.total);
+                        // Use go so the Payment page is navigated via GoRouter
+                        // and the route handling/extra data is consistent.
+                        context.go('/payment', extra: state.total);
                       },
                       child: Text(
                         context.t('checkout'),
