@@ -146,7 +146,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const _ModernLoadingIndicator(),
+                      const _BouncingCubeIndicator(),
                       SizedBox(height: 2.h),
                       Text(
                         "created by Kelompok 3",
@@ -167,38 +167,32 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 }
 
-class _ModernLoadingIndicator extends StatefulWidget {
-  const _ModernLoadingIndicator();
+class _BouncingCubeIndicator extends StatefulWidget {
+  const _BouncingCubeIndicator();
+
   @override
-  State<_ModernLoadingIndicator> createState() =>
-      _ModernLoadingIndicatorState();
+  State<_BouncingCubeIndicator> createState() => _BouncingCubeIndicatorState();
 }
 
-class _ModernLoadingIndicatorState extends State<_ModernLoadingIndicator>
+class _BouncingCubeIndicatorState extends State<_BouncingCubeIndicator>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late List<Animation<double>> _animations;
+  late Animation<double> _bounceAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 700),
     )..repeat(reverse: true);
-    _animations = List.generate(3, (index) {
-      final intervalStart = index * 0.2;
-      return Tween<double>(begin: 0.4, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _controller,
-          curve: Interval(
-            intervalStart,
-            intervalStart + 0.4,
-            curve: Curves.easeInOutCubic,
-          ),
-        ),
-      );
-    });
+
+    _bounceAnimation = Tween<double>(begin: -10, end: 10).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOutSine,
+      ),
+    );
   }
 
   @override
@@ -209,20 +203,39 @@ class _ModernLoadingIndicatorState extends State<_ModernLoadingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (index) {
-        return ScaleTransition(
-          scale: _animations[index],
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 1.w),
-            child: CircleAvatar(
-              radius: 1.5.w,
-              backgroundColor: AppTheme.primaryColor.withOpacity(0.8),
+    final cubeSize = 2.0.w;
+
+    return SizedBox(
+      width: 15.w,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(_bounceAnimation.value, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                CircleAvatar(
+                  radius: cubeSize / 2,
+                  backgroundColor: AppTheme.primaryColor.withOpacity(0.8),
+                ),
+                Container(
+                  width: cubeSize,
+                  height: cubeSize,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                CircleAvatar(
+                  radius: cubeSize / 2,
+                  backgroundColor: AppTheme.primaryColor.withOpacity(0.8),
+                ),
+              ],
             ),
-          ),
-        );
-      }),
+          );
+        },
+      ),
     );
   }
 }

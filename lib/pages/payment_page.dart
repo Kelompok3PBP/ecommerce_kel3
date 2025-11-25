@@ -1,3 +1,4 @@
+import 'dart:convert'; // Tambahkan ini
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -118,6 +119,7 @@ class _PaymentPageState extends State<PaymentPage> {
                           subtotal += sub;
                         }
                       } catch (_) {
+                        // Logika fallback Anda tidak diubah
                         items = [];
                         subtotal = widget.total;
                       }
@@ -127,6 +129,8 @@ class _PaymentPageState extends State<PaymentPage> {
                       final orderDate = DateFormat(
                         'yyyy-MM-dd HH:mm:ss',
                       ).format(DateTime.now());
+                      
+                      // 1. **MEMBUAT receiptMap**
                       final receiptMap = {
                         'order_id': orderId,
                         'order_date': orderDate,
@@ -147,6 +151,13 @@ class _PaymentPageState extends State<PaymentPage> {
                         'installment_amount': 0,
                       };
 
+                      // 2. **LOGIKA PENYIMPANAN RIWAYAT PESANAN**
+                      final receiptJson = jsonEncode(receiptMap);
+                      final historyList = prefs.getStringList('purchase_history') ?? [];
+                      historyList.insert(0, receiptJson); // Tambahkan yang terbaru di depan
+                      await prefs.setStringList('purchase_history', historyList);
+                      
+                      // 3. **AKSI AKHIR**
                       context.read<CartCubit>().clear();
 
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -159,7 +170,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       if (mounted) {
                         context.go(
                           '/purchase-receipt/$orderId',
-                          extra: receiptMap,
+                          extra: receiptMap, // Navigasi ke detail nota
                         );
                       }
                     },

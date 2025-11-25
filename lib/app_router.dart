@@ -23,6 +23,8 @@ import 'pages/feedback_page.dart';
 import 'pages/address_list_page.dart';
 import 'pages/map_page.dart';
 import 'pages/shared_preferences_page.dart';
+import 'pages/order_history_page.dart';
+
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -93,6 +95,12 @@ class AppRouter {
           return PaymentPage(total: total);
         },
       ),
+    
+      GoRoute(
+        path: '/order-history',
+        builder: (context, state) => const OrderHistoryPage(), 
+      ),
+      
       GoRoute(
         path: '/purchase-receipt/:orderId',
         builder: (context, state) {

@@ -14,6 +14,12 @@ import '../model/product.dart';
 import 'theme_provider.dart';
 import '../services/localization_extension.dart';
 
+// Pastikan Anda memiliki OrderHistoryPage di path ini
+// Jika OrderHistoryPage berada di folder pages, pathnya mungkin perlu disesuaikan:
+// import 'order_history_page.dart'; 
+// Namun, karena ini hanya button navigasi, kita hanya perlu GoRouter.
+// import 'order_history_page.dart'; // (Hanya sebagai catatan, tidak perlu import widget jika menggunakan GoRouter)
+
 class DashboardPage extends StatefulWidget {
   final String email;
   const DashboardPage({super.key, required this.email});
@@ -149,6 +155,18 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         title: Text(context.t('dashboard')),
         actions: [
+          // =======================================================
+          // 1. TOMBOL RIWAYAT PESANAN (BARU DITAMBAH)
+          // =======================================================
+          IconButton(
+            icon: const Icon(Icons.history), // Icon riwayat
+            tooltip: 'Riwayat Pesanan',
+            onPressed: () {
+              context.go('/order-history'); // Navigasi ke halaman riwayat pesanan
+            },
+          ),
+          
+          // 2. TOMBOL KERANJANG (Logika lama tidak diubah)
           Stack(
             alignment: Alignment.center,
             children: [
@@ -186,6 +204,8 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ],
           ),
+          
+          // 3. TOMBOL MODE GELAP/TERANG (Logika lama tidak diubah)
           IconButton(
             icon: Icon(
               themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay,
@@ -267,7 +287,6 @@ class _DashboardPageState extends State<DashboardPage> {
                             onChanged: (v) => _searchProducts(v),
                           ),
                         ),
-
                         Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: 3.w,
@@ -279,9 +298,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                 child: DropdownButtonFormField<String>(
                                   value:
                                       (_sortMode == 'price_asc' ||
-                                          _sortMode == 'price_desc')
-                                      ? _sortMode
-                                      : 'none',
+                                              _sortMode == 'price_desc')
+                                          ? _sortMode
+                                          : 'none',
                                   decoration: InputDecoration(
                                     labelText: context.t('urutkan'),
                                     border: OutlineInputBorder(
@@ -360,9 +379,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ],
                           ),
                         ),
-
                         SizedBox(height: 1.h),
-
                         Expanded(
                           child: filteredProducts.isEmpty
                               ? Center(child: Text(context.t('no_products')))
@@ -371,11 +388,11 @@ class _DashboardPageState extends State<DashboardPage> {
                                   itemCount: filteredProducts.length,
                                   gridDelegate:
                                       SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: crossAxisCount,
-                                        crossAxisSpacing: 3.w,
-                                        mainAxisSpacing: 3.w,
-                                        childAspectRatio: 0.6,
-                                      ),
+                                    crossAxisCount: crossAxisCount,
+                                    crossAxisSpacing: 3.w,
+                                    mainAxisSpacing: 3.w,
+                                    childAspectRatio: 0.6,
+                                  ),
                                   itemBuilder: (context, index) {
                                     return _buildProductCard(
                                       filteredProducts[index],
@@ -438,7 +455,20 @@ class _DashboardPageState extends State<DashboardPage> {
               context.go('/settings');
             },
           ),
+          
+          // =======================================================
+          // TAMBAHAN: Riwayat Pesanan di Drawer
+          // =======================================================
+          ListTile(
+            leading: Icon(Icons.history, color: theme.primaryColor),
+            title: Text('Riwayat Pesanan', style: theme.textTheme.bodyLarge),
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/order-history'); 
+            },
+          ),
           const Divider(),
+          
           ListTile(
             leading: Icon(Icons.logout, color: theme.colorScheme.secondary),
             title: Text(
