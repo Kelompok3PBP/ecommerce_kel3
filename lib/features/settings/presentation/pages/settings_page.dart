@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
-import 'package:go_router/go_router.dart';
+import 'package:go_router/go_router.dart'; // Wajib import ini
+
+// Pastikan path import ini sesuai dengan struktur folder kamu
 import 'package:ecommerce/features/settings/presentation/cubits/language_cubit.dart';
 import 'package:ecommerce/features/settings/data/localization_service.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
@@ -22,6 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _loadUserPrefs();
   }
 
+  // Load preferensi notifikasi dari SharedPreferences
   Future<void> _loadUserPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final savedNotif = prefs.getBool('notif');
@@ -32,6 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  // Simpan preferensi notifikasi
   Future<void> _savePrefs(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notif', value);
@@ -53,17 +58,19 @@ class _SettingsPageState extends State<SettingsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // Navigasi kembali ke dashboard pakai GoRouter
+            // PENTING: Kembali ke dashboard menggunakan GoRouter
             context.go('/dashboard');
           },
         ),
       ),
       body: Center(
+        // ConstrainedBox agar tampilan tidak terlalu lebar di Desktop/Web
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 700),
           child: ListView(
             padding: EdgeInsets.all(4.w),
             children: [
+              // --- SECTION NOTIFICATIONS ---
               _buildSection(
                 icon: Icons.notifications,
                 title: context.t('notifications'),
@@ -96,38 +103,49 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
+              
               SizedBox(height: 2.h),
+
+              // --- SECTION APP INFO ---
               _buildSection(
                 icon: Icons.info_outline,
                 title: context.t('app_info'),
                 theme: theme,
                 children: [
+                  // Menu Device Info
                   _buildListTile(
                     icon: Icons.devices,
                     title: context.t('device_info'),
                     subtitle: context.t('view_device_info'),
                     theme: theme,
                     onTap: () {
-                      context.push('/device-info');
+                      // Gunakan context.go agar URL browser berubah jadi /device-info
+                      context.go('/device-info');
                     },
                   ),
+                  // Menu Feedback
                   _buildListTile(
                     icon: Icons.feedback,
                     title: context.t('feedback'),
                     subtitle: context.t('send_feedback'),
                     theme: theme,
                     onTap: () {
-                      context.push('/feedback');
+                      // Gunakan context.go agar URL browser berubah jadi /feedback
+                      context.go('/feedback');
                     },
                   ),
                 ],
               ),
+
               SizedBox(height: 2.h),
+
+              // --- SECTION SETTINGS ---
               _buildSection(
                 icon: Icons.settings,
                 title: context.t('settings'),
                 theme: theme,
                 children: [
+                  // Menu Bahasa
                   _buildListTile(
                     icon: Icons.language,
                     title: context.t('language'),
@@ -137,6 +155,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       _showLanguageDialog(context, primary, secondary);
                     },
                   ),
+                  // Menu About App (Pop-up Dialog Bawaan)
                   _buildListTile(
                     icon: Icons.info,
                     title: context.t('about_app'),
@@ -161,13 +180,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       );
                     },
                   ),
+                  // Menu About Us (Halaman Tim)
                   _buildListTile(
                     icon: Icons.group,
                     title: 'About Us',
                     subtitle: 'Team member names',
                     theme: theme,
                     onTap: () {
-                      // Navigate to About page via GoRouter
+                      // Navigasi ke halaman Tim
                       context.go('/about');
                     },
                   ),
@@ -180,6 +200,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // --- WIDGET HELPERS ---
+
   Widget _buildSection({
     required String title,
     required IconData icon,
@@ -188,10 +210,11 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     final primary = theme.colorScheme.primary;
     final background = theme.colorScheme.surface;
+    
     return Card(
       color: background,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 3,
+      elevation: 2, // Sedikit shadow agar rapi
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -253,6 +276,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // Dialog Ganti Bahasa
   void _showLanguageDialog(
     BuildContext context,
     Color primary,

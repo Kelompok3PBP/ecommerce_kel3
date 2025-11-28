@@ -52,6 +52,8 @@ dependencies:
   google_maps_flutter: ^2.6.1
   geocoding: ^2.1.0
   location: ^5.0.0
+  url_launcher: ^6.3.2
+  font_awesome_flutter: ^10.7.0
 
 
 
@@ -98,6 +100,7 @@ flutter:
   assets:
     - assets/images/banner.png
     - assets/images/logo.png
+    - assets/images/team/rahma.jpeg
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

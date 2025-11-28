@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // 1. Import GoRouter
 import 'package:sizer/sizer.dart';
 import 'package:ecommerce/app/theme/app_theme.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
@@ -18,7 +19,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
     if (_rating == 0 || _commentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.t('send_feedback')),
+          content: Text(context.t('send_feedback')), // Pastikan key t('error_empty') atau semacamnya jika ada
           backgroundColor: AppTheme.primaryColor,
         ),
       );
@@ -26,7 +27,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(context.t('success') + ' ❤️'),
+        content: Text('${context.t('success')} ❤️'),
         backgroundColor: Colors.green,
       ),
     );
@@ -41,65 +42,91 @@ class _FeedbackPageState extends State<FeedbackPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.t('feedback'))),
-      body: Padding(
-        padding: EdgeInsets.all(5.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              context.t('send_feedback'),
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimaryColor,
-                fontSize: 16,
+      appBar: AppBar(
+        title: Text(context.t('feedback')),
+        // 2. Integrasi GoRouter pada tombol Back
+        leading: IconButton(
+          // Menggunakan warna primary agar seragam dengan halaman lain
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary),
+          onPressed: () {
+            // Logika: Cek history, jika tidak ada paksa ke Settings
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/settings');
+            }
+          },
+        ),
+      ),
+      body: SingleChildScrollView( // Tambahkan Scroll agar aman di layar kecil
+        child: Padding(
+          padding: EdgeInsets.all(5.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.t('send_feedback'),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimaryColor,
+                  fontSize: 16,
+                ),
               ),
-            ),
-            SizedBox(height: 2.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                return IconButton(
-                  icon: Icon(
-                    index < _rating ? Icons.star : Icons.star_border,
-                    color: AppTheme.secondaryColor,
-                    size: 40,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _rating = index + 1.0;
-                    });
-                  },
-                );
-              }),
-            ),
-            SizedBox(height: 2.h),
-            TextField(
-              controller: _commentController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: context.t('send_feedback'),
+              SizedBox(height: 2.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < _rating ? Icons.star : Icons.star_border,
+                      color: AppTheme.secondaryColor,
+                      size: 40,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _rating = index + 1.0;
+                      });
+                    },
+                  );
+                }),
               ),
-              style: TextStyle(fontSize: 15),
-            ),
-            SizedBox(height: 3.h),
-            Center(
-              child: ElevatedButton(
-                onPressed: _submitFeedback,
-                style: theme.elevatedButtonTheme.style,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 5.w,
-                    vertical: 1.2.h,
+              SizedBox(height: 2.h),
+              TextField(
+                controller: _commentController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: context.t('send_feedback'), // Atau gunakan key 'comment'
+                  alignLabelWithHint: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    context.t('send_feedback'),
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                style: const TextStyle(fontSize: 15),
+              ),
+              SizedBox(height: 3.h),
+              Center(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submitFeedback,
+                    style: theme.elevatedButtonTheme.style,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 1.5.h,
+                      ),
+                      child: Text(
+                        context.t('send_feedback'), // Key untuk tombol Submit
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 16
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

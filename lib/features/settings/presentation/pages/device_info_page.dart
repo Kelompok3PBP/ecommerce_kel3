@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-// sizer not used here
+import 'package:go_router/go_router.dart'; // Import GoRouter
 
 class DeviceInfoPage extends StatefulWidget {
   const DeviceInfoPage({super.key});
@@ -13,6 +13,7 @@ class DeviceInfoPage extends StatefulWidget {
 
 class _DeviceInfoPageState extends State<DeviceInfoPage> {
   Map<String, dynamic> _deviceData = {};
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -23,7 +24,8 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
   Future<void> _initDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
     Map<String, dynamic> deviceData = {};
-    {
+
+    try {
       if (kIsWeb) {
         final info = await deviceInfo.webBrowserInfo;
         deviceData = {
@@ -40,7 +42,6 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
           "Number of Cores": info.numberOfCores,
           "System Memory (MB)": info.systemMemoryInMegabytes,
           "OS Version": "${info.majorVersion}.${info.minorVersion}",
-          "Build Number": info.buildNumber,
         };
       } else if (Platform.isAndroid) {
         final info = await deviceInfo.androidInfo;
@@ -49,6 +50,8 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
           "Brand": info.brand,
           "Model": info.model,
           "Android Version": info.version.release,
+          "SDK Int": info.version.sdkInt,
+          "Device": info.device,
         };
       } else if (Platform.isIOS) {
         final info = await deviceInfo.iosInfo;
@@ -61,29 +64,84 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
       } else {
         deviceData = {"OS": "Unknown"};
       }
+    } catch (e) {
+      deviceData = {"Error": "Failed to get device info"};
     }
-    if (mounted) setState(() => _deviceData = deviceData);
+
+    if (mounted) {
+      setState(() {
+        _deviceData = deviceData;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Device Info")),
-      body: _deviceData.isEmpty
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: theme.colorScheme.surface,
+        centerTitle: true, // Judul di tengah seperti About
+        
+        // JUDUL: Menggunakan gaya yang sama dengan About (Primary Color & Bold)
+        title: Text(
+          "Device Info",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary, 
+          ),
+        ),
+        
+        // NAVIGASI: Disamakan persis dengan kode About
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary), // Icon warna Primary
+          onPressed: () {
+            // Logika GoRouter yang sama persis
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go('/settings');
+            }
+          },
+        ),
+      ),
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
+              padding: const EdgeInsets.all(16),
               children: _deviceData.entries.map((e) {
-                return ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: Text(
-                    e.key,
-
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  subtitle: Text(
-                    e.value.toString(),
-
-                    style: TextStyle(fontSize: 14),
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.info_outline,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    title: Text(
+                      e.key,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      e.value.toString(),
+                      style: const TextStyle(fontSize: 14),
+                    ),
                   ),
                 );
               }).toList(),
