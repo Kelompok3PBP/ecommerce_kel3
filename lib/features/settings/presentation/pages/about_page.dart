@@ -48,11 +48,11 @@ class AboutPage extends StatelessWidget {
         githubAccount: "PrimaRahma",
         imageAsset: "assets/images/team/rahma.jpeg"),
     TeamMember(
-        name: "Tia",
-        nim: "22051204xxx",
-        studentClass: "S1 Informatika 2023 B",
-        githubAccount: "tia_code",
-        imageAsset: "assets/images/team/tia.png"),
+        name: "Tia Fitrianingsih",
+        nim: "24111814082",
+        studentClass: "S1 Informatika 2024 C",
+        githubAccount: "TiaaaFitria",
+        imageAsset: "assets/images/team/tia.jpeg"),
     TeamMember(
         name: "Rayhan Wahyu",
         nim: "22051204xxx",
