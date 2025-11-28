@@ -3,20 +3,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
-import 'bloc/cart_cubit.dart';
-import 'bloc/product_cubit.dart';
-import 'bloc/language_cubit.dart';
-import 'bloc/auth_cubit.dart';
-import 'bloc/profile_cubit.dart';
-import 'bloc/notification_cubit.dart';
-import 'bloc/order_cubit.dart';
-import 'services/api_service.dart';
-import 'services/notification_service.dart';
+import 'package:ecommerce/features/cart/presentation/cubits/cart_cubit.dart';
+import 'package:ecommerce/features/product/presentation/cubits/product_cubit.dart';
+import 'features/settings/presentation/cubits/language_cubit.dart';
+import 'package:ecommerce/features/auth/presentation/cubits/auth_cubit.dart';
+import 'features/profile/presentation/cubits/profile_cubit.dart';
+import 'features/settings/presentation/cubits/notification_cubit.dart';
+import 'package:ecommerce/features/order/presentation/cubits/order_cubit.dart';
+import 'package:ecommerce/core/network/api_service.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 
-import 'pages/theme_page.dart';
-import 'pages/theme_provider.dart';
+import 'app/theme/app_theme.dart';
+import 'app/theme/theme_provider.dart';
 
-import 'app_router.dart';
+import 'app/router/app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

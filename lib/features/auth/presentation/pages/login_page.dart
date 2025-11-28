@@ -1,0 +1,231 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sizer/sizer.dart';
+import 'package:go_router/go_router.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final prefs = await SharedPreferences.getInstance();
+
+    if (email == 'admin' && password == 'admin') {
+      const adminEmail = 'admin@mail.com';
+      await prefs.setString('current_user', adminEmail);
+      await prefs.setString('user_name', 'Admin');
+      await prefs.setString('user_email', adminEmail);
+      await prefs.setBool('is_logged_in', true);
+      if (!mounted) return;
+      context.go('/dashboard', extra: adminEmail);
+      return;
+    }
+
+    if (_formKey.currentState!.validate()) {
+      final registeredUsers = prefs.getStringList('registered_users') ?? [];
+      bool isAuthenticated = false;
+      for (var user in registeredUsers) {
+        final parts = user.split(':');
+        if (parts.length == 2 && parts[0] == email && parts[1] == password) {
+          isAuthenticated = true;
+          break;
+        }
+      }
+
+      if (isAuthenticated) {
+        await prefs.setString('current_user', email);
+        await prefs.setString('user_name', email.split('@')[0]);
+        await prefs.setString('user_email', email);
+        await prefs.setBool('is_logged_in', true);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login berhasil'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.go('/dashboard', extra: email);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login gagal'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+          child: SizedBox(
+            width: 450,
+            child: Card(
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        "assets/images/logo.png", // kalau ada logo khusus login
+                        height: 15.w,
+                        width: 15.w,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.login, // << ICON LOGIN
+                          size: 12.w, // RESPONSIVE
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+
+                      SizedBox(height: 2.h),
+                      Text(
+                        'Welcome',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                          fontSize: 22,
+                        ),
+                      ),
+                      SizedBox(height: 3.h),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          prefixIcon: Icon(
+                            Icons.person,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Email tidak boleh kosong';
+                          }
+                          if (value != 'admin' &&
+                              !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                            return 'Masukkan email yang valid';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 2.h),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: Icon(
+                            Icons.lock,
+                            color: theme.colorScheme.primary,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: theme.colorScheme.primary,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password tidak boleh kosong';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 4.h),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _login,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 2.h),
+                          ),
+                          child: Text(
+                            'Login',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 2.5.h),
+                      GestureDetector(
+                        onTap: () {
+                          // Use go to change the URL to /register (consistent router navigation)
+                          context.go('/register');
+                        },
+                        child: Text.rich(
+                          TextSpan(
+                            text: 'Belum punya akun? ',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontSize: 14,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'Register',
+                                style: TextStyle(
+                                  color: theme.colorScheme.secondary,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
