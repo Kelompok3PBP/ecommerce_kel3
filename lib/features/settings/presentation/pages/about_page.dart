@@ -62,10 +62,10 @@ class AboutPage extends StatelessWidget {
       imageAsset: "assets/images/team/sukma.jpg",
     ),
     TeamMember(
-      name: "Wafiq",
-      nim: "22051204xxx",
-      studentClass: "S1 Informatika 2023 C",
-      githubAccount: "wafiq_tech",
+      name: "Wafiq ulil abshor allabibi",
+      nim: "24111814064",
+      studentClass: "S1 Informatika 2024 C",
+      githubAccount: "wafiqulil2603",
       imageAsset: "assets/images/team/wafiq.jpg",
     ),
   ];

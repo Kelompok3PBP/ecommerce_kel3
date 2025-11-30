@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart' as fm;
+import 'package:latlong2/latlong.dart' as ll;
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
@@ -13,9 +14,10 @@ class MapPickerPage extends StatefulWidget {
 }
 
 class _MapPickerPageState extends State<MapPickerPage> {
-  LatLng? _selectedLatLng;
+  ll.LatLng? _selectedLatLng;
+  bool _useSatellite = false;
 
-  Future<LatLng> _getUserLocation() async {
+  Future<ll.LatLng> _getUserLocation() async {
     try {
       loc.Location location = loc.Location();
 
@@ -42,13 +44,13 @@ class _MapPickerPageState extends State<MapPickerPage> {
         throw Exception('Could not get current location');
       }
 
-      return LatLng(userLocation.latitude!, userLocation.longitude!);
+      return ll.LatLng(userLocation.latitude!, userLocation.longitude!);
     } catch (e) {
-      return const LatLng(-6.2088, 106.8456);
+      return const ll.LatLng(-6.2088, 106.8456);
     }
   }
 
-  Future<Map<String, String>> _reverseGeocode(LatLng latLng) async {
+  Future<Map<String, String>> _reverseGeocode(ll.LatLng latLng) async {
     try {
       final placemarks = await placemarkFromCoordinates(
         latLng.latitude,
@@ -81,7 +83,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<LatLng>(
+    return FutureBuilder<ll.LatLng>(
       future: _getUserLocation(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -117,28 +119,57 @@ class _MapPickerPageState extends State<MapPickerPage> {
           );
         }
 
-        final center = snapshot.data as LatLng;
+        final center = snapshot.data as ll.LatLng;
 
         return Scaffold(
-          appBar: AppBar(title: Text(context.t('pick_location'))),
+          appBar: AppBar(
+            title: Text(context.t('pick_location')),
+            actions: [
+              IconButton(
+                tooltip: _useSatellite ? 'Streets' : 'Satellite',
+                icon: Icon(_useSatellite ? Icons.map : Icons.satellite_alt),
+                onPressed: () => setState(() => _useSatellite = !_useSatellite),
+              ),
+            ],
+          ),
           body: Stack(
             children: [
-              GoogleMap(
-                initialCameraPosition: CameraPosition(target: center, zoom: 16),
-                onMapCreated: (controller) {},
-                onTap: (latLng) {
-                  setState(() {
-                    _selectedLatLng = latLng;
-                  });
-                },
-                markers: _selectedLatLng != null
-                    ? {
-                        Marker(
-                          markerId: const MarkerId("selected"),
-                          position: _selectedLatLng!,
+              fm.FlutterMap(
+                options: fm.MapOptions(
+                  center: ll.LatLng(center.latitude, center.longitude),
+                  zoom: 16.0,
+                  onTap: (tapPosition, latlng) {
+                    setState(() {
+                      _selectedLatLng = latlng;
+                    });
+                  },
+                ),
+                children: [
+                  fm.TileLayer(
+                    urlTemplate: _useSatellite
+                        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: _useSatellite
+                        ? const []
+                        : const ['a', 'b', 'c'],
+                    userAgentPackageName: 'com.example.app',
+                  ),
+                  if (_selectedLatLng != null)
+                    fm.MarkerLayer(
+                      markers: [
+                        fm.Marker(
+                          point: _selectedLatLng!,
+                          width: 40,
+                          height: 40,
+                          child: const Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 40,
+                          ),
                         ),
-                      }
-                    : {},
+                      ],
+                    ),
+                ],
               ),
 
               if (_selectedLatLng != null)
@@ -149,6 +180,9 @@ class _MapPickerPageState extends State<MapPickerPage> {
                   child: ElevatedButton(
                     onPressed: () async {
                       final data = await _reverseGeocode(_selectedLatLng!);
+                      // include coordinates so caller can show a map preview
+                      data['lat'] = _selectedLatLng!.latitude.toString();
+                      data['lng'] = _selectedLatLng!.longitude.toString();
                       context.pop(data);
                     },
                     child: Text(context.t('use_this_location')),

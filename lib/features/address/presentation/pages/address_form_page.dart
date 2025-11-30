@@ -4,6 +4,8 @@ import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/address/presentation/cubits/address_cubit.dart';
 import 'package:ecommerce/features/address/domain/entities/address.dart';
+import 'package:flutter_map/flutter_map.dart' as fm;
+import 'package:latlong2/latlong.dart' as ll;
 
 class AddressFormPage extends StatefulWidget {
   final Address? address;
@@ -15,6 +17,8 @@ class AddressFormPage extends StatefulWidget {
 
 class _AddressFormPageState extends State<AddressFormPage> {
   final _formKey = GlobalKey<FormState>();
+  ll.LatLng? _previewLatLng;
+  bool _useSatellite = false;
   late TextEditingController labelController;
   late TextEditingController streetController;
   late TextEditingController cityController;
@@ -191,6 +195,17 @@ class _AddressFormPageState extends State<AddressFormPage> {
                           streetController.text = result['street'] ?? '';
                           cityController.text = result['city'] ?? '';
                           postalController.text = result['postal'] ?? '';
+
+                          // if map returned coordinates, show map preview
+                          final latStr = result['lat'];
+                          final lngStr = result['lng'];
+                          if (latStr != null && lngStr != null) {
+                            final lat = double.tryParse(latStr.toString());
+                            final lng = double.tryParse(lngStr.toString());
+                            if (lat != null && lng != null) {
+                              _previewLatLng = ll.LatLng(lat, lng);
+                            }
+                          }
                         });
                       }
                     },
@@ -204,6 +219,61 @@ class _AddressFormPageState extends State<AddressFormPage> {
                   ),
 
                   SizedBox(height: spacingLarge),
+
+                  // MAP PREVIEW (with satellite toggle)
+                  if (_previewLatLng != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              tooltip: _useSatellite ? 'Streets' : 'Satellite',
+                              icon: Icon(
+                                _useSatellite ? Icons.map : Icons.satellite_alt,
+                              ),
+                              onPressed: () => setState(
+                                () => _useSatellite = !_useSatellite,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: isWide ? 260 : 180,
+                          child: fm.FlutterMap(
+                            options: fm.MapOptions(
+                              center: _previewLatLng,
+                              zoom: 16.0,
+                            ),
+                            children: [
+                              fm.TileLayer(
+                                urlTemplate: _useSatellite
+                                    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                                    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                subdomains: _useSatellite
+                                    ? const []
+                                    : const ['a', 'b', 'c'],
+                              ),
+                              fm.MarkerLayer(
+                                markers: [
+                                  fm.Marker(
+                                    point: _previewLatLng!,
+                                    width: 40,
+                                    height: 40,
+                                    child: const Icon(
+                                      Icons.location_on,
+                                      color: Colors.red,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
 
                   // SUBMIT BUTTON
                   SizedBox(
