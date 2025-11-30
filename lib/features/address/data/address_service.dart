@@ -1,4 +1,4 @@
-import 'package:ecommerce/features/address/domain/address.dart';
+import 'package:ecommerce/features/address/domain/entities/address.dart';
 
 class AddressService {
   final List<Address> _store = [];

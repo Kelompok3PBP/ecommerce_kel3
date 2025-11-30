@@ -19,7 +19,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
     if (_rating == 0 || _commentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.t('send_feedback')), // Pastikan key t('error_empty') atau semacamnya jika ada
+          content: Text(
+            context.t('send_feedback'),
+          ), // Pastikan key t('error_empty') atau semacamnya jika ada
           backgroundColor: AppTheme.primaryColor,
         ),
       );
@@ -44,12 +46,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(context.t('feedback')),
-        // 2. Integrasi GoRouter pada tombol Back
         leading: IconButton(
-          // Menggunakan warna primary agar seragam dengan halaman lain
-          icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            // Logika: Cek history, jika tidak ada paksa ke Settings
             if (context.canPop()) {
               context.pop();
             } else {
@@ -58,7 +57,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
           },
         ),
       ),
-      body: SingleChildScrollView( // Tambahkan Scroll agar aman di layar kecil
+      body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(5.w),
           child: Column(
@@ -95,7 +94,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 controller: _commentController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: context.t('send_feedback'), // Atau gunakan key 'comment'
+                  labelText: context.t(
+                    'send_feedback',
+                  ), // Atau gunakan key 'comment'
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -111,14 +112,12 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     onPressed: _submitFeedback,
                     style: theme.elevatedButtonTheme.style,
                     child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 1.5.h,
-                      ),
+                      padding: EdgeInsets.symmetric(vertical: 1.5.h),
                       child: Text(
                         context.t('send_feedback'), // Key untuk tombol Submit
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold, 
-                          fontSize: 16
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
                       ),
                     ),

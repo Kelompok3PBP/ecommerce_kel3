@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:ecommerce/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:ecommerce/features/product/presentation/cubits/product_cubit.dart';
-import 'package:ecommerce/features/product/domain/product.dart';
+import 'package:ecommerce/features/product/domain/entities/product.dart';
 import 'package:ecommerce/app/theme/theme_provider.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
 import 'package:ecommerce/app/theme/app_theme.dart';
@@ -236,25 +236,51 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      height: screenWidth < 600 ? 18.h : 14.h,
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(40),
-                          bottomRight: Radius.circular(40),
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(40),
-                          bottomRight: Radius.circular(40),
-                        ),
-                        child: Image.asset(
-                          'assets/images/banner.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                    // Responsive banner: use LayoutBuilder and Sizer so height
+                    // adapts smoothly across device sizes without distortion.
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final w = constraints.maxWidth;
+                        // Choose banner height based on available width, but
+                        // expressed with Sizer (.h) so it scales with screen height.
+                        double bannerHeight;
+                        if (w < 600) {
+                          bannerHeight = 20.h;
+                        } else if (w < 1000) {
+                          bannerHeight = 16.h;
+                        } else {
+                          bannerHeight = 12.h;
+                        }
+
+                        // Ensure a reasonable min/max pixel height to avoid
+                        // extremely small or huge banners on edge cases.
+                        if (bannerHeight < 120) bannerHeight = 120;
+                        if (bannerHeight > 320) bannerHeight = 320;
+
+                        return Container(
+                          width: double.infinity,
+                          height: bannerHeight,
+                          decoration: const BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(40),
+                              bottomRight: Radius.circular(40),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(40),
+                              bottomRight: Radius.circular(40),
+                            ),
+                            child: Image.asset(
+                              'assets/images/banner.png',
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: bannerHeight,
+                              alignment: Alignment.center,
+                            ),
+                          ),
+                        );
+                      },
                     ),
 
                     SizedBox(height: 2.h * paddingScale),

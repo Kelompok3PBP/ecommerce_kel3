@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ecommerce/features/order/domain/purchase_receipt.dart';
+import 'package:ecommerce/features/order/domain/entities/purchase_receipt.dart';
 import 'package:ecommerce/app/theme/app_theme.dart';
 import 'package:ecommerce/features/cart/presentation/cubits/cart_cubit.dart';
 

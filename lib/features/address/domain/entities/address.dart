@@ -1,4 +1,4 @@
-import '../../profile/domain/user.dart';
+import '../../../profile/domain/entities/user.dart';
 
 class Address extends UserModel {
   String _label;

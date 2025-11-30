@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ecommerce/features/product/domain/product.dart';
+import 'package:ecommerce/features/product/domain/entities/product.dart';
 import 'package:ecommerce/core/network/api_service.dart';
 
 class ProductState {

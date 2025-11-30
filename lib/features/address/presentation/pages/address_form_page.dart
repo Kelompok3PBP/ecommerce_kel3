@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/address/presentation/cubits/address_cubit.dart';
-import 'package:ecommerce/features/address/domain/address.dart';
+import 'package:ecommerce/features/address/domain/entities/address.dart';
 
 class AddressFormPage extends StatefulWidget {
   final Address? address;

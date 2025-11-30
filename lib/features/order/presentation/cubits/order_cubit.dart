@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ecommerce/features/product/domain/product.dart';
+import 'package:ecommerce/features/product/domain/entities/product.dart';
 
 class Order {
   final int id;

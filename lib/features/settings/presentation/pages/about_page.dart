@@ -3,9 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// ===============================
-//  DATA MODEL TEAM MEMBER
-// ===============================
 class TeamMember {
   final String name;
   final String nim;
@@ -22,60 +19,57 @@ class TeamMember {
   });
 }
 
-// ===============================
-//  ABOUT PAGE MODERN STYLE
-// ===============================
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
 
   static const double webMaxContainerWidth = 1000;
   static const double webSubtitleSize = 16;
 
-  // ===============================
-  //  DATA TEAM
-  // ===============================
   static final List<TeamMember> members = [
     TeamMember(
-        name: "Rayhan Fajri",
-        nim: "22051204xxx",
-        studentClass: "S1 Informatika 2023 A",
-        githubAccount: "rayhanfajri",
-        imageAsset: "assets/images/team/rayhan_f.jpg"),
+      name: "Rayhan Fajri Alfarizqi",
+      nim: "24111814050",
+      studentClass: "S1 Informatika 2024 C",
+      githubAccount: "Rayhanfajri",
+      imageAsset: "assets/images/team/jri.jpeg",
+    ),
     TeamMember(
-        name: "Prima Miftakhul Rahma",
-        nim: "24111814005",
-        studentClass: "S1 Informatika 2024C",
-        githubAccount: "PrimaRahma",
-        imageAsset: "assets/images/team/rahma.jpeg"),
+      name: "Prima Miftakhul Rahma",
+      nim: "24111814005",
+      studentClass: "S1 Informatika 2024C",
+      githubAccount: "PrimaRahma",
+      imageAsset: "assets/images/team/rahma.jpeg",
+    ),
     TeamMember(
-        name: "Tia Fitrianingsih",
-        nim: "24111814082",
-        studentClass: "S1 Informatika 2024 C",
-        githubAccount: "TiaaaFitria",
-        imageAsset: "assets/images/team/tia.jpeg"),
+      name: "Tia Fitrianingsih",
+      nim: "24111814082",
+      studentClass: "S1 Informatika 2024 C",
+      githubAccount: "TiaaaFitria",
+      imageAsset: "assets/images/team/tia.jpeg",
+    ),
     TeamMember(
-        name: "Rayhan Wahyu",
-        nim: "22051204xxx",
-        studentClass: "S1 Informatika 2023 B",
-        githubAccount: "rahma_dev",
-        imageAsset: "assets/images/team/rahma.jpg"),
+      name: "Rayhan Wahyu Satrio Wibowo",
+      nim: "22051204xxx",
+      studentClass: "S1 Informatika 2024 C",
+      githubAccount: "rahma_dev",
+      imageAsset: "assets/images/team/bowo.jpg",
+    ),
     TeamMember(
-        name: "Sukma",
-        nim: "22051204xxx",
-        studentClass: "S1 Informatika 2023 A",
-        githubAccount: "sukma_git",
-        imageAsset: "assets/images/team/sukma.jpg"),
+      name: "Sukma",
+      nim: "22051204xxx",
+      studentClass: "S1 Informatika 2023 A",
+      githubAccount: "sukma_git",
+      imageAsset: "assets/images/team/sukma.jpg",
+    ),
     TeamMember(
-        name: "Wafiq",
-        nim: "22051204xxx",
-        studentClass: "S1 Informatika 2023 C",
-        githubAccount: "wafiq_tech",
-        imageAsset: "assets/images/team/wafiq.jpg"),
+      name: "Wafiq",
+      nim: "22051204xxx",
+      studentClass: "S1 Informatika 2023 C",
+      githubAccount: "wafiq_tech",
+      imageAsset: "assets/images/team/wafiq.jpg",
+    ),
   ];
 
-  // ===============================
-  //  LAUNCH LINK GITHUB KELOMPOK
-  // ===============================
   Future<void> _launchGroupGithub() async {
     final Uri url = Uri.parse("https://github.com/Kelompok3PBP");
     await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -96,24 +90,30 @@ class AboutPage extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: webMaxContainerWidth),
           child: CustomScrollView(
             slivers: [
-              // ========================
-              // APP BAR (HEADER) - CENTERED
-              // ========================
               SliverAppBar(
                 pinned: true,
-                expandedHeight: isWeb ? 140 : 18.h, // Tinggi header saat ditarik
+                expandedHeight: isWeb
+                    ? 140
+                    : 18.h, // Tinggi header saat ditarik
                 backgroundColor: theme.colorScheme.surface,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary),
+                  icon: Icon(
+                    Icons.arrow_back,
+                    color: theme.colorScheme.primary,
+                  ),
                   onPressed: () {
-                    if (Navigator.of(context).canPop()) context.pop();
-                    else context.go('/settings');
+                    if (Navigator.of(context).canPop())
+                      context.pop();
+                    else
+                      context.go('/settings');
                   },
                 ),
                 // FlexibleSpaceBar memberikan kontrol penuh untuk posisi judul
                 flexibleSpace: FlexibleSpaceBar(
                   centerTitle: true, // <--- WAJIB TRUE AGAR DI TENGAH
-                  titlePadding: const EdgeInsets.only(bottom: 16), // Jarak teks dari bawah
+                  titlePadding: const EdgeInsets.only(
+                    bottom: 16,
+                  ), // Jarak teks dari bawah
                   expandedTitleScale: 1.3, // Efek membesar saat ditarik
                   title: Text(
                     "PROFIL TIM PENGEMBANG",
@@ -131,9 +131,12 @@ class AboutPage extends StatelessWidget {
               // ========================
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: isWeb ? 24 : 5.w, vertical: 16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isWeb ? 24 : 5.w,
+                    vertical: 16,
+                  ),
                   child: Column(
-                    children: [ 
+                    children: [
                       Text(
                         "Kelompok 3 - S1 Informatika",
                         textAlign: TextAlign.center, // Rata Tengah
@@ -163,9 +166,11 @@ class AboutPage extends StatelessWidget {
                           onPressed: _launchGroupGithub,
                           style: FilledButton.styleFrom(
                             padding: EdgeInsets.symmetric(
-                                vertical: isWeb ? 16 : 12),
+                              vertical: isWeb ? 16 : 12,
+                            ),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16)),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                           icon: const Icon(Icons.group),
                           label: const Text(
@@ -183,7 +188,10 @@ class AboutPage extends StatelessWidget {
               // GRID TEAM MEMBER
               // ========================
               SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: isWeb ? 24 : 5.w, vertical: 16),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isWeb ? 24 : 5.w,
+                  vertical: 16,
+                ),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
@@ -192,8 +200,10 @@ class AboutPage extends StatelessWidget {
                     childAspectRatio: isWeb ? 0.75 : 0.85,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) =>
-                        _MemberProfileCard(member: members[index], isWeb: isWeb),
+                    (context, index) => _MemberProfileCard(
+                      member: members[index],
+                      isWeb: isWeb,
+                    ),
                     childCount: members.length,
                   ),
                 ),
@@ -208,9 +218,6 @@ class AboutPage extends StatelessWidget {
   }
 }
 
-// ===============================
-//  CARD PROFIL MODERN PREMIUM
-// ===============================
 class _MemberProfileCard extends StatefulWidget {
   final TeamMember member;
   final bool isWeb;
@@ -242,8 +249,9 @@ class _MemberProfileCardState extends State<_MemberProfileCard> {
       onExit: (_) => setState(() => isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        transform:
-            isHovered ? (Matrix4.identity()..scale(1.03)) : Matrix4.identity(),
+        transform: isHovered
+            ? (Matrix4.identity()..scale(1.03))
+            : Matrix4.identity(),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
           gradient: LinearGradient(
@@ -281,11 +289,12 @@ class _MemberProfileCardState extends State<_MemberProfileCard> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.primary
-                          .withOpacity(isHovered ? 0.45 : 0.20),
+                      color: theme.colorScheme.primary.withOpacity(
+                        isHovered ? 0.45 : 0.20,
+                      ),
                       blurRadius: isHovered ? 25 : 12,
                       spreadRadius: isHovered ? 4 : 2,
-                    )
+                    ),
                   ],
                   image: DecorationImage(
                     image: AssetImage(widget.member.imageAsset),
@@ -311,14 +320,18 @@ class _MemberProfileCardState extends State<_MemberProfileCard> {
 
               // KELAS
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(colors: [
-                    theme.colorScheme.primaryContainer,
-                    theme.colorScheme.primaryContainer.withOpacity(0.8),
-                  ]),
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primaryContainer,
+                      theme.colorScheme.primaryContainer.withOpacity(0.8),
+                    ],
+                  ),
                 ),
                 child: Text(
                   widget.member.studentClass,
@@ -344,8 +357,7 @@ class _MemberProfileCardState extends State<_MemberProfileCard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.badge_outlined,
-                      color: theme.colorScheme.tertiary),
+                  Icon(Icons.badge_outlined, color: theme.colorScheme.tertiary),
                   const SizedBox(width: 8),
                   Text(widget.member.nim),
                 ],
@@ -357,12 +369,13 @@ class _MemberProfileCardState extends State<_MemberProfileCard> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () =>
-                      _launchGithub(widget.member.githubAccount),
+                  onPressed: () => _launchGithub(widget.member.githubAccount),
                   style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14))),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   icon: const Icon(Icons.code),
                   label: const Text(
                     "GitHub Profile",

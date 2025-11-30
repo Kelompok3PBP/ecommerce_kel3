@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'package:ecommerce/features/order/domain/purchase_receipt.dart';
+import 'package:ecommerce/features/order/domain/entities/purchase_receipt.dart';
 import 'package:ecommerce/app/theme/app_theme.dart'; // <- pastikan path sesuai
 
 class PurchaseReceiptPage extends StatelessWidget {
