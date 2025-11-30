@@ -49,9 +49,9 @@ class AboutPage extends StatelessWidget {
     ),
     TeamMember(
       name: "Rayhan Wahyu Satrio Wibowo",
-      nim: "22051204xxx",
+      nim: "24111814046",
       studentClass: "S1 Informatika 2024 C",
-      githubAccount: "RayhanWahyu09",
+      githubAccount: "RayhanWahyu9",
       imageAsset: "assets/images/team/bowo.jpeg",
     ),
     TeamMember(
