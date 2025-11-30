@@ -5,18 +5,17 @@ import 'package:sizer/sizer.dart';
 
 import 'package:ecommerce/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:ecommerce/features/product/presentation/cubits/product_cubit.dart';
-import 'features/settings/presentation/cubits/language_cubit.dart';
+import 'package:ecommerce/features/settings/presentation/cubits/language_cubit.dart';
 import 'package:ecommerce/features/auth/presentation/cubits/auth_cubit.dart';
-import 'features/profile/presentation/cubits/profile_cubit.dart';
-import 'features/settings/presentation/cubits/notification_cubit.dart';
+import 'package:ecommerce/features/profile/presentation/cubits/profile_cubit.dart';
+import 'package:ecommerce/features/settings/presentation/cubits/notification_cubit.dart';
 import 'package:ecommerce/features/order/presentation/cubits/order_cubit.dart';
 import 'package:ecommerce/core/network/api_service.dart';
 import 'package:ecommerce/features/settings/data/notification_service.dart';
 
-import 'app/theme/app_theme.dart';
-import 'app/theme/theme_provider.dart';
-
-import 'app/router/app_router.dart';
+import 'package:ecommerce/app/theme/app_theme.dart';
+import 'package:ecommerce/app/theme/theme_provider.dart';
+import 'package:ecommerce/app/router/app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

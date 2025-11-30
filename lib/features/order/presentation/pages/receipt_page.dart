@@ -319,6 +319,14 @@ class PurchaseReceiptPage extends StatelessWidget {
 
   PurchaseReceipt _generateMockReceipt() {
     return PurchaseReceipt(
+      id: 1,
+      title: 'Mock Product',
+      price: 1225,
+      description: 'Mock receipt',
+      category: 'Purchase',
+      image: '',
+      rating: 0,
+      ratingCount: 0,
       orderId: orderId,
       orderDate: '31 Dec 2023',
       customerName: 'Noraj',

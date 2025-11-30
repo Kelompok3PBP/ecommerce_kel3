@@ -83,11 +83,11 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icons/logo.png"
+  image_path: "assets/icons/icon.jpg"
 
   web:
     generate: true
-    image_path: "assets/icons/logo.png"
+    image_path: "assets/icons/icon.jpg"
     background_color: "#ffffff"
     theme_color: "#ffffff"
 
@@ -106,6 +106,7 @@ flutter:
     - assets/images/team/rahma.jpeg
     - assets/images/team/tia.jpeg
     - assets/images/team/jri.jpeg
+    - assets/images/team/bowo.jpeg
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
