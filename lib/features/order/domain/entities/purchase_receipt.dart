@@ -1,9 +1,6 @@
 import 'package:ecommerce/features/product/domain/entities/product.dart';
 
-/// PurchaseReceipt extends Product demonstrating inheritance and POLYMORPHISM
-/// A purchase receipt is essentially a product item with additional purchase-specific data
 class PurchaseReceipt extends Product {
-  // Private fields for purchase-specific data - ENCAPSULATION
   final String _orderId;
   final String _orderDate;
   final String _customerName;
@@ -23,7 +20,6 @@ class PurchaseReceipt extends Product {
   final double _installmentAmount;
 
   PurchaseReceipt({
-    // Product parent fields
     required int id,
     required String title,
     required double price,
@@ -99,14 +95,29 @@ class PurchaseReceipt extends Product {
 
   /// Override validateData from parent class - POLYMORPHISM
   /// Validates both product data and purchase-specific data
+  /// More lenient than parent for purchase receipt context
   @override
   bool validateData() {
-    return super.validateData() &&
-        _orderId.isNotEmpty &&
+    // For PurchaseReceipt, we validate receipt-specific fields
+    // Parent validation can be more strict, but we relax here for receipts
+    return _orderId.isNotEmpty &&
         _customerName.isNotEmpty &&
         _customerEmail.isNotEmpty &&
         _totalAmount >= 0;
   }
+
+  /// POLYMORPHISM - Override to provide PurchaseReceipt-specific display name
+  @override
+  String getDisplayName() =>
+      'Struk Pembelian - ${_orderId.isNotEmpty ? _orderId : title}';
+
+  /// POLYMORPHISM - Override to calculate final price including tax and shipping
+  @override
+  double calculateFinalPrice() => _totalAmount;
+
+  /// POLYMORPHISM - Override to identify this as a purchase receipt product type
+  @override
+  String getProductType() => 'PURCHASE_RECEIPT';
 
   /// Calculate remaining installment balance - specialized method
   double getRemainingBalance(int paidMonths) {
@@ -175,8 +186,6 @@ class PurchaseReceipt extends Product {
     );
   }
 
-  /// Override toJson from parent - POLYMORPHISM
-  /// Combines parent product data with purchase-specific data
   @override
   Map<String, dynamic> toJson() {
     return {

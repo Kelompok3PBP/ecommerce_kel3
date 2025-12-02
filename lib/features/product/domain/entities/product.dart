@@ -11,11 +11,18 @@ abstract class BaseProduct {
 
   /// Get serializable map representation
   Map<String, dynamic> toJson();
+
+  /// Polymorphic method - can be overridden by subclasses
+  String getDisplayName() => 'Product';
+
+  /// Polymorphic method - calculate final price (can include taxes, fees, etc)
+  double calculateFinalPrice() => getPrice();
+
+  /// Polymorphic method - get product type
+  String getProductType();
 }
 
-/// Product entity with encapsulation (private fields, getters/setters)
-/// Demonstrates OOP principles: encapsulation and extensibility for polymorphism
-class Product implements BaseProduct {
+class Product extends BaseProduct {
   // Private fields - ENCAPSULATION
   int _id;
   String _title;
@@ -43,11 +50,30 @@ class Product implements BaseProduct {
        _image = image,
        _rating = rating,
        _ratingCount = ratingCount {
-    // Validate data on initialization
-    if (!validateData()) {
-      throw ArgumentError('Invalid product data');
+    // Validate data on initialization (only title is required)
+    if (_title.isEmpty) {
+      throw ArgumentError('Product title cannot be empty');
     }
   }
+
+  /// Constructor untuk cart items (relax validation)
+  Product.fromCart({
+    required int id,
+    required String title,
+    required double price,
+    String description = '',
+    String category = '',
+    String image = '',
+    double rating = 0.0,
+    int ratingCount = 0,
+  }) : _id = id,
+       _title = title,
+       _price = price,
+       _description = description,
+       _category = category,
+       _image = image,
+       _rating = rating,
+       _ratingCount = ratingCount;
 
   // Getters - controlled access to private fields (ENCAPSULATION)
   @override
@@ -134,6 +160,18 @@ class Product implements BaseProduct {
     }
     return _price * (1 - discountPercent / 100);
   }
+
+  /// POLYMORPHISM - Override to provide Product-specific display name
+  @override
+  String getDisplayName() => _title;
+
+  /// POLYMORPHISM - Override to calculate final price (can be extended by subclasses)
+  @override
+  double calculateFinalPrice() => _price;
+
+  /// POLYMORPHISM - Override to identify product type
+  @override
+  String getProductType() => 'STANDARD_PRODUCT';
 
   factory Product.fromJson(Map<String, dynamic> json) {
     final ratingData = json['rating'] ?? {};

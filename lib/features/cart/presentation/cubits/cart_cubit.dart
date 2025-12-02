@@ -42,15 +42,11 @@ class CartCubit extends Cubit<CartState> {
     required int quantity,
     required double price,
   }) {
-    final product = Product(
+    final product = Product.fromCart(
       id: int.tryParse(productId) ?? 0,
       title: productName,
       price: price,
-      description: '',
-      category: '',
       image: productImage,
-      rating: 0.0,
-      ratingCount: 0,
     );
     final newItems = Map<Product, int>.from(state.items);
     newItems[product] = (newItems[product] ?? 0) + quantity;

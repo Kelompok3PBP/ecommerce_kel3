@@ -233,41 +233,69 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () async {
+                      onPressed: () {
                         // Add items kembali ke cart
-                        for (var item in receipt.items) {
-                          final cartItem = item is Map<String, dynamic>
-                              ? item
-                              : {};
-                          final productId = cartItem['product_id'] ?? '';
-                          final productName = cartItem['product_name'] ?? '';
-                          final productImage = cartItem['product_image'] ?? '';
-                          final quantity = cartItem['quantity'] ?? 1;
-                          final price = (cartItem['price'] ?? 0).toDouble();
+                        try {
+                          for (var item in receipt.items) {
+                            if (item is Map<String, dynamic>) {
+                              final productId = (item['product_id'] ?? '')
+                                  .toString();
+                              final productName = (item['product_name'] ?? '')
+                                  .toString();
+                              final productImage = (item['product_image'] ?? '')
+                                  .toString();
+                              final quantity =
+                                  int.tryParse(
+                                    (item['quantity'] ?? 1).toString(),
+                                  ) ??
+                                  1;
+                              final price =
+                                  double.tryParse(
+                                    (item['price'] ?? 0).toString(),
+                                  ) ??
+                                  0.0;
 
+                              context.read<CartCubit>().addItem(
+                                productId: productId,
+                                productName: productName,
+                                productImage: productImage,
+                                quantity: quantity,
+                                price: price,
+                              );
+                            }
+                          }
+
+                          // Show success message
                           if (context.mounted) {
-                            context.read<CartCubit>().addItem(
-                              productId: productId,
-                              productName: productName,
-                              productImage: productImage,
-                              quantity: quantity,
-                              price: price,
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${receipt.items.length} produk ditambahkan ke cart',
+                                ),
+                                backgroundColor: Colors.green,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+
+                            // Navigate to cart after short delay
+                            Future.delayed(
+                              const Duration(milliseconds: 500),
+                              () {
+                                if (context.mounted) {
+                                  context.go('/cart');
+                                }
+                              },
                             );
                           }
-                        }
-
-                        // Navigate ke cart
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Produk ditambahkan ke cart'),
-                              backgroundColor: Colors.green,
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
-                          Future.delayed(const Duration(milliseconds: 500), () {
-                            if (context.mounted) context.go('/cart');
-                          });
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         }
                       },
                       style: OutlinedButton.styleFrom(

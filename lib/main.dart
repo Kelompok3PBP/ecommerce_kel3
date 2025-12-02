@@ -47,21 +47,22 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return BlocListener<LanguageCubit, LanguageState>(
-          listener: (context, state) {},
-          child: Sizer(
-            builder: (context, orientation, deviceType) {
-              return MaterialApp.router(
-                title: 'Belanja.in',
-                debugShowCheckedModeBanner: false,
-
-                theme: AppTheme.lightTheme,
-                darkTheme: AppTheme.darkTheme,
-                themeMode: themeProvider.themeMode,
-                routerConfig: AppRouter.router,
-              );
-            },
-          ),
+        return BlocBuilder<LanguageCubit, LanguageState>(
+          builder: (context, languageState) {
+            return Sizer(
+              builder: (context, orientation, deviceType) {
+                return MaterialApp.router(
+                  title: 'Belanja.in',
+                  debugShowCheckedModeBanner: false,
+                  locale: Locale(languageState.languageCode),
+                  theme: AppTheme.lightTheme,
+                  darkTheme: AppTheme.darkTheme,
+                  themeMode: themeProvider.themeMode,
+                  routerConfig: AppRouter.router,
+                );
+              },
+            );
+          },
         );
       },
     );

@@ -24,7 +24,7 @@ class PurchaseReceiptPage extends StatelessWidget {
         ? PurchaseReceipt.fromJson(receiptData!)
         : _generateMockReceipt();
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -33,18 +33,7 @@ class PurchaseReceiptPage extends StatelessWidget {
 
             return Stack(
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppTheme.backgroundColor,
-                        const Color(0xFFFFFFFF),
-                      ],
-                    ),
-                  ),
-                ),
+                Container(decoration: BoxDecoration(color: Colors.white)),
                 SingleChildScrollView(
                   child: Center(
                     child: Container(
@@ -79,19 +68,16 @@ class PurchaseReceiptPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.primaryColor, width: 3),
         boxShadow: [
           BoxShadow(
-            color:
-                (Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black)
-                    .withOpacity(0.1),
+            color: AppTheme.primaryColor.withOpacity(0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           SizedBox(height: 8),
@@ -107,7 +93,11 @@ class PurchaseReceiptPage extends StatelessWidget {
           SizedBox(height: 12),
           Text(
             "Struk Pembelian",
-            style: TextStyle(fontSize: 14, color: AppTheme.textSecondaryColor),
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           SizedBox(height: 6),
           Text(
@@ -115,26 +105,31 @@ class PurchaseReceiptPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimaryColor,
+              color: AppTheme.primaryColor,
             ),
           ),
-          SizedBox(height: 14),
+          SizedBox(height: 16),
           _detailRow("Tanggal", receipt.orderDate),
+          SizedBox(height: 8),
           _detailRow("Metode Pembayaran", receipt.paymentMethod),
+          SizedBox(height: 8),
           _detailRow("No Referensi", receipt.orderId),
+          SizedBox(height: 8),
           _detailRow("Account", receipt.customerName),
-          Divider(height: 28, color: Theme.of(context).dividerColor),
+          SizedBox(height: 16),
+          Divider(height: 2, color: AppTheme.primaryColor, thickness: 2),
+          SizedBox(height: 16),
           if (receipt.items.isNotEmpty) ...[
-            SizedBox(height: 8),
+            SizedBox(height: 12),
             Text(
               "Item yang Dibeli:",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor,
-                fontSize: 12,
+                color: AppTheme.primaryColor,
+                fontSize: 13,
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 12),
             ...receipt.items.map((item) {
               final itemMap = item is Map<String, dynamic> ? item : {};
               final name = itemMap['product_name'] ?? 'Item';
@@ -161,8 +156,9 @@ class PurchaseReceiptPage extends StatelessWidget {
                       child: Text(
                         currency.format(price * qty),
                         style: TextStyle(
-                          color: AppTheme.textPrimaryColor,
+                          color: AppTheme.primaryColor,
                           fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.right,
                       ),
@@ -171,38 +167,53 @@ class PurchaseReceiptPage extends StatelessWidget {
                 ),
               );
             }).toList(),
-            Divider(height: 16, color: Theme.of(context).dividerColor),
+            SizedBox(height: 12),
+            Divider(height: 2, color: AppTheme.primaryColor, thickness: 1),
+            SizedBox(height: 12),
           ],
           _detailRow(
             "Total",
             currency.format(receipt.totalAmount),
             isBold: true,
+            isPrimary: true,
           ),
+          SizedBox(height: 8),
         ],
       ),
     );
   }
 
-  Widget _detailRow(String label, String value, {bool isBold = false}) {
+  Widget _detailRow(
+    String label,
+    String value, {
+    bool isBold = false,
+    bool isPrimary = false,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              label,
-              style: TextStyle(color: AppTheme.textSecondaryColor),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: isPrimary
+                  ? AppTheme.primaryColor
+                  : AppTheme.textSecondaryColor,
+              fontWeight: isPrimary ? FontWeight.bold : FontWeight.w500,
             ),
           ),
-          Expanded(
-            flex: 5,
+          Flexible(
             child: Text(
               value,
               textAlign: TextAlign.right,
               style: TextStyle(
+                fontSize: 13,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-                color: AppTheme.textPrimaryColor,
+                color: isPrimary
+                    ? AppTheme.primaryColor
+                    : AppTheme.textPrimaryColor,
               ),
             ),
           ),
@@ -223,8 +234,9 @@ class PurchaseReceiptPage extends StatelessWidget {
             icon: const Icon(Icons.download),
             label: const Text("Download PDF"),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.primaryColor,
-              side: BorderSide(color: AppTheme.secondaryColor),
+              foregroundColor: Colors.white,
+              side: BorderSide(color: Colors.white, width: 2),
+              backgroundColor: AppTheme.primaryColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -237,7 +249,18 @@ class PurchaseReceiptPage extends StatelessWidget {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () => context.go('/dashboard'),
-            child: const Text("Kembali ke Dashboard"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppTheme.primaryColor,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text(
+              "Kembali ke Dashboard",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ],
