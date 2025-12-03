@@ -147,14 +147,14 @@ class _DashboardPageState extends State<DashboardPage> {
     double fontScale = screenWidth < 600
         ? 1.0
         : screenWidth < 1000
-        ? 0.9
-        : 0.8;
+            ? 0.9
+            : 0.8;
 
     double paddingScale = screenWidth < 600
         ? 1.0
         : screenWidth < 1000
-        ? 0.8
-        : 0.7;
+            ? 0.8
+            : 0.7;
 
     return Scaffold(
       drawer: _buildDrawer(context),
@@ -324,9 +324,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: DropdownButtonFormField<String>(
                         value:
                             (_sortMode == 'price_asc' ||
-                                _sortMode == 'price_desc')
-                            ? _sortMode
-                            : 'none',
+                                    _sortMode == 'price_desc')
+                                ? _sortMode
+                                : 'none',
                         decoration: InputDecoration(
                           labelText: context.t('urutkan'),
                           border: OutlineInputBorder(
@@ -378,21 +378,21 @@ class _DashboardPageState extends State<DashboardPage> {
                                 int crossAxisCount = constraints.maxWidth < 600
                                     ? 2
                                     : constraints.maxWidth < 900
-                                    ? 3
-                                    : constraints.maxWidth < 1200
-                                    ? 4
-                                    : 5;
+                                        ? 3
+                                        : constraints.maxWidth < 1200
+                                            ? 4
+                                            : 5;
                                 return GridView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: filteredProducts.length,
                                   gridDelegate:
                                       SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: crossAxisCount,
-                                        mainAxisSpacing: 2.w,
-                                        crossAxisSpacing: 2.w,
-                                        childAspectRatio: 0.7,
-                                      ),
+                                    crossAxisCount: crossAxisCount,
+                                    mainAxisSpacing: 2.w,
+                                    crossAxisSpacing: 2.w,
+                                    childAspectRatio: 0.7,
+                                  ),
                                   itemBuilder: (context, i) =>
                                       _buildProductCard(filteredProducts[i]),
                                 );
@@ -454,24 +454,71 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // >>> START OF MODIFIED _buildDrawer METHOD <<<
   Drawer _buildDrawer(BuildContext context) {
     final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          UserAccountsDrawerHeader(
-            accountName: Text(userName),
-            accountEmail: Text(userEmail),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: theme.cardColor,
-              backgroundImage: _buildProfileImage(),
-              child: _buildProfileImage() == null
-                  ? Icon(Icons.person, size: 40, color: theme.primaryColor)
-                  : null,
+          // Header yang lebih kecil dan menarik (Small, appealing header)
+          DrawerHeader(
+            margin: EdgeInsets.zero,
+            padding: EdgeInsets.only(top: 2.h, left: 3.w, bottom: 2.h),
+            decoration: const BoxDecoration(
+              color: AppTheme.primaryColor,
             ),
-            decoration: const BoxDecoration(color: AppTheme.primaryColor),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile Picture
+                CircleAvatar(
+                  radius: 24, // Lebih kecil dari default UserAccountsDrawerHeader
+                  backgroundColor: theme.cardColor,
+                  backgroundImage: _buildProfileImage(),
+                  child: _buildProfileImage() == null
+                      ? Icon(Icons.person, size: 28, color: theme.primaryColor)
+                      : null,
+                ),
+                SizedBox(width: 3.w),
+                // Welcome Text
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        // Menggunakan bodyLarge/titleMedium untuk ukuran font dashboard
+                        context.t('welcome'),
+                        style: textTheme.titleSmall?.copyWith(
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        userName,
+                        style: textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        userEmail,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: Colors.white70,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+          // >>> END OF MODIFIED _buildDrawer METHOD <<<
           ListTile(
             leading: Icon(Icons.home, color: theme.primaryColor),
             title: Text(context.t('home')),
