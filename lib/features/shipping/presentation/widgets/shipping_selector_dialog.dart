@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/shipping_cubit.dart';
-import 'shipping_option_card.dart'; 
+import 'shipping_option_card.dart';
 
 // Fungsi untuk menampilkan dialog
 Future<void> showShippingSelectorDialog(BuildContext context) async {
@@ -25,13 +25,16 @@ class _ShippingSelectorContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16.0),
-      height: MediaQuery.of(context).size.height * 0.75, // Ambil 75% tinggi layar
+      height:
+          MediaQuery.of(context).size.height * 0.75, // Ambil 75% tinggi layar
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Pilih Jasa Pengiriman',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           Divider(),
           // BlocBuilder mendengarkan state dari ShippingCubit
@@ -44,7 +47,10 @@ class _ShippingSelectorContent extends StatelessWidget {
 
                 if (state is ShippingError) {
                   return Center(
-                    child: Text('Error: ${state.message}', style: const TextStyle(color: Colors.red)),
+                    child: Text(
+                      'Error: ${state.message}',
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   );
                 }
 
@@ -52,7 +58,7 @@ class _ShippingSelectorContent extends StatelessWidget {
                   // Tampilkan Alamat Pengiriman
                   final address = state.shippingAddress;
                   final selected = state.selectedOption;
-                  
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -61,10 +67,13 @@ class _ShippingSelectorContent extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: Text(
                             'Kirim ke: ${address.street}, ${address.city} (${address.postalCode})',
-                            style: const TextStyle(fontSize: 14.0, fontStyle: FontStyle.italic),
+                            style: const TextStyle(
+                              fontSize: 14.0,
+                              fontStyle: FontStyle.italic,
+                            ),
                           ),
                         ),
-                      
+
                       // Daftar Opsi Pengiriman
                       Expanded(
                         child: ListView.builder(
@@ -76,15 +85,17 @@ class _ShippingSelectorContent extends StatelessWidget {
                               isSelected: option.id == selected?.id,
                               onTap: () {
                                 // Panggil cubit saat opsi dipilih
-                                context.read<ShippingCubit>().selectShippingOption(option);
+                                context
+                                    .read<ShippingCubit>()
+                                    .selectShippingOption(option);
                                 // Tutup dialog setelah memilih
-                                Navigator.pop(context); 
+                                Navigator.pop(context);
                               },
                             );
                           },
                         ),
                       ),
-                      
+
                       // Tombol Konfirmasi (Opsional, karena sudah tertutup saat tap)
                       SizedBox(
                         width: double.infinity,
@@ -97,7 +108,9 @@ class _ShippingSelectorContent extends StatelessWidget {
                   );
                 }
 
-                return const Center(child: Text('Belum ada opsi pengiriman dimuat.'));
+                return const Center(
+                  child: Text('Belum ada opsi pengiriman dimuat.'),
+                );
               },
             ),
           ),

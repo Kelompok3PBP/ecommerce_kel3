@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart'; // 1. Import GoRouter
 import 'package:sizer/sizer.dart';
 import 'package:ecommerce/app/theme/app_theme.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 
 class FeedbackPage extends StatefulWidget {
   const FeedbackPage({super.key});
@@ -17,21 +18,17 @@ class _FeedbackPageState extends State<FeedbackPage> {
 
   void _submitFeedback() {
     if (_rating == 0 || _commentController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.t('send_feedback'),
-          ), // Pastikan key t('error_empty') atau semacamnya jika ada
-          backgroundColor: AppTheme.primaryColor,
-        ),
+      NotificationService.showIfEnabledDialog(
+        context,
+        title: 'Validasi',
+        body: context.t('send_feedback'),
       );
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${context.t('success')} ❤️'),
-        backgroundColor: Colors.green,
-      ),
+    NotificationService.showIfEnabledDialog(
+      context,
+      title: context.t('success'),
+      body: 'Terima kasih atas feedback Anda! ❤️',
     );
     setState(() {
       _rating = 0;

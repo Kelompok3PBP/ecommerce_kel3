@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -34,8 +35,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       if (parts.length == 2 && parts[0] == current) {
         if (parts[1] != _old.text) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(context.t('old_password_wrong'))),
+            await NotificationService.showIfEnabledDialog(
+              context,
+              title: 'Error',
+              body: context.t('old_password_wrong'),
             );
           }
           return;
@@ -43,8 +46,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
         if (_pass.text != _confirm.text) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(context.t('password_mismatch'))),
+            await NotificationService.showIfEnabledDialog(
+              context,
+              title: 'Error',
+              body: context.t('password_mismatch'),
             );
           }
           return;
@@ -53,8 +58,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         users[i] = '${parts[0]}:${_pass.text}';
         await prefs.setStringList('registered_users', users);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.t('password_changed'))),
+          await NotificationService.showIfEnabledDialog(
+            context,
+            title: 'Berhasil',
+            body: context.t('password_changed'),
           );
         }
         context.pop();

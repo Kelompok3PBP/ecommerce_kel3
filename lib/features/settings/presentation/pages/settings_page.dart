@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart'; // Wajib import ini
 import 'package:ecommerce/features/settings/presentation/cubits/language_cubit.dart';
 import 'package:ecommerce/features/settings/data/localization_service.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -88,22 +89,18 @@ class _SettingsPageState extends State<SettingsPage> {
                       setState(() => notif = val);
                       await _savePrefs(val);
                       if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            val
-                                ? context.t('notifications_enabled')
-                                : context.t('notifications_disabled'),
-                          ),
-                          duration: const Duration(seconds: 1),
-                          backgroundColor: secondary,
-                        ),
+                      await NotificationService.showIfEnabledDialog(
+                        context,
+                        title: 'Pengaturan Notifikasi',
+                        body: val
+                            ? context.t('notifications_enabled')
+                            : context.t('notifications_disabled'),
                       );
                     },
                   ),
                 ],
               ),
-              
+
               SizedBox(height: 2.h),
 
               // --- SECTION APP INFO ---
@@ -210,7 +207,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     final primary = theme.colorScheme.primary;
     final background = theme.colorScheme.surface;
-    
+
     return Card(
       color: background,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -308,16 +305,12 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {
                 context.read<LanguageCubit>().changeLanguage(code, name, flag);
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: secondary,
-                    content: Text(
-                      AppLocalizations.t(
-                        'language_changed',
-                        languageCode: code,
-                      ),
-                    ),
-                    duration: const Duration(seconds: 2),
+                NotificationService.showIfEnabledDialog(
+                  context,
+                  title: 'Bahasa Diubah',
+                  body: AppLocalizations.t(
+                    'language_changed',
+                    languageCode: code,
                   ),
                 );
               },

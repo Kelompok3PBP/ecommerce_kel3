@@ -1,5 +1,3 @@
-// Path: lib/features/payment/presentation/pages/payment_page.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,11 +7,12 @@ import 'package:shared_preferences/shared_preferences.dart' as sp;
 import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
-import 'package:ecommerce/features/shipping/domain/entities/shipping_option.dart'; // Import ShippingOption
+import 'package:ecommerce/features/settings/data/notification_service.dart';
+import 'package:ecommerce/features/shipping/domain/entities/shipping_option.dart';
 
 class PaymentPage extends StatefulWidget {
-  final double total;
-  const PaymentPage({super.key, required this.total});
+  final dynamic extra;
+  const PaymentPage({super.key, this.extra});
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
@@ -21,26 +20,37 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   String? selectedMethod;
-  double shippingCost = 0.0;
+  bool isBuyNow = false;
+  Map<String, dynamic> buyNowData = {};
+  double total = 0;
   ShippingOption? selectedShippingOption;
 
   @override
   void initState() {
     super.initState();
+    // Check if this is from BUY NOW button
+    if (widget.extra is Map) {
+      isBuyNow = true;
+      buyNowData = widget.extra as Map<String, dynamic>;
+      total = buyNowData['total'] ?? 0;
+    } else if (widget.extra is double) {
+      total = widget.extra as double;
+    }
     _loadShippingData();
   }
 
-  // Fungsi untuk memuat data pengiriman
   Future<void> _loadShippingData() async {
     final prefs = await sp.SharedPreferences.getInstance();
     final shippingJson = prefs.getString('selected_shipping_option');
-
     if (shippingJson != null) {
-      final Map<String, dynamic> map = jsonDecode(shippingJson);
-      setState(() {
-        selectedShippingOption = ShippingOption.fromJson(map);
-        shippingCost = selectedShippingOption!.cost;
-      });
+      try {
+        final shippingMap = jsonDecode(shippingJson) as Map<String, dynamic>;
+        setState(() {
+          selectedShippingOption = ShippingOption.fromJson(shippingMap);
+        });
+      } catch (e) {
+        print('Error loading shipping option: $e');
+      }
     }
   }
 
@@ -55,15 +65,18 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Total Akhir = Total Item + Biaya Kirim
-    final finalTotal = widget.total + shippingCost;
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.go('/cart'),
+          onPressed: () {
+            if (isBuyNow) {
+              context.go('/detail/${buyNowData['productId']}');
+            } else {
+              context.go('/cart');
+            }
+          },
         ),
         title: Text(
           context.t('payment'),
@@ -75,27 +88,22 @@ class _PaymentPageState extends State<PaymentPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Detail Pengiriman ---
-            _buildShippingDetails(),
-            const SizedBox(height: 12.0),
-            // --- Total Pembayaran ---
             Text(
-              '${context.t('final_total_payment')}: ${formatRupiah(finalTotal)}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              '${context.t('cart_total')} ${formatRupiah(total)}',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24.0),
-            Text(context.t('payment_method'), style: const TextStyle(fontSize: 16)),
-            // --- Pilihan Metode Pembayaran (Tetap sama) ---
+            Text(context.t('payment_method'), style: TextStyle(fontSize: 16)),
             RadioListTile<String>(
               value: 'Transfer Bank',
               groupValue: selectedMethod,
-              title: const Text('Transfer Bank', style: TextStyle(fontSize: 15)),
+              title: Text('Transfer Bank', style: TextStyle(fontSize: 15)),
               onChanged: (v) => setState(() => selectedMethod = v),
             ),
             RadioListTile<String>(
               value: 'E-Wallet (OVO, DANA, GoPay)',
               groupValue: selectedMethod,
-              title: const Text(
+              title: Text(
                 'E-Wallet (OVO, DANA, GoPay)',
                 style: TextStyle(fontSize: 15),
               ),
@@ -104,21 +112,20 @@ class _PaymentPageState extends State<PaymentPage> {
             RadioListTile<String>(
               value: 'Bayar di Tempat (COD)',
               groupValue: selectedMethod,
-              title: const Text(
+              title: Text(
                 'Bayar di Tempat (COD)',
                 style: TextStyle(fontSize: 15),
               ),
               onChanged: (v) => setState(() => selectedMethod = v),
             ),
             const Spacer(),
-            // --- Tombol Bayar ---
             ElevatedButton(
               style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
                 minimumSize: MaterialStateProperty.all(
                   const Size(double.infinity, 56.0),
                 ),
               ),
-              onPressed: selectedMethod == null || selectedShippingOption == null
+              onPressed: selectedMethod == null
                   ? null
                   : () async {
                       final prefs = await sp.SharedPreferences.getInstance();
@@ -130,49 +137,68 @@ class _PaymentPageState extends State<PaymentPage> {
                       List<Map<String, dynamic>> items = [];
                       double subtotal = 0;
 
-                      // Logika Pengambilan Item Cart (Tetap Sama)
                       try {
-                        final selJson = prefs.getString('selected_checkout');
-                        if (selJson != null) {
-                          final parsed = jsonDecode(selJson) as List<dynamic>;
-                          for (var entry in parsed) {
-                            final Map<String, dynamic> m = Map<String, dynamic>.from(entry as Map);
-                            final qty = (m['quantity'] ?? 1) as num;
-                            final price = (m['price'] ?? 0) as num;
-                            items.add({
-                              'product_id': m['product_id']?.toString() ?? '',
-                              'product_name': m['product_name'] ?? '',
-                              'product_image': m['product_image'] ?? '',
-                              'quantity': qty.toInt(),
-                              'price': price.toDouble(),
-                              'subtotal': (price.toDouble() * qty.toDouble()),
-                            });
-                            subtotal += price.toDouble() * qty.toDouble();
-                          }
-                        } else {
-                          final cartState = context.read<CartCubit>().state;
-                          cartState.items.forEach((product, quantity) {
-                            items.add({
-                              'product_id': product.id.toString(),
-                              'product_name': product.title,
-                              'product_image': product.image,
-                              'quantity': quantity,
-                              'price': product.price,
-                              'subtotal': product.price * quantity,
-                            });
-                            subtotal += product.price * quantity;
+                        // Check if this is from BUY NOW (direct checkout)
+                        if (isBuyNow) {
+                          items.add({
+                            'product_id':
+                                buyNowData['productId']?.toString() ?? '',
+                            'product_name': buyNowData['productName'] ?? '',
+                            'product_image': buyNowData['productImage'] ?? '',
+                            'quantity': buyNowData['quantity'] ?? 1,
+                            'price': buyNowData['price'] ?? 0,
+                            'subtotal':
+                                (buyNowData['price'] ?? 0) *
+                                (buyNowData['quantity'] ?? 1),
                           });
+                          subtotal = buyNowData['total'] ?? 0;
+                        } else {
+                          // Regular checkout from cart
+                          final selJson = prefs.getString('selected_checkout');
+                          if (selJson != null) {
+                            final parsed = jsonDecode(selJson) as List<dynamic>;
+                            for (var entry in parsed) {
+                              final Map<String, dynamic> m =
+                                  Map<String, dynamic>.from(entry as Map);
+                              final qty = (m['quantity'] ?? 1) as num;
+                              final price = (m['price'] ?? 0) as num;
+                              items.add({
+                                'product_id': m['product_id']?.toString() ?? '',
+                                'product_name': m['product_name'] ?? '',
+                                'product_image': m['product_image'] ?? '',
+                                'quantity': qty.toInt(),
+                                'price': price.toDouble(),
+                                'subtotal': (price.toDouble() * qty.toDouble()),
+                              });
+                              subtotal += price.toDouble() * qty.toDouble();
+                            }
+                          } else {
+                            final cartState = context.read<CartCubit>().state;
+                            cartState.items.forEach((product, quantity) {
+                              items.add({
+                                'product_id': product.id.toString(),
+                                'product_name': product.title,
+                                'product_image': product.image,
+                                'quantity': quantity,
+                                'price': product.price,
+                                'subtotal': product.price * quantity,
+                              });
+                              subtotal += product.price * quantity;
+                            });
+                          }
                         }
                       } catch (e) {
                         print('Error extracting cart items: $e');
                         items = [];
-                        subtotal = widget.total;
+                        subtotal = total;
                       }
 
-                      final orderId = DateTime.now().millisecondsSinceEpoch.toString();
-                      final orderDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+                      final orderId = DateTime.now().millisecondsSinceEpoch
+                          .toString();
+                      final orderDate = DateFormat(
+                        'yyyy-MM-dd HH:mm:ss',
+                      ).format(DateTime.now());
 
-                      // --- MAP RECEIPT BARU (TAMBAH DETAIL PENGIRIMAN) ---
                       final receiptMap = {
                         'order_id': orderId,
                         'order_date': orderDate,
@@ -182,35 +208,41 @@ class _PaymentPageState extends State<PaymentPage> {
                         'shipping_address': address,
                         'items': items,
                         'subtotal': subtotal,
-                        'shipping_cost': shippingCost, // Menggunakan biaya kirim yang dimuat
+                        'shipping_cost': selectedShippingOption?.cost ?? 0.0,
                         'tax': 0,
                         'discount': 0,
-                        'total_amount': finalTotal, // Menggunakan total akhir
+                        'total_amount': total,
                         'payment_method': selectedMethod,
                         'payment_status': 'Success',
                         'purchase_structure': 'Pembayaran Penuh',
                         'installment_months': 0,
                         'installment_amount': 0,
-                        // Detail Shipping Option di-embed
-                        'selected_shipping_option': selectedShippingOption!.toJson(),
+                        'selected_shipping_option':
+                            selectedShippingOption != null
+                            ? selectedShippingOption!.toJson()
+                            : null,
                       };
 
                       final receiptJson = jsonEncode(receiptMap);
-                      final historyList = prefs.getStringList('purchase_history') ?? [];
+                      final historyList =
+                          prefs.getStringList('purchase_history') ?? [];
                       historyList.insert(0, receiptJson);
-                      
-                      await prefs.setStringList('purchase_history', historyList);
-                      
-                      // Clear cart dan temporary selected list + shipping option
-                      context.read<CartCubit>().clear();
-                      await prefs.remove('selected_checkout');
-                      await prefs.remove('selected_shipping_option'); // Hapus data pengiriman sementara
+                      await prefs.setStringList(
+                        'purchase_history',
+                        historyList,
+                      );
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(context.t('payment_success')),
-                          backgroundColor: Colors.green,
-                        ),
+                      // Clear cart and temporary selected list (only if from regular cart)
+                      if (!isBuyNow) {
+                        context.read<CartCubit>().clear();
+                        await prefs.remove('selected_checkout');
+                      }
+
+                      // Show success popup only if notifications enabled
+                      await NotificationService.showIfEnabledDialog(
+                        context,
+                        title: context.t('payment_success'),
+                        body: context.t('payment_success'),
                       );
 
                       if (mounted) {
@@ -220,33 +252,11 @@ class _PaymentPageState extends State<PaymentPage> {
                         );
                       }
                     },
-              child: Text(context.t('pay_now'), style: const TextStyle(fontSize: 16)),
+              child: Text(context.t('pay_now'), style: TextStyle(fontSize: 16)),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildShippingDetails() {
-    if (selectedShippingOption == null) {
-      return Text(
-        'Pengiriman: Belum dipilih. Kembali ke keranjang untuk memilih.',
-        style: TextStyle(color: Colors.red[700]),
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Detail Pengiriman:',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
-        ),
-        const SizedBox(height: 4),
-        Text('Kurir: ${selectedShippingOption!.courierName} (${selectedShippingOption!.name})'),
-        Text('Estimasi: ${selectedShippingOption!.estimate}'),
-        Text('Biaya Kirim: ${formatRupiah(selectedShippingOption!.cost)}'),
-      ],
     );
   }
 }

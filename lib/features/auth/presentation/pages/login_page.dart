@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -56,19 +57,17 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('user_email', email);
         await prefs.setBool('is_logged_in', true);
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login berhasil'),
-            backgroundColor: Colors.green,
-          ),
+        await NotificationService.showIfEnabledDialog(
+          context,
+          title: 'Login Berhasil',
+          body: 'Selamat datang!',
         );
         context.go('/dashboard', extra: email);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login gagal'),
-            backgroundColor: Colors.redAccent,
-          ),
+        await NotificationService.showIfEnabledDialog(
+          context,
+          title: 'Login Gagal',
+          body: 'Email atau password salah',
         );
       }
     }
@@ -90,10 +89,26 @@ class _LoginPageState extends State<LoginPage> {
           Positioned.fill(
             child: ColorFiltered(
               colorFilter: ColorFilter.matrix(<double>[
-                0.213 + 0.787 * 1.15, 0.715 - 0.715 * 1.15, 0.072 - 0.072 * 1.15, 0, 0,
-                0.213 - 0.213 * 1.15, 0.715 + 0.285 * 1.15, 0.072 - 0.072 * 1.15, 0, 0,
-                0.213 - 0.213 * 1.15, 0.715 - 0.715 * 1.15, 0.072 + 0.928 * 1.15, 0, 0,
-                0, 0, 0, 1, 0,
+                0.213 + 0.787 * 1.15,
+                0.715 - 0.715 * 1.15,
+                0.072 - 0.072 * 1.15,
+                0,
+                0,
+                0.213 - 0.213 * 1.15,
+                0.715 + 0.285 * 1.15,
+                0.072 - 0.072 * 1.15,
+                0,
+                0,
+                0.213 - 0.213 * 1.15,
+                0.715 - 0.715 * 1.15,
+                0.072 + 0.928 * 1.15,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
               ]),
               child: Image.asset(
                 'assets/images/background.jpg',
@@ -163,11 +178,12 @@ class _LoginPageState extends State<LoginPage> {
                               width: 72,
                               fit: BoxFit.contain,
                               color: Colors.white,
-                              errorBuilder: (context, error, stackTrace) => Icon(
-                                Icons.shopping_cart_outlined,
-                                size: 64,
-                                color: Colors.white,
-                              ),
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(
+                                    Icons.shopping_cart_outlined,
+                                    size: 64,
+                                    color: Colors.white,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -299,25 +315,7 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                               ),
                               const SizedBox(height: 8),
-                              // Remember & Forgot
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {},
-                                    child: Text(
-                                      'Lupa password?',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: maroonColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
                               const SizedBox(height: 16),
-                              // Login button
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
@@ -342,7 +340,6 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              // Register link
                               GestureDetector(
                                 onTap: () => context.go('/register'),
                                 child: Text.rich(

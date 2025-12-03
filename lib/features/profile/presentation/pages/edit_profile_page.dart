@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String name;
@@ -65,11 +66,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(context.t('profile_updated') + ' ✅'),
-        backgroundColor: Colors.green,
-      ),
+    await NotificationService.showIfEnabledDialog(
+      context,
+      title: 'Profil Diperbarui',
+      body: context.t('profile_updated'),
     );
     context.pop(true);
   }

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -41,11 +42,10 @@ class _RegisterPageState extends State<RegisterPage> {
       });
 
       if (emailExists) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Email sudah terdaftar. Silakan login."),
-            backgroundColor: Colors.orangeAccent,
-          ),
+        await NotificationService.showIfEnabledDialog(
+          context,
+          title: 'Email Sudah Terdaftar',
+          body: 'Silakan login dengan akun Anda.',
         );
         return;
       }
@@ -59,14 +59,12 @@ class _RegisterPageState extends State<RegisterPage> {
       await prefs.reload();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Registrasi berhasil! Silakan login."),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
+        await NotificationService.showIfEnabledDialog(
+          context,
+          title: 'Registrasi Berhasil',
+          body: 'Silakan login dengan akun Anda.',
         );
-        await Future.delayed(const Duration(seconds: 2));
+        await Future.delayed(const Duration(seconds: 1));
         if (mounted) {
           context.go('/login');
         }
@@ -86,10 +84,26 @@ class _RegisterPageState extends State<RegisterPage> {
           Positioned.fill(
             child: ColorFiltered(
               colorFilter: ColorFilter.matrix(<double>[
-                0.213 + 0.787 * 1.15, 0.715 - 0.715 * 1.15, 0.072 - 0.072 * 1.15, 0, 0,
-                0.213 - 0.213 * 1.15, 0.715 + 0.285 * 1.15, 0.072 - 0.072 * 1.15, 0, 0,
-                0.213 - 0.213 * 1.15, 0.715 - 0.715 * 1.15, 0.072 + 0.928 * 1.15, 0, 0,
-                0, 0, 0, 1, 0,
+                0.213 + 0.787 * 1.15,
+                0.715 - 0.715 * 1.15,
+                0.072 - 0.072 * 1.15,
+                0,
+                0,
+                0.213 - 0.213 * 1.15,
+                0.715 + 0.285 * 1.15,
+                0.072 - 0.072 * 1.15,
+                0,
+                0,
+                0.213 - 0.213 * 1.15,
+                0.715 - 0.715 * 1.15,
+                0.072 + 0.928 * 1.15,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
               ]),
               child: Image.asset(
                 'assets/images/background.jpg',
@@ -98,14 +112,19 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           // light dark overlay so image remains visible
-          Positioned.fill(child: Container(color: Colors.black.withOpacity(0.12))),
+          Positioned.fill(
+            child: Container(color: Colors.black.withOpacity(0.12)),
+          ),
           // soft vignette to focus content
           Positioned.fill(
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.18)],
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.18),
+                    ],
                     stops: const [0.6, 1.0],
                     center: const Alignment(0, -0.1),
                     radius: 1.0,
@@ -158,11 +177,12 @@ class _RegisterPageState extends State<RegisterPage> {
                               width: 64,
                               fit: BoxFit.contain,
                               color: Colors.white,
-                              errorBuilder: (context, error, stackTrace) => Icon(
-                                Icons.app_registration,
-                                size: 64,
-                                color: Colors.white,
-                              ),
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(
+                                    Icons.app_registration,
+                                    size: 64,
+                                    color: Colors.white,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             Text(

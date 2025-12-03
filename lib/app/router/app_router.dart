@@ -28,13 +28,13 @@ import 'package:ecommerce/features/settings/presentation/pages/feedback_page.dar
 
 import 'package:ecommerce/features/address/presentation/pages/address_list_page.dart';
 import 'package:ecommerce/features/address/presentation/pages/map_page.dart';
-import 'package:ecommerce/features/settings/presentation/pages/shared_preferences_page.dart';
-import 'package:ecommerce/features/order/presentation/pages/order_history_page.dart';
 import 'package:ecommerce/features/shipping/presentation/pages/shipping_selection_page.dart';
 import 'package:ecommerce/features/shipping/presentation/cubits/shipping_cubit.dart';
-import 'package:ecommerce/features/shipping/domain/usecases/get_shipping_options_usecase.dart';
 import 'package:ecommerce/features/shipping/data/shipping_service.dart';
 import 'package:ecommerce/features/shipping/data/repositories/shipping_repository_impl.dart';
+import 'package:ecommerce/features/shipping/domain/usecases/get_shipping_options_usecase.dart';
+import 'package:ecommerce/features/settings/presentation/pages/shared_preferences_page.dart';
+import 'package:ecommerce/features/order/presentation/pages/order_history_page.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -127,32 +127,35 @@ class AppRouter {
       ),
       GoRoute(path: '/cart', builder: (context, state) => const CartPage()),
 
-      // Shipping Selection
+      // Order & Payment
       GoRoute(
         path: '/shipping-selection',
-        builder: (context, state) => MultiBlocProvider(
-          providers: [
-            BlocProvider(
-              create: (context) => ShippingCubit(
-                GetShippingOptionsUseCase(
-                  ShippingRepositoryImpl(ShippingService()),
-                ),
+        builder: (context, state) {
+          final extra = state.extra;
+          final shippingService = ShippingService();
+          final repository = ShippingRepositoryImpl(shippingService);
+          final useCase = GetShippingOptionsUseCase(repository);
+          final cubit = ShippingCubit(useCase);
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => AddressCubit(AddressService())..fetchAll(),
               ),
-            ),
-            BlocProvider(
-              create: (context) => AddressCubit(AddressService())..fetchAll(),
-            ),
-          ],
-          child: const ShippingSelectionPage(),
-        ),
+              BlocProvider.value(value: cubit),
+            ],
+            child: ShippingSelectionPage(extra: extra),
+          );
+        },
       ),
-
-      // Order & Payment
       GoRoute(
         path: '/payment',
         builder: (context, state) {
-          final total = state.extra as double? ?? 0.0;
-          return PaymentPage(total: total);
+          dynamic extra = state.extra;
+          // Convert to proper type if needed
+          if (extra is Map) {
+            return PaymentPage(extra: Map<String, dynamic>.from(extra));
+          }
+          return PaymentPage(extra: extra);
         },
       ),
       GoRoute(

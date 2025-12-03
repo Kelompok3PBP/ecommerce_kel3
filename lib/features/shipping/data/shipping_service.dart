@@ -18,7 +18,7 @@ class ShippingService {
     } else {
       baseCost = 30000.0; // Biaya default / zona lain
     }
-    
+
     // 2. Definisikan Opsi Pengiriman dan Hitung Biaya
     return [
       // Jasa Reguler (J&T Express)
@@ -27,7 +27,7 @@ class ShippingService {
         name: 'Reguler',
         serviceType: 'Reguler',
         // Biaya: Dasar + (Berat total * 500 per kg)
-        cost: baseCost + (totalWeight * 500), 
+        cost: baseCost + (totalWeight * 500),
         courierName: 'J&T Express',
         estimate: '3-5 hari',
       ),

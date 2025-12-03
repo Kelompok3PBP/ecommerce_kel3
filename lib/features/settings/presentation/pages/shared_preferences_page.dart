@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:ecommerce/app/theme/app_theme.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 
 class SharedPreferencesPage extends StatefulWidget {
   const SharedPreferencesPage({super.key});
@@ -36,9 +37,11 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     _loadAllPrefs();
-    ScaffoldMessenger.of(
+    await NotificationService.showIfEnabledDialog(
       context,
-    ).showSnackBar(SnackBar(content: Text(context.t('success') + ' 🗑️')));
+      title: context.t('success'),
+      body: 'Data telah dihapus 🗑️',
+    );
   }
 
   @override

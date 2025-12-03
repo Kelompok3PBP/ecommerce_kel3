@@ -4,8 +4,27 @@ import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/address/presentation/cubits/address_cubit.dart';
 import 'package:ecommerce/features/address/presentation/pages/address_form_page.dart';
 
-class AddressListPage extends StatelessWidget {
+class AddressListPage extends StatefulWidget {
   const AddressListPage({Key? key}) : super(key: key);
+
+  @override
+  State<AddressListPage> createState() => _AddressListPageState();
+}
+
+class _AddressListPageState extends State<AddressListPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Ensure addresses are loaded when page first opens
+    context.read<AddressCubit>().fetchAll();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh addresses every time this page becomes active
+    context.read<AddressCubit>().fetchAll();
+  }
 
   @override
   Widget build(BuildContext context) {

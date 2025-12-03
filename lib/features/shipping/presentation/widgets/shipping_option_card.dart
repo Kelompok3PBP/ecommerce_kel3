@@ -55,7 +55,9 @@ class ShippingOptionCard extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16.0,
-                      color: isSelected ? Colors.green.shade700 : Colors.green.shade600,
+                      color: isSelected
+                          ? Colors.green.shade700
+                          : Colors.green.shade600,
                     ),
                   ),
                 ],
@@ -64,10 +66,7 @@ class ShippingOptionCard extends StatelessWidget {
               // Estimasi Waktu Tiba
               Text(
                 'Estimasi tiba: ${option.estimate}',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 13.0,
-                ),
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13.0),
               ),
             ],
           ),

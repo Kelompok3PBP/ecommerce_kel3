@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:ecommerce/features/product/presentation/cubits/product_cubit.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 import 'package:ecommerce/app/theme/app_theme.dart';
 
 class DetailPage extends StatefulWidget {
@@ -18,6 +20,10 @@ class DetailPage extends StatefulWidget {
 class _DetailPageState extends State<DetailPage> {
   double userRating = 0;
   int? lastLoadedId;
+  int quantity = 1;
+  List<dynamic> productReviews = [];
+  double avgRating = 0.0;
+  int reviewCount = 0;
 
   @override
   void initState() {
@@ -31,17 +37,36 @@ class _DetailPageState extends State<DetailPage> {
     context.read<ProductCubit>().fetchProductById(productId);
   }
 
-  Future<void> _loadRating(int id) async {
+  Future<void> _loadProductReviews(int id) async {
     final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('product_reviews') ?? '{}';
+    Map<String, dynamic> map = {};
+    try {
+      map = jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      map = {};
+    }
+
+    final List<dynamic> list = List<dynamic>.from(map[id.toString()] ?? []);
+
+    double computedAvg = 0.0;
+    if (list.isNotEmpty) {
+      final sum = list
+          .map(
+            (e) => (e['rating'] ?? 0) is num
+                ? (e['rating'] ?? 0) as num
+                : num.parse((e['rating'] ?? 0).toString()),
+          )
+          .fold<num>(0, (prev, el) => prev + el);
+      computedAvg = (sum / list.length).toDouble();
+    }
+
     if (!mounted) return;
     setState(() {
-      userRating = prefs.getDouble('rating_$id') ?? 0;
+      productReviews = list;
+      reviewCount = list.length;
+      avgRating = computedAvg;
     });
-  }
-
-  Future<void> _saveRating(int id, double rating) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('rating_$id', rating);
   }
 
   String formatRupiah(double price) {
@@ -61,7 +86,7 @@ class _DetailPageState extends State<DetailPage> {
 
         if (product != null && lastLoadedId != product.id) {
           lastLoadedId = product.id;
-          _loadRating(product.id);
+          _loadProductReviews(product.id);
         }
 
         return Scaffold(
@@ -380,25 +405,33 @@ class _DetailPageState extends State<DetailPage> {
                               ),
                               SizedBox(height: 16.0),
 
-                              // Rating
-                              Wrap(
-                                children: List.generate(5, (i) {
-                                  return IconButton(
-                                    icon: Icon(
-                                      i < userRating
-                                          ? Icons.star
-                                          : Icons.star_border,
-                                      color: AppTheme.secondaryColor,
-                                      size: isMobile
-                                          ? 24
-                                          : (isTablet ? 28 : 32),
+                              // Rating (from order history reviews)
+                              Row(
+                                children: [
+                                  Row(
+                                    children: List.generate(5, (i) {
+                                      return Icon(
+                                        i < avgRating.round()
+                                            ? Icons.star
+                                            : Icons.star_border,
+                                        color: AppTheme.secondaryColor,
+                                        size: isMobile
+                                            ? 24
+                                            : (isTablet ? 28 : 32),
+                                      );
+                                    }),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    reviewCount > 0
+                                        ? '${avgRating.toStringAsFixed(1)} ($reviewCount)'
+                                        : 'Belum ada ulasan',
+                                    style: TextStyle(
+                                      color: AppTheme.textSecondaryColor,
+                                      fontSize: isMobile ? 12 : 14,
                                     ),
-                                    onPressed: () {
-                                      setState(() => userRating = i + 1.0);
-                                      _saveRating(product.id, userRating);
-                                    },
-                                  );
-                                }),
+                                  ),
+                                ],
                               ),
 
                               SizedBox(height: 16.0),
@@ -413,9 +446,95 @@ class _DetailPageState extends State<DetailPage> {
                                   color: AppTheme.textSecondaryColor,
                                 ),
                               ),
+                              const SizedBox(height: 12.0),
+                              // Reviews section loaded from order history
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Ulasan',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textPrimaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    if (productReviews.isEmpty)
+                                      Text(
+                                        'Belum ada ulasan untuk produk ini',
+                                        style: TextStyle(
+                                          color: AppTheme.textSecondaryColor,
+                                        ),
+                                      )
+                                    else
+                                      ListView.separated(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        itemBuilder: (context, i) {
+                                          final r = productReviews[i];
+                                          final ratingVal = (r['rating'] ?? 0)
+                                              .toInt();
+                                          final text = (r['text'] ?? '')
+                                              .toString();
+                                          final orderId = (r['orderId'] ?? '')
+                                              .toString();
+                                          final orderDate =
+                                              (r['orderDate'] ?? '').toString();
+                                          return Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: List.generate(5, (j) {
+                                                  return Icon(
+                                                    j < ratingVal
+                                                        ? Icons.star
+                                                        : Icons.star_border,
+                                                    color:
+                                                        AppTheme.secondaryColor,
+                                                    size: 16,
+                                                  );
+                                                }),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              if (text.isNotEmpty)
+                                                Text(
+                                                  text,
+                                                  style: TextStyle(
+                                                    color: AppTheme
+                                                        .textPrimaryColor,
+                                                  ),
+                                                ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Pesanan: $orderId • $orderDate',
+                                                style: TextStyle(
+                                                  color: AppTheme
+                                                      .textSecondaryColor,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                        separatorBuilder: (_, __) =>
+                                            const Divider(),
+                                        itemCount: productReviews.length,
+                                      ),
+                                  ],
+                                ),
+                              ),
                               SizedBox(height: 24.0),
 
-                              // Quantity selector + Add to Cart
+                              // Quantity selector + Add to Cart + Buy Now
                               Row(
                                 children: [
                                   Container(
@@ -430,36 +549,52 @@ class _DetailPageState extends State<DetailPage> {
                                         IconButton(
                                           icon: const Icon(Icons.remove),
                                           color: AppTheme.primaryColor,
-                                          onPressed: () {},
+                                          onPressed: quantity > 1
+                                              ? () {
+                                                  setState(() => quantity--);
+                                                }
+                                              : null,
                                         ),
-                                        const Text(
-                                          "1",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                        SizedBox(
+                                          width: 30,
+                                          child: Text(
+                                            "$quantity",
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
                                           ),
                                         ),
                                         IconButton(
                                           icon: const Icon(Icons.add),
                                           color: AppTheme.primaryColor,
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            setState(() => quantity++);
+                                          },
                                         ),
                                       ],
                                     ),
                                   ),
-                                  SizedBox(width: 24.0),
+                                  SizedBox(width: 12.0),
                                   Expanded(
                                     child: ElevatedButton(
                                       onPressed: () {
-                                        context.read<CartCubit>().add(product);
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Ditambahkan ke keranjang!',
-                                            ),
-                                          ),
+                                        context.read<CartCubit>().addItem(
+                                          productId: product.id.toString(),
+                                          productName: product.title,
+                                          productImage: product.image,
+                                          quantity: quantity,
+                                          price: product.price,
                                         );
+                                        // Show popup notification only if enabled
+                                        NotificationService.showIfEnabledDialog(
+                                          context,
+                                          title: 'Ditambahkan ke Keranjang',
+                                          body:
+                                              '$quantity item ditambahkan ke keranjang!',
+                                        );
+                                        setState(() => quantity = 1);
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppTheme.primaryColor,
@@ -476,6 +611,45 @@ class _DetailPageState extends State<DetailPage> {
                                       ),
                                       child: const Text(
                                         "ADD TO CART",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.0),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        context.go(
+                                          '/shipping-selection',
+                                          extra: {
+                                            'productId': product.id.toString(),
+                                            'productName': product.title,
+                                            'productImage': product.image,
+                                            'quantity': quantity,
+                                            'price': product.price,
+                                            'total': product.price * quantity,
+                                          },
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: isMobile
+                                              ? 14.0
+                                              : (isTablet ? 18.0 : 22.0),
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        "BUY NOW",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,

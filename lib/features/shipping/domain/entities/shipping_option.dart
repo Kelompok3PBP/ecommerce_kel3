@@ -47,15 +47,15 @@ class ShippingOption extends Equatable {
       'estimate': estimate,
     };
   }
-  
+
   // Implementasi Equatable untuk perbandingan objek
   @override
   List<Object?> get props => [
-        id,
-        name,
-        serviceType,
-        cost,
-        courierName,
-        estimate,
-      ];
+    id,
+    name,
+    serviceType,
+    cost,
+    courierName,
+    estimate,
+  ];
 }

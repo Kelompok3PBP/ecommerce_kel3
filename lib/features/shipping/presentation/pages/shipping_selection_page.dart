@@ -10,12 +10,13 @@ import '../../../address/domain/entities/address.dart';
 import '../../../address/presentation/cubits/address_cubit.dart';
 import '../cubits/shipping_cubit.dart';
 import '../../domain/entities/shipping_option.dart';
-import '../widgets/shipping_selector_dialog.dart'; // (optional helper dialog)
+import '../../../settings/data/notification_service.dart';
 
 class ShippingSelectionPage extends StatefulWidget {
   static const String routeName = '/shipping-selection';
+  final dynamic extra;
 
-  const ShippingSelectionPage({super.key});
+  const ShippingSelectionPage({super.key, this.extra});
 
   @override
   State<ShippingSelectionPage> createState() => _ShippingSelectionPageState();
@@ -23,14 +24,13 @@ class ShippingSelectionPage extends StatefulWidget {
 
 class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
   Address? _selectedAddress;
-  ShippingOption? _selectedOption;
   double _subtotal = 0.0;
   double _totalWeight = 0.0;
 
   @override
   void initState() {
     super.initState();
-    // Ensure addresses are loaded by AddressCubit (router also triggers fetchAll())
+    // Ensure addresses are loaded by AddressCubit
     try {
       final addrCubit = context.read<AddressCubit>();
       addrCubit.fetchAll();
@@ -38,7 +38,21 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
       // AddressCubit not provided above — router should provide it.
     }
 
-    _loadSelectedCheckout();
+    // Handle BUY NOW flow: extra contains product data
+    if (widget.extra is Map<String, dynamic>) {
+      final buyNowData = widget.extra as Map<String, dynamic>;
+      final price = (buyNowData['price'] as num?)?.toDouble() ?? 0.0;
+      final quantity = (buyNowData['quantity'] as num?)?.toInt() ?? 1;
+      final total =
+          (buyNowData['total'] as num?)?.toDouble() ?? (price * quantity);
+
+      setState(() {
+        _subtotal = total;
+        _totalWeight = quantity * 1.0; // assume 1kg per item
+      });
+    } else {
+      _loadSelectedCheckout();
+    }
   }
 
   Future<void> _loadSelectedCheckout() async {
@@ -66,8 +80,10 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
 
   void _onLoadShippingOptions() {
     if (_selectedAddress == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih alamat terlebih dahulu')),
+      NotificationService.showIfEnabledDialog(
+        context,
+        title: 'Alamat',
+        body: 'Pilih alamat terlebih dahulu',
       );
       return;
     }

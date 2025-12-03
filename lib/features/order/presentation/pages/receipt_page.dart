@@ -79,9 +79,6 @@ class PurchaseReceiptPage extends StatelessWidget {
   Widget _receiptCard(BuildContext context, PurchaseReceipt receipt) {
     // Ambil detail ShippingOption
     final shippingOption = receipt.selectedShippingOption;
-    final shippingDetails = shippingOption != null
-        ? '${shippingOption.courierName} (${shippingOption.name})'
-        : 'Tidak Dipilih';
     final shippingCostDisplay = currency.format(receipt.shippingCost);
 
     return Container(
@@ -138,9 +135,55 @@ class PurchaseReceiptPage extends StatelessWidget {
           _detailRow("Account", receipt.customerName),
           const SizedBox(height: 16),
           // --- DETAIL PENGIRIMAN ---
-          _detailRow("Pengiriman", shippingDetails),
-          const SizedBox(height: 8),
-          _detailRow("Alamat Kirim", receipt.shippingAddress, isMultiline: true),
+          Container(
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.primaryColor, width: 1.5),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "📦 Detail Pengiriman",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _detailRow(
+                  "Kurir",
+                  shippingOption?.courierName ?? "Tidak Dipilih",
+                ),
+                const SizedBox(height: 6),
+                _detailRow("Layanan", shippingOption?.name ?? "-"),
+                const SizedBox(height: 6),
+                _detailRow("Estimasi", shippingOption?.estimate ?? "-"),
+                const SizedBox(height: 6),
+                _detailRow("Biaya Kirim", shippingCostDisplay, isBold: true),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "📍 ${receipt.shippingAddress}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondaryColor,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
           // --------------------------
           const Divider(height: 2, color: AppTheme.primaryColor, thickness: 2),
@@ -194,7 +237,11 @@ class PurchaseReceiptPage extends StatelessWidget {
               );
             }).toList(),
             const SizedBox(height: 12),
-            const Divider(height: 2, color: AppTheme.primaryColor, thickness: 1),
+            const Divider(
+              height: 2,
+              color: AppTheme.primaryColor,
+              thickness: 1,
+            ),
             const SizedBox(height: 12),
           ],
           _detailRow(
@@ -203,11 +250,7 @@ class PurchaseReceiptPage extends StatelessWidget {
             isBold: true,
           ),
           const SizedBox(height: 8),
-          _detailRow(
-            "Biaya Kirim",
-            shippingCostDisplay,
-            isBold: true,
-          ),
+          _detailRow("Biaya Kirim", shippingCostDisplay, isBold: true),
           const SizedBox(height: 8),
           _detailRow(
             "Total Akhir",
@@ -232,7 +275,9 @@ class PurchaseReceiptPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        crossAxisAlignment: isMultiline
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.center,
         children: [
           SizedBox(
             width: 120,
@@ -319,9 +364,6 @@ class PurchaseReceiptPage extends StatelessWidget {
 
     // Ambil detail ShippingOption untuk PDF
     final shippingOption = receipt.selectedShippingOption;
-    final shippingDetails = shippingOption != null
-        ? '${shippingOption.courierName} (${shippingOption.name})'
-        : 'Tidak Dipilih';
 
     pdf.addPage(
       pw.Page(
@@ -347,15 +389,53 @@ class PurchaseReceiptPage extends StatelessWidget {
               _pdfRow("Tanggal", receipt.orderDate),
               _pdfRow("Metode Pembayaran", receipt.paymentMethod),
               _pdfRow("Status Pembayaran", receipt.paymentStatus),
+              pw.SizedBox(height: 12),
               // Detail Pengiriman
-              _pdfRow("Pengiriman", shippingDetails),
-              _pdfRow("Alamat Kirim", receipt.shippingAddress),
-              // Subtotal, Biaya Kirim, Pajak (Opsional)
+              pw.Container(
+                padding: const pw.EdgeInsets.all(8),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(),
+                  borderRadius: const pw.BorderRadius.all(
+                    pw.Radius.circular(4),
+                  ),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      "DETAIL PENGIRIMAN",
+                      style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                    pw.SizedBox(height: 6),
+                    _pdfRow(
+                      "Kurir",
+                      shippingOption?.courierName ?? "Tidak Dipilih",
+                    ),
+                    _pdfRow("Layanan", shippingOption?.name ?? "-"),
+                    _pdfRow("Estimasi", shippingOption?.estimate ?? "-"),
+                    _pdfRow(
+                      "Biaya",
+                      currency.format(shippingOption?.cost ?? 0),
+                    ),
+                    pw.SizedBox(height: 6),
+                    pw.Text(
+                      receipt.shippingAddress,
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 12),
+              // --------------------------
               pw.SizedBox(height: 10),
               pw.Divider(),
               _pdfRow("Subtotal Produk", currency.format(receipt.subtotal)),
               _pdfRow("Biaya Kirim", currency.format(receipt.shippingCost)),
-              if (receipt.tax > 0) _pdfRow("Pajak", currency.format(receipt.tax)),
+              if (receipt.tax > 0)
+                _pdfRow("Pajak", currency.format(receipt.tax)),
               pw.SizedBox(height: 10),
               _pdfRow(
                 "TOTAL AKHIR",
@@ -376,10 +456,7 @@ class PurchaseReceiptPage extends StatelessWidget {
                   final name = itemMap['product_name'] ?? 'Item';
                   final qty = itemMap['quantity'] ?? 1;
                   final price = (itemMap['price'] ?? 0).toDouble();
-                  return _pdfRow(
-                    '$name (x$qty)',
-                    currency.format(price * qty),
-                  );
+                  return _pdfRow('$name (x$qty)', currency.format(price * qty));
                 }).toList(),
                 pw.SizedBox(height: 16),
               ],
@@ -436,10 +513,21 @@ class PurchaseReceiptPage extends StatelessWidget {
       customerName: 'Noraj Rayhan',
       customerEmail: 'rayhan@email.com',
       customerPhone: '08123456789',
-      shippingAddress: 'Jl. Merdeka No. 123, Komplek Kenanga Blok B No. 5, Jakarta Selatan 12780',
+      shippingAddress:
+          'Jl. Merdeka No. 123, Komplek Kenanga Blok B No. 5, Jakarta Selatan 12780',
       items: const [
-        {'product_name': 'Hoodie Katun', 'quantity': 1, 'price': 500.0, 'product_id': 'h1'},
-        {'product_name': 'Sepatu Lari X', 'quantity': 2, 'price': 300.0, 'product_id': 's2'},
+        {
+          'product_name': 'Hoodie Katun',
+          'quantity': 1,
+          'price': 500.0,
+          'product_id': 'h1',
+        },
+        {
+          'product_name': 'Sepatu Lari X',
+          'quantity': 2,
+          'price': 300.0,
+          'product_id': 's2',
+        },
       ],
       subtotal: 1100,
       tax: 25,

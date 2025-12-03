@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ecommerce/features/order/domain/entities/purchase_receipt.dart';
 import 'package:ecommerce/app/theme/app_theme.dart';
 import 'package:ecommerce/features/cart/presentation/cubits/cart_cubit.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 
 class OrderHistoryPage extends StatefulWidget {
   const OrderHistoryPage({super.key});
@@ -47,6 +48,110 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _saveReview(
+    String productId,
+    double rating,
+    String text,
+    PurchaseReceipt receipt,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('product_reviews') ?? '{}';
+    Map<String, dynamic> map = {};
+    try {
+      map = jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      map = {};
+    }
+
+    final List<dynamic> list = List<dynamic>.from(map[productId] ?? []);
+    list.add({
+      'rating': rating,
+      'text': text,
+      'orderId': receipt.orderId,
+      'orderDate': receipt.orderDate,
+    });
+    map[productId] = list;
+
+    await prefs.setString('product_reviews', jsonEncode(map));
+
+    if (mounted) {
+      await NotificationService.showIfEnabledDialog(
+        context,
+        title: 'Ulasan',
+        body: 'Ulasan berhasil disimpan',
+      );
+    }
+  }
+
+  void _showReviewDialog(
+    BuildContext context,
+    String productId,
+    String productName,
+    PurchaseReceipt receipt,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        double selectedRating = 5.0;
+        final TextEditingController controller = TextEditingController();
+        return StatefulBuilder(
+          builder: (context, setStateSB) {
+            return AlertDialog(
+              title: Text('Ulas $productName'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (i) {
+                        return IconButton(
+                          icon: Icon(
+                            i < selectedRating ? Icons.star : Icons.star_border,
+                            color: AppTheme.secondaryColor,
+                          ),
+                          onPressed: () =>
+                              setStateSB(() => selectedRating = i + 1.0),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: controller,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        hintText: 'Tulis ulasan Anda (opsional)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    await _saveReview(
+                      productId,
+                      selectedRating,
+                      controller.text.trim(),
+                      receipt,
+                    );
+                    if (mounted) Navigator.of(context).pop();
+                  },
+                  child: const Text('Kirim'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   String formatRupiah(double price) {
@@ -100,6 +205,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           if (item is Map<String, dynamic>) {
             final itemMap = item;
             productsList.add({
+              'product_id':
+                  (itemMap['product_id'] ?? itemMap['productId'] ?? '')
+                      .toString(),
               'product_image':
                   (itemMap['product_image'] ?? itemMap['productImage'] ?? '')
                       .toString()
@@ -210,6 +318,31 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
+                                const SizedBox(height: 6),
+                                SizedBox(
+                                  width: itemTextWidth,
+                                  child: TextButton.icon(
+                                    onPressed: () {
+                                      final pid = (product['product_id'] ?? '')
+                                          .toString();
+                                      _showReviewDialog(
+                                        context,
+                                        pid,
+                                        product['product_name']?.toString() ??
+                                            'Produk',
+                                        receipt,
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.rate_review,
+                                      size: 16,
+                                    ),
+                                    label: const Text(
+                                      'Ulas',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           );
@@ -233,7 +366,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         // Add items kembali ke cart
                         try {
                           for (var item in receipt.items) {
@@ -267,14 +400,11 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
                           // Show success message
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
+                            await NotificationService.showIfEnabledDialog(
+                              context,
+                              title: 'Berhasil',
+                              body:
                                   '${receipt.items.length} produk ditambahkan ke cart',
-                                ),
-                                backgroundColor: Colors.green,
-                                duration: const Duration(seconds: 2),
-                              ),
                             );
 
                             // Navigate to cart after short delay
@@ -289,11 +419,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                           }
                         } catch (e) {
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error: ${e.toString()}'),
-                                backgroundColor: Colors.red,
-                              ),
+                            await NotificationService.showIfEnabledDialog(
+                              context,
+                              title: 'Error',
+                              body: e.toString(),
                             );
                           }
                         }

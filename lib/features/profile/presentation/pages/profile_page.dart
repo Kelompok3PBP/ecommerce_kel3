@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
+import 'package:ecommerce/features/settings/data/notification_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
 
@@ -92,11 +93,10 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.t('error')),
-            backgroundColor: Colors.red,
-          ),
+        await NotificationService.showIfEnabledDialog(
+          context,
+          title: context.t('error'),
+          body: 'Gagal menyimpan gambar',
         );
       }
     }
@@ -157,9 +157,11 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(
+      await NotificationService.showIfEnabledDialog(
         context,
-      ).showSnackBar(SnackBar(content: Text(context.t('permission_required'))));
+        title: context.t('permission_required'),
+        body: 'Aplikasi memerlukan akses ke galeri',
+      );
     }
 
     return false;
