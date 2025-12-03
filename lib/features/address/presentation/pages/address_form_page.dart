@@ -9,7 +9,8 @@ import 'package:latlong2/latlong.dart' as ll;
 
 class AddressFormPage extends StatefulWidget {
   final Address? address;
-  const AddressFormPage({Key? key, this.address}) : super(key: key);
+  // Fiksasi: Menggunakan super.key untuk clean code
+  const AddressFormPage({super.key, this.address});
 
   @override
   State<AddressFormPage> createState() => _AddressFormPageState();
@@ -19,11 +20,17 @@ class _AddressFormPageState extends State<AddressFormPage> {
   final _formKey = GlobalKey<FormState>();
   ll.LatLng? _previewLatLng;
   bool _useSatellite = false;
+  
+  // Controllers Address
   late TextEditingController labelController;
   late TextEditingController streetController;
   late TextEditingController cityController;
   late TextEditingController postalController;
   late TextEditingController phoneController;
+  
+  // Penambahan Fiksasi: Controllers untuk menyimpan koordinat
+  late TextEditingController latitudeController;
+  late TextEditingController longitudeController;
 
   @override
   void initState() {
@@ -37,6 +44,21 @@ class _AddressFormPageState extends State<AddressFormPage> {
       text: widget.address?.postalCode ?? '',
     );
     phoneController = TextEditingController(text: widget.address?.phone ?? '');
+
+    // Fiksasi: Inisialisasi controller koordinat dengan data lama (jika ada)
+    latitudeController = TextEditingController(
+      text: widget.address?.latitude?.toString() ?? '',
+    );
+    longitudeController = TextEditingController(
+      text: widget.address?.longitude?.toString() ?? '',
+    );
+
+    // Fiksasi: Inisialisasi Map Preview jika ada koordinat
+    final initialLat = widget.address?.latitude;
+    final initialLng = widget.address?.longitude;
+    if (initialLat != null && initialLng != null) {
+      _previewLatLng = ll.LatLng(initialLat, initialLng);
+    }
   }
 
   @override
@@ -46,11 +68,18 @@ class _AddressFormPageState extends State<AddressFormPage> {
     cityController.dispose();
     postalController.dispose();
     phoneController.dispose();
+    // Fiksasi: Dispose controller koordinat
+    latitudeController.dispose();
+    longitudeController.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
+      // Fiksasi: Ambil dan parse koordinat sebelum membuat objek
+      final double? latitude = double.tryParse(latitudeController.text);
+      final double? longitude = double.tryParse(longitudeController.text);
+
       final address = Address(
         id: widget.address?.id ?? 0,
         label: labelController.text,
@@ -58,15 +87,48 @@ class _AddressFormPageState extends State<AddressFormPage> {
         city: cityController.text,
         postalCode: postalController.text,
         phone: phoneController.text,
+        
+        // Fiksasi: Menyimpan LatLng ke entitas Address
+        latitude: latitude,
+        longitude: longitude,
       );
+      
       final cubit = context.read<AddressCubit>();
+      
       if (widget.address == null) {
         cubit.create(address);
       } else {
         cubit.update(address);
       }
-      Navigator.pop(context);
+      
+      // Menggunakan context.pop() dari GoRouter
+      context.pop(); 
     }
+  }
+  
+  // Fiksasi: Method terpisah untuk handle hasil dari map picker
+  void _handleMapResult(Map<String, dynamic> result) {
+    setState(() {
+      streetController.text = result['street'] ?? '';
+      cityController.text = result['city'] ?? '';
+      postalController.text = result['postal'] ?? '';
+
+      final latStr = result['lat'];
+      final lngStr = result['lng'];
+
+      if (latStr != null && lngStr != null) {
+        final lat = double.tryParse(latStr.toString());
+        final lng = double.tryParse(lngStr.toString());
+        
+        if (lat != null && lng != null) {
+          _previewLatLng = ll.LatLng(lat, lng);
+          
+          // Fiksasi: Menyimpan LatLng ke controller
+          latitudeController.text = lat.toString();
+          longitudeController.text = lng.toString();
+        }
+      }
+    });
   }
 
   @override
@@ -184,37 +246,38 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
                   SizedBox(height: spacingLarge),
 
-                  // ➕ GOOGLE MAP PICKER BUTTON
+                  // GOOGLE MAP PICKER BUTTON
                   ElevatedButton.icon(
                     onPressed: () async {
                       final result =
                           await context.push('/map') as Map<String, dynamic>?;
 
                       if (result != null) {
-                        setState(() {
-                          streetController.text = result['street'] ?? '';
-                          cityController.text = result['city'] ?? '';
-                          postalController.text = result['postal'] ?? '';
-
-                          // if map returned coordinates, show map preview
-                          final latStr = result['lat'];
-                          final lngStr = result['lng'];
-                          if (latStr != null && lngStr != null) {
-                            final lat = double.tryParse(latStr.toString());
-                            final lng = double.tryParse(lngStr.toString());
-                            if (lat != null && lng != null) {
-                              _previewLatLng = ll.LatLng(lat, lng);
-                            }
-                          }
-                        });
+                        _handleMapResult(result); // Panggil method fiksasi
                       }
                     },
                     icon: const Icon(Icons.location_on),
-                    label: const Text("Pilih Lokasi di Maps"),
+                    label: Text(
+                      _previewLatLng == null
+                          ? "Pilih Lokasi di Maps"
+                          : "Ubah Lokasi di Maps",
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueGrey,
                       foregroundColor: Colors.white,
                       minimumSize: Size(double.infinity, buttonHeight),
+                    ),
+                  ),
+
+                  // Fiksasi Penambahan: Field tersembunyi untuk LatLng
+                  SizedBox(
+                    height: 0,
+                    width: 0,
+                    child: Column(
+                      children: [
+                        TextFormField(controller: latitudeController),
+                        TextFormField(controller: longitudeController),
+                      ],
                     ),
                   ),
 
@@ -226,8 +289,13 @@ class _AddressFormPageState extends State<AddressFormPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            // Fiksasi: Tampilkan koordinat yang dipilih
+                            Text(
+                              'Lokasi Dipilih (${_previewLatLng!.latitude.toStringAsFixed(4)}, ${_previewLatLng!.longitude.toStringAsFixed(4)})',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
                             IconButton(
                               tooltip: _useSatellite ? 'Streets' : 'Satellite',
                               icon: Icon(
@@ -243,8 +311,8 @@ class _AddressFormPageState extends State<AddressFormPage> {
                           height: isWide ? 260 : 180,
                           child: fm.FlutterMap(
                             options: fm.MapOptions(
-                              center: _previewLatLng,
-                              zoom: 16.0,
+                              initialCenter: _previewLatLng!, // Fiksasi: menggunakan initialCenter
+                              initialZoom: 16.0,
                             ),
                             children: [
                               fm.TileLayer(
@@ -274,6 +342,8 @@ class _AddressFormPageState extends State<AddressFormPage> {
                         ),
                       ],
                     ),
+
+                  SizedBox(height: spacingLarge),
 
                   // SUBMIT BUTTON
                   SizedBox(

@@ -212,4 +212,6 @@ class Product extends BaseProduct {
 
   @override
   int get hashCode => _id.hashCode;
+
+  get weight => null;
 }

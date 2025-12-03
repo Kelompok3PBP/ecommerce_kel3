@@ -1,4 +1,8 @@
+// lib/features/order/domain/entities/purchase_receipt.dart (FINAL & SIAP TEMPEL)
+
 import 'package:ecommerce/features/product/domain/entities/product.dart';
+import '../../../shipping/domain/entities/shipping_option.dart'; // Import Wajib
+import 'package:equatable/equatable.dart'; 
 
 class PurchaseReceipt extends Product {
   final String _orderId;
@@ -9,7 +13,7 @@ class PurchaseReceipt extends Product {
   final String _shippingAddress;
   final List<dynamic> _items;
   final double _subtotal;
-  final double _shippingCost;
+  // final double _shippingCost; <--- DIBIARKAN DIHAPUS
   final double _tax;
   final double _discount;
   final double _totalAmount;
@@ -19,7 +23,11 @@ class PurchaseReceipt extends Product {
   final int _installmentMonths;
   final double _installmentAmount;
 
+  // FIELD BARU: Objek Opsi Pengiriman
+  final ShippingOption? _selectedShippingOption;
+
   PurchaseReceipt({
+    // Product parent fields
     required int id,
     required String title,
     required double price,
@@ -28,6 +36,7 @@ class PurchaseReceipt extends Product {
     required String image,
     required double rating,
     required int ratingCount,
+    
     // PurchaseReceipt specific fields
     required String orderId,
     required String orderDate,
@@ -37,7 +46,7 @@ class PurchaseReceipt extends Product {
     required String shippingAddress,
     required List<dynamic> items,
     required double subtotal,
-    required double shippingCost,
+    // required double shippingCost, <--- SUDAH DIHAPUS DARI PARAMETER
     required double tax,
     required double discount,
     required double totalAmount,
@@ -46,35 +55,41 @@ class PurchaseReceipt extends Product {
     required String purchaseStructure,
     required int installmentMonths,
     required double installmentAmount,
+    
+    // PARAMETER BARU: ShippingOption yang bersifat opsional
+    ShippingOption? selectedShippingOption, 
+  // HAPUS: required int shippingCost, <-- BARIS INI YANG ERROR
   }) : _orderId = orderId,
-       _orderDate = orderDate,
-       _customerName = customerName,
-       _customerEmail = customerEmail,
-       _customerPhone = customerPhone,
-       _shippingAddress = shippingAddress,
-       _items = items,
-       _subtotal = subtotal,
-       _shippingCost = shippingCost,
-       _tax = tax,
-       _discount = discount,
-       _totalAmount = totalAmount,
-       _paymentMethod = paymentMethod,
-       _paymentStatus = paymentStatus,
-       _purchaseStructure = purchaseStructure,
-       _installmentMonths = installmentMonths,
-       _installmentAmount = installmentAmount,
-       super(
-         id: id,
-         title: title,
-         price: price,
-         description: description,
-         category: category,
-         image: image,
-         rating: rating,
-         ratingCount: ratingCount,
-       );
+        _orderDate = orderDate,
+        _customerName = customerName,
+        _customerEmail = customerEmail,
+        _customerPhone = customerPhone,
+        _shippingAddress = shippingAddress,
+        _items = items,
+        _subtotal = subtotal,
+        // _shippingCost = shippingCost, <--- DIHAPUS
+        _tax = tax,
+        _discount = discount,
+        _totalAmount = totalAmount,
+        _paymentMethod = paymentMethod,
+        _paymentStatus = paymentStatus,
+        _purchaseStructure = purchaseStructure,
+        _installmentMonths = installmentMonths,
+        _installmentAmount = installmentAmount,
+        // INISIALISASI FIELD BARU DENGAN PARAMETER LOKAL
+        _selectedShippingOption = selectedShippingOption,
+        super(
+          id: id,
+          title: title,
+          price: price,
+          description: description,
+          category: category,
+          image: image,
+          rating: rating,
+          ratingCount: ratingCount,
+        );
 
-  // Getters - controlled access to private fields (ENCAPSULATION)
+  // Getters
   String get orderId => _orderId;
   String get orderDate => _orderDate;
   String get customerName => _customerName;
@@ -83,7 +98,13 @@ class PurchaseReceipt extends Product {
   String get shippingAddress => _shippingAddress;
   List<dynamic> get items => List.unmodifiable(_items);
   double get subtotal => _subtotal;
-  double get shippingCost => _shippingCost;
+  
+  // MODIFIKASI: Ambil biaya kirim dari objek ShippingOption (SUDAH BENAR)
+  // Getter ini mengambil alih (override) field dari PurchaseReceipt.dart yang asli
+  // yang Anda hapus, sehingga kode lama yang mengakses .shippingCost tetap berfungsi.
+  @override
+  double get shippingCost => _selectedShippingOption?.cost ?? 0.0; 
+  
   double get tax => _tax;
   double get discount => _discount;
   double get totalAmount => _totalAmount;
@@ -92,14 +113,13 @@ class PurchaseReceipt extends Product {
   String get purchaseStructure => _purchaseStructure;
   int get installmentMonths => _installmentMonths;
   double get installmentAmount => _installmentAmount;
+  
+  // Getter BARU
+  ShippingOption? get selectedShippingOption => _selectedShippingOption;
 
   /// Override validateData from parent class - POLYMORPHISM
-  /// Validates both product data and purchase-specific data
-  /// More lenient than parent for purchase receipt context
   @override
   bool validateData() {
-    // For PurchaseReceipt, we validate receipt-specific fields
-    // Parent validation can be more strict, but we relax here for receipts
     return _orderId.isNotEmpty &&
         _customerName.isNotEmpty &&
         _customerEmail.isNotEmpty &&
@@ -151,6 +171,7 @@ class PurchaseReceipt extends Product {
         (json[a] ?? json[b] ?? []) as List<dynamic>;
 
     final ratingData = json['rating'] ?? {};
+    final shippingJson = json['selectedShippingOption'] as Map<String, dynamic>?; // Ambil Data Kurir
 
     return PurchaseReceipt(
       // Product parent fields
@@ -174,7 +195,7 @@ class PurchaseReceipt extends Product {
       shippingAddress: _s('shippingAddress', 'shipping_address'),
       items: _l('items', 'items'),
       subtotal: _d('subtotal', 'subtotal'),
-      shippingCost: _d('shippingCost', 'shipping_cost'),
+      // shippingCost: _d('shippingCost', 'shipping_cost'), <--- HAPUS
       tax: _d('tax', 'tax'),
       discount: _d('discount', 'discount'),
       totalAmount: _d('totalAmount', 'total_amount'),
@@ -183,6 +204,11 @@ class PurchaseReceipt extends Product {
       purchaseStructure: _s('purchaseStructure', 'purchase_structure'),
       installmentMonths: _i('installmentMonths', 'installment_months'),
       installmentAmount: _d('installmentAmount', 'installment_amount'),
+      
+      // INISIALISASI FIELD BARU
+      selectedShippingOption: shippingJson != null 
+          ? ShippingOption.fromJson(shippingJson) 
+          : null,
     );
   }
 
@@ -200,7 +226,7 @@ class PurchaseReceipt extends Product {
       'shippingAddress': _shippingAddress,
       'items': _items,
       'subtotal': _subtotal,
-      'shippingCost': _shippingCost,
+      // 'shippingCost': _shippingCost, <--- HAPUS
       'tax': _tax,
       'discount': _discount,
       'totalAmount': _totalAmount,
@@ -209,6 +235,9 @@ class PurchaseReceipt extends Product {
       'purchaseStructure': _purchaseStructure,
       'installmentMonths': _installmentMonths,
       'installmentAmount': _installmentAmount,
+      
+      // Tambahkan FIELD BARU
+      'selectedShippingOption': _selectedShippingOption?.toJson(),
     };
   }
 

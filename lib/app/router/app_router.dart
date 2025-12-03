@@ -23,12 +23,18 @@ import 'package:ecommerce/features/settings/presentation/pages/about_page.dart';
 import 'package:ecommerce/features/settings/presentation/pages/device_info_page.dart';
 
 // --- FIX 1: Gunakan alias 'as' untuk menghindari konflik nama class ---
-import 'package:ecommerce/features/settings/presentation/pages/feedback_page.dart' as feedback_ui;
+import 'package:ecommerce/features/settings/presentation/pages/feedback_page.dart'
+    as feedback_ui;
 
 import 'package:ecommerce/features/address/presentation/pages/address_list_page.dart';
 import 'package:ecommerce/features/address/presentation/pages/map_page.dart';
 import 'package:ecommerce/features/settings/presentation/pages/shared_preferences_page.dart';
 import 'package:ecommerce/features/order/presentation/pages/order_history_page.dart';
+import 'package:ecommerce/features/shipping/presentation/pages/shipping_selection_page.dart';
+import 'package:ecommerce/features/shipping/presentation/cubits/shipping_cubit.dart';
+import 'package:ecommerce/features/shipping/domain/usecases/get_shipping_options_usecase.dart';
+import 'package:ecommerce/features/shipping/data/shipping_service.dart';
+import 'package:ecommerce/features/shipping/data/repositories/shipping_repository_impl.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -67,9 +73,15 @@ class AppRouter {
     routes: <RouteBase>[
       // Splash & Auth
       GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
-      GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
+      GoRoute(
+        path: '/welcome',
+        builder: (context, state) => const WelcomeScreen(),
+      ),
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
-      GoRoute(path: '/register', builder: (context, state) => const RegisterPage()),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterPage(),
+      ),
 
       // Dashboard
       GoRoute(
@@ -95,7 +107,8 @@ class AppRouter {
       GoRoute(
         path: '/edit-profile',
         builder: (context, state) {
-          final data = state.extra as Map<String, String>? ?? {'name': '', 'email': ''};
+          final data =
+              state.extra as Map<String, String>? ?? {'name': '', 'email': ''};
           return EditProfilePage(name: data['name']!, email: data['email']!);
         },
       ),
@@ -113,6 +126,26 @@ class AppRouter {
         },
       ),
       GoRoute(path: '/cart', builder: (context, state) => const CartPage()),
+
+      // Shipping Selection
+      GoRoute(
+        path: '/shipping-selection',
+        builder: (context, state) => MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (context) => ShippingCubit(
+                GetShippingOptionsUseCase(
+                  ShippingRepositoryImpl(ShippingService()),
+                ),
+              ),
+            ),
+            BlocProvider(
+              create: (context) => AddressCubit(AddressService())..fetchAll(),
+            ),
+          ],
+          child: const ShippingSelectionPage(),
+        ),
+      ),
 
       // Order & Payment
       GoRoute(
@@ -144,10 +177,13 @@ class AppRouter {
         // Pastikan class di settings_page.dart bernama SettingsPage
         builder: (context, state) => const SettingsPage(),
       ),
-      
+
       GoRoute(path: '/about', builder: (context, state) => const AboutPage()),
-      GoRoute(path: '/device-info', builder: (context, state) => const DeviceInfoPage()),
-      
+      GoRoute(
+        path: '/device-info',
+        builder: (context, state) => const DeviceInfoPage(),
+      ),
+
       GoRoute(
         path: '/feedback',
         // --- FIX 2: Panggil menggunakan prefix ---

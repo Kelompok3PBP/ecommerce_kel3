@@ -399,7 +399,7 @@ class _CartPageState extends State<CartPage> {
                               jsonEncode(sel),
                             );
 
-                            context.go('/payment', extra: selectedTotal);
+                            context.go('/shipping-selection');
                           },
                     child: Text(
                       context.t('checkout'),

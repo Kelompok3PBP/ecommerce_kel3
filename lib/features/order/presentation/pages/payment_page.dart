@@ -1,3 +1,5 @@
+// Path: lib/features/payment/presentation/pages/payment_page.dart
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart' as sp;
 import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
+import 'package:ecommerce/features/shipping/domain/entities/shipping_option.dart'; // Import ShippingOption
 
 class PaymentPage extends StatefulWidget {
   final double total;
@@ -18,6 +21,28 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   String? selectedMethod;
+  double shippingCost = 0.0;
+  ShippingOption? selectedShippingOption;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadShippingData();
+  }
+
+  // Fungsi untuk memuat data pengiriman
+  Future<void> _loadShippingData() async {
+    final prefs = await sp.SharedPreferences.getInstance();
+    final shippingJson = prefs.getString('selected_shipping_option');
+
+    if (shippingJson != null) {
+      final Map<String, dynamic> map = jsonDecode(shippingJson);
+      setState(() {
+        selectedShippingOption = ShippingOption.fromJson(map);
+        shippingCost = selectedShippingOption!.cost;
+      });
+    }
+  }
 
   String formatRupiah(double price) {
     final format = NumberFormat.currency(
@@ -30,6 +55,9 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Total Akhir = Total Item + Biaya Kirim
+    final finalTotal = widget.total + shippingCost;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
@@ -47,22 +75,27 @@ class _PaymentPageState extends State<PaymentPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- Detail Pengiriman ---
+            _buildShippingDetails(),
+            const SizedBox(height: 12.0),
+            // --- Total Pembayaran ---
             Text(
-              '${context.t('cart_total')} ${formatRupiah(widget.total)}',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              '${context.t('final_total_payment')}: ${formatRupiah(finalTotal)}',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24.0),
-            Text(context.t('payment_method'), style: TextStyle(fontSize: 16)),
+            Text(context.t('payment_method'), style: const TextStyle(fontSize: 16)),
+            // --- Pilihan Metode Pembayaran (Tetap sama) ---
             RadioListTile<String>(
               value: 'Transfer Bank',
               groupValue: selectedMethod,
-              title: Text('Transfer Bank', style: TextStyle(fontSize: 15)),
+              title: const Text('Transfer Bank', style: TextStyle(fontSize: 15)),
               onChanged: (v) => setState(() => selectedMethod = v),
             ),
             RadioListTile<String>(
               value: 'E-Wallet (OVO, DANA, GoPay)',
               groupValue: selectedMethod,
-              title: Text(
+              title: const Text(
                 'E-Wallet (OVO, DANA, GoPay)',
                 style: TextStyle(fontSize: 15),
               ),
@@ -71,20 +104,21 @@ class _PaymentPageState extends State<PaymentPage> {
             RadioListTile<String>(
               value: 'Bayar di Tempat (COD)',
               groupValue: selectedMethod,
-              title: Text(
+              title: const Text(
                 'Bayar di Tempat (COD)',
                 style: TextStyle(fontSize: 15),
               ),
               onChanged: (v) => setState(() => selectedMethod = v),
             ),
             const Spacer(),
+            // --- Tombol Bayar ---
             ElevatedButton(
               style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
                 minimumSize: MaterialStateProperty.all(
                   const Size(double.infinity, 56.0),
                 ),
               ),
-              onPressed: selectedMethod == null
+              onPressed: selectedMethod == null || selectedShippingOption == null
                   ? null
                   : () async {
                       final prefs = await sp.SharedPreferences.getInstance();
@@ -96,14 +130,13 @@ class _PaymentPageState extends State<PaymentPage> {
                       List<Map<String, dynamic>> items = [];
                       double subtotal = 0;
 
+                      // Logika Pengambilan Item Cart (Tetap Sama)
                       try {
-                        // First try to read selected checkout items saved by CartPage
                         final selJson = prefs.getString('selected_checkout');
                         if (selJson != null) {
                           final parsed = jsonDecode(selJson) as List<dynamic>;
                           for (var entry in parsed) {
-                            final Map<String, dynamic> m =
-                                Map<String, dynamic>.from(entry as Map);
+                            final Map<String, dynamic> m = Map<String, dynamic>.from(entry as Map);
                             final qty = (m['quantity'] ?? 1) as num;
                             final price = (m['price'] ?? 0) as num;
                             items.add({
@@ -136,12 +169,10 @@ class _PaymentPageState extends State<PaymentPage> {
                         subtotal = widget.total;
                       }
 
-                      final orderId = DateTime.now().millisecondsSinceEpoch
-                          .toString();
-                      final orderDate = DateFormat(
-                        'yyyy-MM-dd HH:mm:ss',
-                      ).format(DateTime.now());
+                      final orderId = DateTime.now().millisecondsSinceEpoch.toString();
+                      final orderDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
 
+                      // --- MAP RECEIPT BARU (TAMBAH DETAIL PENGIRIMAN) ---
                       final receiptMap = {
                         'order_id': orderId,
                         'order_date': orderDate,
@@ -151,29 +182,29 @@ class _PaymentPageState extends State<PaymentPage> {
                         'shipping_address': address,
                         'items': items,
                         'subtotal': subtotal,
-                        'shipping_cost': 0,
+                        'shipping_cost': shippingCost, // Menggunakan biaya kirim yang dimuat
                         'tax': 0,
                         'discount': 0,
-                        'total_amount': widget.total,
+                        'total_amount': finalTotal, // Menggunakan total akhir
                         'payment_method': selectedMethod,
                         'payment_status': 'Success',
                         'purchase_structure': 'Pembayaran Penuh',
                         'installment_months': 0,
                         'installment_amount': 0,
+                        // Detail Shipping Option di-embed
+                        'selected_shipping_option': selectedShippingOption!.toJson(),
                       };
 
                       final receiptJson = jsonEncode(receiptMap);
-                      final historyList =
-                          prefs.getStringList('purchase_history') ?? [];
+                      final historyList = prefs.getStringList('purchase_history') ?? [];
                       historyList.insert(0, receiptJson);
-                      await prefs.setStringList(
-                        'purchase_history',
-                        historyList,
-                      );
-
-                      // Clear cart and temporary selected list
+                      
+                      await prefs.setStringList('purchase_history', historyList);
+                      
+                      // Clear cart dan temporary selected list + shipping option
                       context.read<CartCubit>().clear();
                       await prefs.remove('selected_checkout');
+                      await prefs.remove('selected_shipping_option'); // Hapus data pengiriman sementara
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -189,11 +220,33 @@ class _PaymentPageState extends State<PaymentPage> {
                         );
                       }
                     },
-              child: Text(context.t('pay_now'), style: TextStyle(fontSize: 16)),
+              child: Text(context.t('pay_now'), style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildShippingDetails() {
+    if (selectedShippingOption == null) {
+      return Text(
+        'Pengiriman: Belum dipilih. Kembali ke keranjang untuk memilih.',
+        style: TextStyle(color: Colors.red[700]),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Detail Pengiriman:',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+        ),
+        const SizedBox(height: 4),
+        Text('Kurir: ${selectedShippingOption!.courierName} (${selectedShippingOption!.name})'),
+        Text('Estimasi: ${selectedShippingOption!.estimate}'),
+        Text('Biaya Kirim: ${formatRupiah(selectedShippingOption!.cost)}'),
+      ],
     );
   }
 }

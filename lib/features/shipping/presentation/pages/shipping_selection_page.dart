@@ -1,0 +1,241 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart' as sp;
+
+// Import Entitas Dummy yang diperlukan untuk memuat opsi
+import '../../../address/domain/entities/address.dart';
+import '../../../address/presentation/cubits/address_cubit.dart';
+import '../cubits/shipping_cubit.dart';
+import '../../domain/entities/shipping_option.dart';
+import '../widgets/shipping_selector_dialog.dart'; // (optional helper dialog)
+
+class ShippingSelectionPage extends StatefulWidget {
+  static const String routeName = '/shipping-selection';
+
+  const ShippingSelectionPage({super.key});
+
+  @override
+  State<ShippingSelectionPage> createState() => _ShippingSelectionPageState();
+}
+
+class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
+  Address? _selectedAddress;
+  ShippingOption? _selectedOption;
+  double _subtotal = 0.0;
+  double _totalWeight = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ensure addresses are loaded by AddressCubit (router also triggers fetchAll())
+    try {
+      final addrCubit = context.read<AddressCubit>();
+      addrCubit.fetchAll();
+    } catch (_) {
+      // AddressCubit not provided above — router should provide it.
+    }
+
+    _loadSelectedCheckout();
+  }
+
+  Future<void> _loadSelectedCheckout() async {
+    final prefs = await sp.SharedPreferences.getInstance();
+    final selJson = prefs.getString('selected_checkout');
+    if (selJson == null) return;
+
+    try {
+      final List items = jsonDecode(selJson) as List;
+      double subtotal = 0.0;
+      double weight = 0.0;
+      for (final it in items) {
+        final price = (it['price'] as num?)?.toDouble() ?? 0.0;
+        final qty = (it['quantity'] as num?)?.toInt() ?? 1;
+        subtotal += price * qty;
+        weight += qty * 1.0; // assume 1kg per item if not available
+      }
+
+      setState(() {
+        _subtotal = subtotal;
+        _totalWeight = weight;
+      });
+    } catch (_) {}
+  }
+
+  void _onLoadShippingOptions() {
+    if (_selectedAddress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih alamat terlebih dahulu')),
+      );
+      return;
+    }
+
+    context.read<ShippingCubit>().loadShippingOptions(
+      address: _selectedAddress!,
+      totalWeight: _totalWeight > 0 ? _totalWeight : 1.0,
+    );
+  }
+
+  Future<void> _proceedToPayment() async {
+    final state = context.read<ShippingCubit>().state;
+    if (state is! ShippingLoaded || state.selectedOption == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih opsi pengiriman terlebih dahulu')),
+      );
+      return;
+    }
+
+    final selected = state.selectedOption!;
+    final prefs = await sp.SharedPreferences.getInstance();
+    await prefs.setString(
+      'selected_shipping_option',
+      jsonEncode(selected.toJson()),
+    );
+
+    final finalTotal = _subtotal + selected.cost;
+
+    // Navigate to payment and pass final total
+    context.go('/payment', extra: finalTotal);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Pilih Jasa Pengiriman')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pilih Alamat',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+
+            // Addresses
+            BlocBuilder<AddressCubit, AddressState>(
+              builder: (context, astate) {
+                if (astate is AddressLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (astate is AddressListLoaded) {
+                  final addrs = astate.addresses;
+                  if (addrs.isEmpty)
+                    return const Text(
+                      'Belum ada alamat. Tambah di Pengaturan > Alamat.',
+                    );
+
+                  return Column(
+                    children: addrs.map((addr) {
+                      return RadioListTile<Address>(
+                        value: addr,
+                        groupValue: _selectedAddress,
+                        title: Text('${addr.label} — ${addr.street}'),
+                        subtitle: Text('${addr.city} • ${addr.postalCode}'),
+                        onChanged: (v) => setState(() => _selectedAddress = v),
+                      );
+                    }).toList(),
+                  );
+                }
+
+                if (astate is AddressError)
+                  return Text('Error: ${astate.message}');
+
+                return const Text('Memuat alamat...');
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            const Divider(),
+            const SizedBox(height: 8),
+
+            const Text(
+              'Opsi Pengiriman',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+
+            // Shipping options
+            Expanded(
+              child: BlocConsumer<ShippingCubit, ShippingState>(
+                listener: (context, state) {
+                  if (state is ShippingError) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(state.message)));
+                  }
+                },
+                builder: (context, state) {
+                  if (state is ShippingLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state is ShippingLoaded) {
+                    final options = state.options;
+                    if (options.isEmpty)
+                      return const Text('Tidak ada opsi pengiriman.');
+
+                    return ListView(
+                      children: options.map((opt) {
+                        return RadioListTile<ShippingOption>(
+                          value: opt,
+                          groupValue: state.selectedOption,
+                          title: Text('${opt.courierName} — ${opt.name}'),
+                          subtitle: Text(
+                            'Estimasi: ${opt.estimate ?? '-'} • Biaya: Rp ${opt.cost.toStringAsFixed(0)}',
+                          ),
+                          onChanged: (v) {
+                            if (v != null)
+                              context
+                                  .read<ShippingCubit>()
+                                  .selectShippingOption(v);
+                          },
+                        );
+                      }).toList(),
+                    );
+                  }
+
+                  // Initial / empty state
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Tekan tombol di bawah untuk memuat opsi pengiriman',
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: _onLoadShippingOptions,
+                          child: const Text('Pilih Jasa Pengiriman'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // Bottom action: proceed to payment
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _proceedToPayment,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: Colors.green.shade700,
+                ),
+                child: Text(
+                  'Lanjut ke Pembayaran (Rp ${(_subtotal + (context.read<ShippingCubit>().state is ShippingLoaded && (context.read<ShippingCubit>().state as ShippingLoaded).selectedOption != null ? (context.read<ShippingCubit>().state as ShippingLoaded).selectedOption!.cost : 0.0)).toStringAsFixed(0)})',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
