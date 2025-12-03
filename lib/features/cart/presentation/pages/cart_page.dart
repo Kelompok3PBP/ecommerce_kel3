@@ -19,6 +19,16 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> {
   final Set<dynamic> selectedProducts = {};
 
+  // --- Helper untuk Warna Adaptif ---
+  Color _getTextPrimaryColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onBackground;
+  }
+
+  Color _getTextSecondaryColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+  // ----------------------------------
+
   String formatRupiah(double price) {
     final format = NumberFormat.currency(
       locale: 'id_ID',
@@ -31,17 +41,25 @@ class _CartPageState extends State<CartPage> {
   double getSelectedTotal(Map<dynamic, int> items) {
     double total = 0;
     for (var product in selectedProducts) {
+      // Pastikan product memiliki properti price dan itu double
+      final price = (product.price is num) ? (product.price as num).toDouble() : double.tryParse(product.price.toString()) ?? 0.0;
       final qty = items[product] ?? 0;
-      total += (product.price ?? 0) * qty;
+      total += price * qty;
     }
     return total;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textPrimaryColor = _getTextPrimaryColor(context);
+    final textSecondaryColor = _getTextSecondaryColor(context);
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      // 💡 Menggunakan scaffoldBackgroundColor dari tema
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        // AppBar tetap primaryColor
         backgroundColor: AppTheme.primaryColor,
         elevation: 0,
         leading: IconButton(
@@ -88,6 +106,7 @@ class _CartPageState extends State<CartPage> {
                         children: [
                           Icon(
                             Icons.shopping_bag_outlined,
+                            // Icon menggunakan secondary color
                             color: AppTheme.secondaryColor,
                             size: iconSize,
                           ),
@@ -96,7 +115,8 @@ class _CartPageState extends State<CartPage> {
                             context.t('cart_empty') + ' 🛍️',
                             style: TextStyle(
                               fontSize: isMobile ? 18 : 18.0,
-                              color: AppTheme.textSecondaryColor,
+                              // 💡 Warna teks adaptif
+                              color: textSecondaryColor,
                             ),
                           ),
                         ],
@@ -105,7 +125,6 @@ class _CartPageState extends State<CartPage> {
                   }
 
                   // Select all by default if nothing selected.
-                  // Use post frame callback to avoid calling setState during build.
                   if (selectedProducts.isEmpty) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (mounted) {
@@ -129,7 +148,8 @@ class _CartPageState extends State<CartPage> {
                           style: TextStyle(
                             fontSize: isMobile ? 20 : 22.0,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimaryColor,
+                            // 💡 Warna teks adaptif
+                            color: textPrimaryColor,
                           ),
                         ),
                         SizedBox(height: isMobile ? 2.h : 16.0),
@@ -147,16 +167,13 @@ class _CartPageState extends State<CartPage> {
 
                               return Container(
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
+                                  // 💡 Menggunakan cardColor dari tema
+                                  color: theme.cardColor,
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          (Theme.of(context).brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.white
-                                                  : Colors.black)
-                                              .withOpacity(0.1),
+                                      // 💡 Warna shadow adaptif
+                                      color: textPrimaryColor.withOpacity(0.1),
                                       blurRadius: 6,
                                       offset: const Offset(0, 2),
                                     ),
@@ -183,6 +200,9 @@ class _CartPageState extends State<CartPage> {
                                             }
                                           });
                                         },
+                                        // Checkbox warna utama dari tema (adaptif)
+                                        activeColor: theme.primaryColor,
+                                        checkColor: Colors.white,
                                       ),
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
@@ -206,8 +226,8 @@ class _CartPageState extends State<CartPage> {
                                               style: TextStyle(
                                                 fontSize: isMobile ? 16 : 18.0,
                                                 fontWeight: FontWeight.w600,
-                                                color:
-                                                    AppTheme.textPrimaryColor,
+                                                // 💡 Warna teks adaptif
+                                                color: textPrimaryColor,
                                               ),
                                             ),
                                             SizedBox(
@@ -235,8 +255,8 @@ class _CartPageState extends State<CartPage> {
                                                     ),
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                          12,
-                                                        ),
+                                                      12,
+                                                    ),
                                                   ),
                                                   child: Row(
                                                     children: [
@@ -261,6 +281,8 @@ class _CartPageState extends State<CartPage> {
                                                               : 16.0,
                                                           fontWeight:
                                                               FontWeight.w500,
+                                                          // 💡 Warna teks adaptif
+                                                          color: textPrimaryColor, 
                                                         ),
                                                       ),
                                                       IconButton(
@@ -328,14 +350,12 @@ class _CartPageState extends State<CartPage> {
           return Container(
             padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
+              // 💡 Menggunakan cardColor dari tema
+              color: theme.cardColor,
               boxShadow: [
                 BoxShadow(
-                  color:
-                      (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white
-                              : Colors.black)
-                          .withOpacity(0.1),
+                  // 💡 Warna shadow adaptif
+                  color: textPrimaryColor.withOpacity(0.1),
                   blurRadius: 6,
                   offset: const Offset(0, -2),
                 ),
@@ -351,11 +371,12 @@ class _CartPageState extends State<CartPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       "Total Price",
                       style: TextStyle(
                         fontSize: 16,
-                        color: AppTheme.textSecondaryColor,
+                        // 💡 Warna teks adaptif
+                        color: textSecondaryColor,
                       ),
                     ),
                     Text(
@@ -391,7 +412,7 @@ class _CartPageState extends State<CartPage> {
                                 'price': p.price,
                                 'quantity':
                                     (context.read<CartCubit>().state.items[p] ??
-                                    1),
+                                        1),
                               };
                             }).toList();
                             await prefs.setString(

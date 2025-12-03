@@ -17,7 +17,7 @@ import 'package:ecommerce/app/theme/app_theme.dart';
 
 class DashboardPage extends StatefulWidget {
   final String email;
-  const DashboardPage({super.key, required this.email});
+  const DashboardPage({super.key, required final this.email});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -45,6 +45,9 @@ class _DashboardPageState extends State<DashboardPage> {
     super.initState();
     _loadUserInfo();
     _searchController = TextEditingController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductCubit>().fetchProducts();
+    });
   }
 
   @override
@@ -142,6 +145,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final screenWidth = MediaQuery.of(context).size.width;
+    final theme = Theme.of(context);
 
     // Dynamic scale biar ukuran pas di semua device
     double fontScale = screenWidth < 600
@@ -223,186 +227,196 @@ class _DashboardPageState extends State<DashboardPage> {
           products = state.products;
           _applyFilters();
 
-          return RefreshIndicator(
-            color: Theme.of(context).primaryColor,
-            onRefresh: () async {
-              _searchProducts("");
-              await context.read<ProductCubit>().fetchProducts();
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 1.h * paddingScale),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Responsive banner: use LayoutBuilder and Sizer so height
-                    // adapts smoothly across device sizes without distortion.
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final w = constraints.maxWidth;
-                        // Choose banner height based on available width, but
-                        // expressed with Sizer (.h) so it scales with screen height.
-                        double bannerHeight;
-                        if (w < 600) {
-                          bannerHeight = 20.h;
-                        } else if (w < 1000) {
-                          bannerHeight = 16.h;
-                        } else {
-                          bannerHeight = 12.h;
-                        }
+          return Column(
+            children: [
+              // Bagian Header yang TIDAK AKAN digulir (Statis)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Banner (Responsif)
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final w = constraints.maxWidth;
+                      double bannerHeight;
+                      if (w < 600) {
+                        bannerHeight = 20.h;
+                      } else if (w < 1000) {
+                        bannerHeight = 16.h;
+                      } else {
+                        bannerHeight = 12.h;
+                      }
 
-                        // Ensure a reasonable min/max pixel height to avoid
-                        // extremely small or huge banners on edge cases.
-                        if (bannerHeight < 120) bannerHeight = 120;
-                        if (bannerHeight > 320) bannerHeight = 320;
+                      if (bannerHeight < 120) bannerHeight = 120;
+                      if (bannerHeight > 320) bannerHeight = 320;
 
-                        return Container(
-                          width: double.infinity,
-                          height: bannerHeight,
-                          decoration: const BoxDecoration(
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(40),
-                              bottomRight: Radius.circular(40),
-                            ),
+                      return Container(
+                        width: double.infinity,
+                        height: bannerHeight,
+                        decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(40),
+                            bottomRight: Radius.circular(40),
                           ),
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(40),
-                              bottomRight: Radius.circular(40),
-                            ),
-                            child: Image.asset(
-                              'assets/images/banner.png',
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: bannerHeight,
-                              alignment: Alignment.center,
-                            ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(40),
+                            bottomRight: Radius.circular(40),
                           ),
-                        );
+                          child: Image.asset(
+                            'assets/images/banner.png',
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: bannerHeight,
+                            alignment: Alignment.center,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  SizedBox(height: 2.h * paddingScale),
+                  _buildCategoryChips(), // Chips Kategori
+
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 3.w,
+                      vertical: 1.h,
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: context.t('search'),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          // Menggunakan warna sekunder tema (adaptif)
+                          color: theme.colorScheme.secondary,
+                        ),
+                        suffixIcon: _currentQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _searchProducts('');
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          // Border color yang adaptif
+                          borderSide: BorderSide(color: theme.dividerColor),
+                        ),
+                        filled: true,
+                        // GUNAKAN cardColor DARI TEMA (ADAPTIF!)
+                        fillColor: theme.cardColor,
+                      ),
+                      onChanged: (v) => _searchProducts(v),
+                      // Tambahkan style untuk memastikan teks input terlihat
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ), // Search Box
+
+                  // Sorting Dropdown
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 3.w),
+                    child: DropdownButtonFormField<String>(
+                      value:
+                          (_sortMode == 'price_asc' || _sortMode == 'price_desc')
+                              ? _sortMode
+                              : 'none',
+                      decoration: InputDecoration(
+                        labelText: context.t('urutkan'),
+                        // Tambahkan labelStyle agar label terlihat jelas
+                        labelStyle: theme.textTheme.bodyMedium,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          // Border color yang adaptif
+                          borderSide: BorderSide(color: theme.dividerColor),
+                        ),
+                        filled: true,
+                        // GUNAKAN cardColor DARI TEMA (ADAPTIF!)
+                        fillColor: theme.cardColor,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'none',
+                          child: Text(context.t('default')),
+                        ),
+                        DropdownMenuItem(
+                          value: 'price_asc',
+                          child: Text(context.t('Harga Terendah')),
+                        ),
+                        DropdownMenuItem(
+                          value: 'price_desc',
+                          child: Text(context.t('Harga Tertinggi')),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        setState(() {
+                          _sortMode = val ?? 'none';
+                          _applyFilters();
+                        });
                       },
+                      // Tambahkan style untuk memastikan teks yang dipilih terlihat
+                      style: theme.textTheme.bodyMedium,
+                      // Warna ikon Dropdown adaptif
+                      iconEnabledColor: theme.colorScheme.secondary,
                     ),
+                  ),
 
-                    SizedBox(height: 2.h * paddingScale),
-                    _buildCategoryChips(),
+                  SizedBox(height: 2.h),
+                ],
+              ),
 
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 3.w,
-                        vertical: 1.h,
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: context.t('search'),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                          suffixIcon: _currentQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    _searchProducts('');
-                                  },
-                                )
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                        onChanged: (v) => _searchProducts(v),
-                      ),
-                    ),
-
-                    // Sorting
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 3.w),
-                      child: DropdownButtonFormField<String>(
-                        value:
-                            (_sortMode == 'price_asc' ||
-                                    _sortMode == 'price_desc')
-                                ? _sortMode
-                                : 'none',
-                        decoration: InputDecoration(
-                          labelText: context.t('urutkan'),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                        items: [
-                          DropdownMenuItem(
-                            value: 'none',
-                            child: Text(context.t('default')),
-                          ),
-                          DropdownMenuItem(
-                            value: 'price_asc',
-                            child: Text(context.t('Harga Terendah')),
-                          ),
-                          DropdownMenuItem(
-                            value: 'price_desc',
-                            child: Text(context.t('Harga Tertinggi')),
-                          ),
-                        ],
-                        onChanged: (val) {
-                          setState(() {
-                            _sortMode = val ?? 'none';
-                            _applyFilters();
-                          });
-                        },
-                      ),
-                    ),
-
-                    SizedBox(height: 2.h),
-
-                    // Grid
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 3.w),
-                      child: filteredProducts.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: EdgeInsets.only(top: 5.h),
-                                child: Text(
-                                  context.t('no_products'),
-                                  style: TextStyle(fontSize: 12.sp * fontScale),
-                                ),
+              // Bagian Grid Produk yang DAPAT digulir (Expanded)
+              Expanded(
+                child: RefreshIndicator(
+                  color: Theme.of(context).primaryColor,
+                  onRefresh: () async {
+                    _searchProducts("");
+                    await context.read<ProductCubit>().fetchProducts();
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 3.w),
+                    child: filteredProducts.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 5.h),
+                              child: Text(
+                                context.t('no_products'),
+                                style: TextStyle(fontSize: 12.sp * fontScale),
                               ),
-                            )
-                          : LayoutBuilder(
-                              builder: (context, constraints) {
-                                int crossAxisCount = constraints.maxWidth < 600
-                                    ? 2
-                                    : constraints.maxWidth < 900
-                                        ? 3
-                                        : constraints.maxWidth < 1200
-                                            ? 4
-                                            : 5;
-                                return GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: filteredProducts.length,
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: crossAxisCount,
-                                    mainAxisSpacing: 2.w,
-                                    crossAxisSpacing: 2.w,
-                                    childAspectRatio: 0.7,
-                                  ),
-                                  itemBuilder: (context, i) =>
-                                      _buildProductCard(filteredProducts[i]),
-                                );
-                              },
                             ),
-                    ),
-                  ],
+                          )
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              int crossAxisCount = constraints.maxWidth < 600
+                                  ? 2
+                                  : constraints.maxWidth < 900
+                                      ? 3
+                                      : constraints.maxWidth < 1200
+                                          ? 4
+                                          : 5;
+                              return GridView.builder(
+                                shrinkWrap: false,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                itemCount: filteredProducts.length,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  mainAxisSpacing: 2.w,
+                                  crossAxisSpacing: 2.w,
+                                  childAspectRatio: 0.7,
+                                ),
+                                itemBuilder: (context, i) =>
+                                    _buildProductCard(filteredProducts[i]),
+                              );
+                            },
+                          ),
+                  ),
                 ),
               ),
-            ),
+            ],
           );
         },
       ),
@@ -425,6 +439,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildCategoryChip(String value, String label) {
+    final theme = Theme.of(context);
     final bool selected =
         _categoryFilter == value || (value == "all" && _categoryFilter == null);
     return Padding(
@@ -433,11 +448,14 @@ class _DashboardPageState extends State<DashboardPage> {
         label: Text(label),
         selected: selected,
         selectedColor: AppTheme.primaryColor,
-        backgroundColor: Theme.of(context).cardColor,
+        // Gunakan cardColor dari tema dan berikan sedikit opacity jika Dark Mode untuk kontras yang lebih baik
+        backgroundColor: theme.brightness == Brightness.dark 
+            ? theme.cardColor.withOpacity(0.5) 
+            : theme.cardColor,
         labelStyle: TextStyle(
           color: selected
               ? Colors.white
-              : Theme.of(context).textTheme.bodyMedium?.color,
+              : theme.textTheme.bodyMedium?.color, // Warna teks adaptif
           fontWeight: FontWeight.bold,
         ),
         onSelected: (_) {
@@ -454,7 +472,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // >>> START OF MODIFIED _buildDrawer METHOD <<<
   Drawer _buildDrawer(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
@@ -518,7 +535,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
           ),
-          // >>> END OF MODIFIED _buildDrawer METHOD <<<
           ListTile(
             leading: Icon(Icons.home, color: theme.primaryColor),
             title: Text(context.t('home')),
@@ -594,9 +610,10 @@ class _DashboardPageState extends State<DashboardPage> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 p.title,
+                // Menggunakan warna teks default tema (putih/terang di Dark Mode)
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimaryColor,
+                  color: theme.textTheme.bodyMedium?.color, 
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -609,6 +626,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
+                  // Menggunakan AppTheme.primaryColor (merah) yang terlihat jelas di kedua mode
                   color: AppTheme.primaryColor,
                 ),
               ),

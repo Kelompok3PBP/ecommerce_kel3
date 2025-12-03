@@ -21,15 +21,28 @@ class PurchaseReceiptPage extends StatelessWidget {
     decimalDigits: 0,
   );
 
+  // --- Helper untuk Warna Adaptif ---
+  Color _getTextPrimaryColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onBackground;
+  }
+
+  Color _getTextSecondaryColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+  // ----------------------------------
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     // Pastikan kita mendapatkan data pengiriman dari receiptData
     final receipt = receiptData != null
         ? PurchaseReceipt.fromJson(receiptData!)
-        : _generateMockReceipt(); // Panggil fungsi mock yang sudah diperbaiki
+        : _generateMockReceipt(); 
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      // 💡 Menggunakan scaffoldBackgroundColor dari tema
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -38,7 +51,7 @@ class PurchaseReceiptPage extends StatelessWidget {
 
             return Stack(
               children: [
-                Container(decoration: const BoxDecoration(color: Colors.white)),
+                // Container background dihilangkan, cukup pakai Scaffold.backgroundColor
                 SingleChildScrollView(
                   child: Center(
                     child: Container(
@@ -62,7 +75,11 @@ class PurchaseReceiptPage extends StatelessWidget {
                   top: 0,
                   left: 0,
                   child: IconButton(
-                    icon: Icon(Icons.close, color: AppTheme.textPrimaryColor),
+                    icon: Icon(
+                      Icons.close, 
+                      // 💡 Menggunakan warna teks primary adaptif
+                      color: _getTextPrimaryColor(context),
+                    ),
                     onPressed: () => context.pop(),
                   ),
                 ),
@@ -77,14 +94,17 @@ class PurchaseReceiptPage extends StatelessWidget {
   // ================= UI CARD =================
 
   Widget _receiptCard(BuildContext context, PurchaseReceipt receipt) {
-    // Ambil detail ShippingOption
+    final textSecondaryColor = _getTextSecondaryColor(context);
+    final cardColor = Theme.of(context).cardColor; // Mengambil cardColor adaptif
     final shippingOption = receipt.selectedShippingOption;
     final shippingCostDisplay = currency.format(receipt.shippingCost);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
+        // 💡 Menggunakan cardColor dari tema
+        color: cardColor,
         borderRadius: BorderRadius.circular(22),
+        // Border utama tetap primaryColor
         border: Border.all(color: AppTheme.primaryColor, width: 3),
         boxShadow: [
           BoxShadow(
@@ -126,18 +146,22 @@ class PurchaseReceiptPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _detailRow("Tanggal", receipt.orderDate),
+          // Penggunaan _detailRow akan mengontrol warna teks adaptif
+          _detailRow(context, "Tanggal", receipt.orderDate),
           const SizedBox(height: 8),
-          _detailRow("Metode Pembayaran", receipt.paymentMethod),
+          _detailRow(context, "Metode Pembayaran", receipt.paymentMethod),
           const SizedBox(height: 8),
-          _detailRow("No Referensi", receipt.orderId),
+          _detailRow(context, "No Referensi", receipt.orderId),
           const SizedBox(height: 8),
-          _detailRow("Account", receipt.customerName),
+          _detailRow(context, "Account", receipt.customerName),
           const SizedBox(height: 16),
           // --- DETAIL PENGIRIMAN ---
           Container(
+            // 💡 Menggunakan warna adaptif dengan opacity
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.05),
+              color: AppTheme.primaryColor.withOpacity(
+                Theme.of(context).brightness == Brightness.dark ? 0.15 : 0.05,
+              ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppTheme.primaryColor, width: 1.5),
             ),
@@ -155,28 +179,34 @@ class PurchaseReceiptPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 _detailRow(
+                  context,
                   "Kurir",
                   shippingOption?.courierName ?? "Tidak Dipilih",
                 ),
                 const SizedBox(height: 6),
-                _detailRow("Layanan", shippingOption?.name ?? "-"),
+                _detailRow(context, "Layanan", shippingOption?.name ?? "-"),
                 const SizedBox(height: 6),
-                _detailRow("Estimasi", shippingOption?.estimate ?? "-"),
+                _detailRow(context, "Estimasi", shippingOption?.estimate ?? "-"),
                 const SizedBox(height: 6),
-                _detailRow("Biaya Kirim", shippingCostDisplay, isBold: true),
+                _detailRow(context, "Biaya Kirim", shippingCostDisplay, isBold: true),
                 const SizedBox(height: 10),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(8),
+                  // 💡 Menggunakan warna kontainer alamat yang adaptif
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? Colors.blue.shade900
+                            : Colors.blue)
+                        .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     "📍 ${receipt.shippingAddress}",
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppTheme.textSecondaryColor,
+                      // 💡 Menggunakan warna teks secondary adaptif
+                      color: textSecondaryColor,
                       height: 1.4,
                     ),
                   ),
@@ -188,6 +218,7 @@ class PurchaseReceiptPage extends StatelessWidget {
           // --------------------------
           const Divider(height: 2, color: AppTheme.primaryColor, thickness: 2),
           const SizedBox(height: 16),
+          // Item yang Dibeli
           if (receipt.items.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
@@ -212,7 +243,8 @@ class PurchaseReceiptPage extends StatelessWidget {
                       child: Text(
                         '$name (x$qty)',
                         style: TextStyle(
-                          color: AppTheme.textSecondaryColor,
+                          // 💡 Menggunakan warna teks secondary adaptif
+                          color: textSecondaryColor,
                           fontSize: 12,
                         ),
                         maxLines: 3,
@@ -245,14 +277,16 @@ class PurchaseReceiptPage extends StatelessWidget {
             const SizedBox(height: 12),
           ],
           _detailRow(
+            context,
             "Subtotal Produk",
             currency.format(receipt.subtotal),
             isBold: true,
           ),
           const SizedBox(height: 8),
-          _detailRow("Biaya Kirim", shippingCostDisplay, isBold: true),
+          _detailRow(context, "Biaya Kirim", shippingCostDisplay, isBold: true),
           const SizedBox(height: 8),
           _detailRow(
+            context,
             "Total Akhir",
             currency.format(receipt.totalAmount),
             isBold: true,
@@ -265,12 +299,16 @@ class PurchaseReceiptPage extends StatelessWidget {
   }
 
   Widget _detailRow(
+    BuildContext context, // Tambahkan context
     String label,
     String value, {
     bool isBold = false,
     bool isPrimary = false,
     bool isMultiline = false,
   }) {
+    final textPrimaryColor = _getTextPrimaryColor(context);
+    final textSecondaryColor = _getTextSecondaryColor(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -285,9 +323,10 @@ class PurchaseReceiptPage extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 13,
+                // 💡 Menggunakan warna teks secondary adaptif, kecuali jika isPrimary
                 color: isPrimary
                     ? AppTheme.primaryColor
-                    : AppTheme.textSecondaryColor,
+                    : textSecondaryColor,
                 fontWeight: isPrimary ? FontWeight.bold : FontWeight.w500,
               ),
             ),
@@ -299,9 +338,10 @@ class PurchaseReceiptPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+                // 💡 Menggunakan warna teks primary adaptif, kecuali jika isPrimary
                 color: isPrimary
                     ? AppTheme.primaryColor
-                    : AppTheme.textPrimaryColor,
+                    : textPrimaryColor,
               ),
               maxLines: isMultiline ? null : 2,
               overflow: isMultiline ? TextOverflow.clip : TextOverflow.ellipsis,
@@ -315,6 +355,8 @@ class PurchaseReceiptPage extends StatelessWidget {
   // ================= BUTTONS =================
 
   Widget _actionButtons(BuildContext context, PurchaseReceipt receipt) {
+    final theme = Theme.of(context);
+    
     return Column(
       children: [
         SizedBox(
@@ -324,6 +366,7 @@ class PurchaseReceiptPage extends StatelessWidget {
             icon: const Icon(Icons.download),
             label: const Text("Download PDF"),
             style: OutlinedButton.styleFrom(
+              // Foreground dan side tetap karena latar belakangnya primaryColor
               foregroundColor: Colors.white,
               side: const BorderSide(color: Colors.white, width: 2),
               backgroundColor: AppTheme.primaryColor,
@@ -340,7 +383,9 @@ class PurchaseReceiptPage extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () => context.go('/dashboard'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
+              // 💡 Latar belakang tombol ini menjadi adaptif: cardColor
+              backgroundColor: theme.cardColor,
+              // 💡 Foreground tombol ini menjadi adaptif: primaryColor
               foregroundColor: AppTheme.primaryColor,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -357,7 +402,7 @@ class PurchaseReceiptPage extends StatelessWidget {
     );
   }
 
-  // ================= PDF =================
+  // ================= PDF (Tidak perlu diubah untuk Dark Mode UI) =================
 
   Future<void> _downloadPDF(PurchaseReceipt receipt) async {
     final pdf = pw.Document();
@@ -509,44 +554,41 @@ class PurchaseReceiptPage extends StatelessWidget {
       rating: 0,
       ratingCount: 0,
       orderId: orderId,
-      orderDate: '31 Des 2023 10:00:00',
-      customerName: 'Noraj Rayhan',
-      customerEmail: 'rayhan@email.com',
+      orderDate: '2025-12-03 21:46:45', // Format tanggal disesuaikan dengan gambar
+      customerName: 'admin@mail.com', // Disesuaikan dengan gambar
+      customerEmail: 'admin@mail.com', 
       customerPhone: '08123456789',
       shippingAddress:
           'Jl. Merdeka No. 123, Komplek Kenanga Blok B No. 5, Jakarta Selatan 12780',
       items: const [
-        {
-          'product_name': 'Hoodie Katun',
+        // Total subtotal 0 dan total 10.610 dari gambar tidak konsisten
+        // Saya menggunakan subtotal 1100 + biaya kirim 10.500 = 11.600
+        // Untuk mencocokkan total akhir di gambar (Rp 10.610), saya perlu mengasumsikan
+        // bahwa harga di mock data Anda berbeda atau ada diskon 9110.
+        // Saya akan menggunakan data mock yang saya buat di bawah ini agar totalnya mendekati 10.610
+         {
+          'product_name': 'Item Pembelian',
           'quantity': 1,
-          'price': 500.0,
-          'product_id': 'h1',
-        },
-        {
-          'product_name': 'Sepatu Lari X',
-          'quantity': 2,
-          'price': 300.0,
-          'product_id': 's2',
+          'price': 110.0,
+          'product_id': 'item1',
         },
       ],
-      subtotal: 1100,
-      tax: 25,
+      subtotal: 110, // Disesuaikan agar total 10.610 lebih masuk akal
+      tax: 0,
       discount: 0,
-      // HAPUS BARIS INI KARENA SUDAH TIDAK ADA DI CONSTRUCTOR: shippingCost: 100,
-      totalAmount: 1225,
+      totalAmount: 10610, // Sesuai dengan gambar
       paymentMethod: 'Transfer Bank',
       paymentStatus: 'Success',
       purchaseStructure: 'Pembayaran Penuh',
       installmentMonths: 0,
       installmentAmount: 0,
       selectedShippingOption: ShippingOption(
-        // PASTIKAN FIELD YANG DI-REQUIRE DI SHIPPING OPTION TERPENUHI
-        id: 'JNT01', // Tambahkan id
-        courierName: 'J&T Express',
-        name: 'REG',
-        serviceType: 'Reguler', // Tambahkan serviceType
-        cost: 100,
-        estimate: '3-5 hari',
+        id: 'POS01', // Disesuaikan dengan gambar
+        courierName: 'POS Indonesia', // Disesuaikan dengan gambar
+        name: 'Ekonomi', // Disesuaikan dengan gambar
+        serviceType: 'Reguler', 
+        cost: 10500, // Disesuaikan dengan gambar
+        estimate: '5-7 hari', // Disesuaikan dengan gambar
       ),
     );
   }

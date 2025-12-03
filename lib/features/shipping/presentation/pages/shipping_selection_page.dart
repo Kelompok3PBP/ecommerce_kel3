@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart' as sp;
+import 'package:sizer/sizer.dart'; // Import Sizer
 
 // Import Entitas Dummy yang diperlukan untuk memuat opsi
 import '../../../address/domain/entities/address.dart';
@@ -118,140 +119,174 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Pilih Jasa Pengiriman')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Pilih Alamat',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
+    // Gunakan Sizer untuk inisialisasi di root widget
+    return Sizer(
+      builder: (context, orientation, deviceType) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Pilih Jasa Pengiriman')),
+          body: Padding(
+            padding: EdgeInsets.all(4.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pilih Alamat',
+                  // 👇 Ukuran font dikecilkan dari 18.sp menjadi 16.sp
+                  style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 1.h),
 
-            // Addresses
-            BlocBuilder<AddressCubit, AddressState>(
-              builder: (context, astate) {
-                if (astate is AddressLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (astate is AddressListLoaded) {
-                  final addrs = astate.addresses;
-                  if (addrs.isEmpty)
-                    return const Text(
-                      'Belum ada alamat. Tambah di Pengaturan > Alamat.',
-                    );
-
-                  return Column(
-                    children: addrs.map((addr) {
-                      return RadioListTile<Address>(
-                        value: addr,
-                        groupValue: _selectedAddress,
-                        title: Text('${addr.label} — ${addr.street}'),
-                        subtitle: Text('${addr.city} • ${addr.postalCode}'),
-                        onChanged: (v) => setState(() => _selectedAddress = v),
-                      );
-                    }).toList(),
-                  );
-                }
-
-                if (astate is AddressError)
-                  return Text('Error: ${astate.message}');
-
-                return const Text('Memuat alamat...');
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            const Divider(),
-            const SizedBox(height: 8),
-
-            const Text(
-              'Opsi Pengiriman',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-
-            // Shipping options
-            Expanded(
-              child: BlocConsumer<ShippingCubit, ShippingState>(
-                listener: (context, state) {
-                  if (state is ShippingError) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(state.message)));
-                  }
-                },
-                builder: (context, state) {
-                  if (state is ShippingLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (state is ShippingLoaded) {
-                    final options = state.options;
-                    if (options.isEmpty)
-                      return const Text('Tidak ada opsi pengiriman.');
-
-                    return ListView(
-                      children: options.map((opt) {
-                        return RadioListTile<ShippingOption>(
-                          value: opt,
-                          groupValue: state.selectedOption,
-                          title: Text('${opt.courierName} — ${opt.name}'),
-                          subtitle: Text(
-                            'Estimasi: ${opt.estimate ?? '-'} • Biaya: Rp ${opt.cost.toStringAsFixed(0)}',
-                          ),
-                          onChanged: (v) {
-                            if (v != null)
-                              context
-                                  .read<ShippingCubit>()
-                                  .selectShippingOption(v);
-                          },
+                // Addresses
+                BlocBuilder<AddressCubit, AddressState>(
+                  builder: (context, astate) {
+                    if (astate is AddressLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (astate is AddressListLoaded) {
+                      final addrs = astate.addresses;
+                      if (addrs.isEmpty) {
+                        return Text(
+                          'Belum ada alamat. Tambah di Pengaturan > Alamat.',
+                          // 👇 Ukuran font dikecilkan dari 11.sp menjadi 9.sp
+                          style: TextStyle(fontSize: 9.sp),
                         );
-                      }).toList(),
-                    );
-                  }
+                      }
 
-                  // Initial / empty state
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Tekan tombol di bawah untuk memuat opsi pengiriman',
+                      return Column(
+                        children: addrs.map((addr) {
+                          return RadioListTile<Address>(
+                            value: addr,
+                            groupValue: _selectedAddress,
+                            // 👇 Ukuran font dikecilkan dari 12.sp menjadi 10.sp
+                            title: Text('${addr.label} — ${addr.street}',
+                                style: TextStyle(fontSize: 10.sp)),
+                            // 👇 Ukuran font dikecilkan dari 10.sp menjadi 9.sp
+                            subtitle: Text('${addr.city} • ${addr.postalCode}',
+                                style: TextStyle(fontSize: 9.sp)),
+                            onChanged: (v) => setState(() => _selectedAddress = v),
+                          );
+                        }).toList(),
+                      );
+                    }
+
+                    if (astate is AddressError)
+                      return Text('Error: ${astate.message}');
+
+                    return const Text('Memuat alamat...');
+                  },
+                ),
+
+                SizedBox(height: 1.5.h),
+
+                const Divider(),
+                SizedBox(height: 1.h),
+
+                Text(
+                  'Opsi Pengiriman',
+                  // 👇 Ukuran font dikecilkan dari 18.sp menjadi 16.sp
+                  style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 1.h),
+
+                // Shipping options
+                Expanded(
+                  child: BlocConsumer<ShippingCubit, ShippingState>(
+                    listener: (context, state) {
+                      if (state is ShippingError) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(state.message)));
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state is ShippingLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (state is ShippingLoaded) {
+                        final options = state.options;
+                        if (options.isEmpty) {
+                          return Text(
+                            'Tidak ada opsi pengiriman.',
+                            // 👇 Ukuran font dikecilkan dari 11.sp menjadi 9.sp
+                            style: TextStyle(fontSize: 9.sp),
+                          );
+                        }
+
+                        return ListView(
+                          children: options.map((opt) {
+                            return RadioListTile<ShippingOption>(
+                              value: opt,
+                              groupValue: state.selectedOption,
+                              // 👇 Ukuran font dikecilkan dari 12.sp menjadi 10.sp
+                              title: Text('${opt.courierName} — ${opt.name}',
+                                  style: TextStyle(fontSize: 10.sp)),
+                              subtitle: Text(
+                                'Estimasi: ${opt.estimate ?? '-'} • Biaya: Rp ${opt.cost.toStringAsFixed(0)}',
+                                // 👇 Ukuran font dikecilkan dari 10.sp menjadi 9.sp
+                                style: TextStyle(fontSize: 9.sp),
+                              ),
+                              onChanged: (v) {
+                                if (v != null) {
+                                  context
+                                      .read<ShippingCubit>()
+                                      .selectShippingOption(v);
+                                }
+                              },
+                            );
+                          }).toList(),
+                        );
+                      }
+
+                      // Initial / empty state
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Tekan tombol di bawah untuk memuat opsi pengiriman',
+                              // 👇 Ukuran font dikecilkan dari 11.sp menjadi 9.sp
+                              style: TextStyle(fontSize: 9.sp),
+                            ),
+                            SizedBox(height: 1.5.h),
+                            ElevatedButton(
+                              onPressed: _onLoadShippingOptions,
+                              child: Text('Pilih Jasa Pengiriman',
+                                  // 👇 Ukuran font dikecilkan dari 11.sp menjadi 10.sp
+                                  style: TextStyle(fontSize: 10.sp)),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: _onLoadShippingOptions,
-                          child: const Text('Pilih Jasa Pengiriman'),
-                        ),
-                      ],
+                      );
+                    },
+                  ),
+                ),
+
+                // Bottom action: proceed to payment
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _proceedToPayment,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      backgroundColor: Colors.green.shade700,
                     ),
-                  );
-                },
-              ),
-            ),
-
-            // Bottom action: proceed to payment
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _proceedToPayment,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.green.shade700,
+                    child: Text(
+                      'Lanjut ke Pembayaran (Rp ${(_subtotal + (context.read<ShippingCubit>().state is ShippingLoaded && (context.read<ShippingCubit>().state as ShippingLoaded).selectedOption != null ? (context.read<ShippingCubit>().state as ShippingLoaded).selectedOption!.cost : 0.0)).toStringAsFixed(0)})',
+                      // 👇 Ukuran font dikecilkan dari 12.sp menjadi 11.sp
+                      style: TextStyle(fontSize: 11.sp),
+                    ),
+                  ),
                 ),
-                child: Text(
-                  'Lanjut ke Pembayaran (Rp ${(_subtotal + (context.read<ShippingCubit>().state is ShippingLoaded && (context.read<ShippingCubit>().state as ShippingLoaded).selectedOption != null ? (context.read<ShippingCubit>().state as ShippingLoaded).selectedOption!.cost : 0.0)).toStringAsFixed(0)})',
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -21,6 +21,20 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   List<PurchaseReceipt> history = [];
   bool isLoading = true;
 
+  // --- Helper untuk Warna Adaptif ---
+  Color _getTextPrimaryColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onBackground;
+  }
+
+  Color _getTextSecondaryColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+
+  Color _getCardColor(BuildContext context) {
+    return Theme.of(context).cardColor;
+  }
+  // ----------------------------------
+
   @override
   void initState() {
     super.initState();
@@ -91,6 +105,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     String productName,
     PurchaseReceipt receipt,
   ) {
+    final theme = Theme.of(context);
+    final textPrimaryColor = _getTextPrimaryColor(context);
+
     showDialog<void>(
       context: context,
       builder: (context) {
@@ -110,7 +127,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                         return IconButton(
                           icon: Icon(
                             i < selectedRating ? Icons.star : Icons.star_border,
-                            color: AppTheme.secondaryColor,
+                            color: AppTheme.secondaryColor, // Warna bintang tetap
                           ),
                           onPressed: () =>
                               setStateSB(() => selectedRating = i + 1.0),
@@ -121,10 +138,17 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     TextField(
                       controller: controller,
                       maxLines: 4,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Tulis ulasan Anda (opsional)',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                        enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: theme.dividerColor)),
+                        focusedBorder: OutlineInputBorder(
+                            borderSide:
+                                BorderSide(color: theme.colorScheme.primary)),
+                        hintStyle: TextStyle(color: theme.hintColor),
                       ),
+                      style: TextStyle(color: textPrimaryColor),
                     ),
                   ],
                 ),
@@ -165,9 +189,13 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      // 💡 Menggunakan scaffoldBackgroundColor dari tema
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        // AppBar tetap primaryColor
         backgroundColor: AppTheme.primaryColor,
         elevation: 0,
         leading: IconButton(
@@ -181,22 +209,33 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
         centerTitle: true,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(color: theme.primaryColor))
           : history.isEmpty
-          ? const Center(child: Text('Tidak ada pesanan selesai'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: history.length,
-              itemBuilder: (context, index) {
-                return _orderCard(context, history[index]);
-              },
-            ),
+              // 💡 Menggunakan warna teks adaptif
+              ? Center(
+                  child: Text(
+                    'Tidak ada pesanan selesai',
+                    style: TextStyle(color: _getTextPrimaryColor(context)),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: history.length,
+                  itemBuilder: (context, index) {
+                    return _orderCard(context, history[index]);
+                  },
+                ),
     );
   }
 
   // ================= CARD =================
   Widget _orderCard(BuildContext context, PurchaseReceipt receipt) {
-    // Extract all items info
+    final theme = Theme.of(context);
+    final textPrimaryColor = _getTextPrimaryColor(context);
+    final textSecondaryColor = _getTextSecondaryColor(context);
+    final cardColor = _getCardColor(context);
+
     List<Map<String, dynamic>> productsList = [];
 
     try {
@@ -213,9 +252,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       .toString()
                       .trim(),
               'product_name':
-                  (itemMap['product_name'] ??
-                          itemMap['productName'] ??
-                          'Produk')
+                  (itemMap['product_name'] ?? itemMap['productName'] ?? 'Produk')
                       .toString()
                       .trim(),
               'quantity': itemMap['quantity'] ?? 1,
@@ -225,34 +262,29 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
         }
       }
     } catch (e) {
-      print('Error extracting product info: $e');
-      print('Items content: ${receipt.items}');
+      // debug print removed
     }
-
-    print('DEBUG: Total items = ${productsList.length}');
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
         double screenWidth = MediaQuery.of(context).size.width;
-        // compute item thumbnail size based on available width
         final double itemSize = math.min(80, math.max(56, width * 0.16));
-        final double itemTextWidth =
-            itemSize; // use for the label beneath thumbnail
+        
+        final productRepresentative = productsList.isNotEmpty ? productsList.first : null;
+        final bool isReviewed = false; 
 
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppTheme.cardColor,
+            // 💡 Menggunakan cardColor dari tema
+            color: cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color:
-                    (Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black)
-                        .withOpacity(0.1),
+                // 💡 Warna shadow adaptif
+                color: textPrimaryColor.withOpacity(0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 6),
               ),
@@ -261,161 +293,175 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Items horizontal scroll atau list
-              SizedBox(
-                height: itemSize + 36,
-                child: productsList.isEmpty
-                    ? const Center(child: Text('Tidak ada barang'))
-                    : ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: productsList.length,
-                        itemBuilder: (context, index) {
-                          final product = productsList[index];
-                          final imageUrl = (product['product_image'] ?? '')
-                              .toString();
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
+              // Bagian Detail Produk Utama (Row)
+              if (productRepresentative != null)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Gambar Produk
+                    Container(
+                      width: itemSize,
+                      height: itemSize,
+                      decoration: BoxDecoration(
+                        color: theme.brightness == Brightness.dark
+                            ? const Color(0xFF303030)
+                            : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                        image: productRepresentative['product_image'].isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(productRepresentative['product_image']),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: productRepresentative['product_image'].isEmpty
+                          ? const Icon(
+                              Icons.image,
+                              size: 28,
+                              color: Colors.grey,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    
+                    // Detail Teks (Nama, Status, Ulas)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        // PERBAIKAN: Mengurangi margin vertikal dengan menghilangkan SizedBox/Padding yang tidak perlu
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Nama Produk dan Quantity
+                              Expanded(
+                                child: Text(
+                                  // Menggabungkan nama dan quantity
+                                  '${productRepresentative['product_name']} (x${productRepresentative['quantity']})',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimaryColor,
+                                  ),
+                                  maxLines: 1, // Batasi 1 baris
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              
+                              // Tombol Ulas (Diperbesar Maksimal)
+                              if (!isReviewed)
+                                // PERUBAHAN: Padding lebih besar dan ukuran font lebih besar
+                                // Kita gunakan Padding horizontal 14 dan vertikal 6 untuk membuatnya besar
                                 Container(
-                                  width: itemSize,
-                                  height: itemSize,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), 
                                   decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? const Color(0xFF303030)
-                                        : Colors.grey[200],
-                                    borderRadius: BorderRadius.circular(12),
-                                    image: imageUrl.isNotEmpty
-                                        ? DecorationImage(
-                                            image: NetworkImage(imageUrl),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : null,
+                                    color: AppTheme.secondaryColor.withOpacity(0.15), 
+                                    borderRadius: BorderRadius.circular(16), 
+                                    border: Border.all(color: AppTheme.secondaryColor.withOpacity(0.5), width: 1),
                                   ),
-                                  child: imageUrl.isEmpty
-                                      ? const Icon(
-                                          Icons.image,
-                                          size: 28,
-                                          color: Colors.grey,
-                                        )
-                                      : null,
-                                ),
-                                const SizedBox(height: 6),
-                                SizedBox(
-                                  width: itemTextWidth,
-                                  child: Text(
-                                    '${product['product_name']} (x${product['quantity']})',
-                                    style: TextStyle(
-                                      fontSize: math.max(10, itemSize * 0.12),
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.textPrimaryColor,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                SizedBox(
-                                  width: itemTextWidth,
-                                  child: TextButton.icon(
-                                    onPressed: () {
-                                      final pid = (product['product_id'] ?? '')
-                                          .toString();
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      final pid = productRepresentative['product_id'].toString();
                                       _showReviewDialog(
                                         context,
                                         pid,
-                                        product['product_name']?.toString() ??
-                                            'Produk',
+                                        productRepresentative['product_name'].toString(),
                                         receipt,
                                       );
                                     },
-                                    icon: const Icon(
-                                      Icons.rate_review,
-                                      size: 16,
-                                    ),
-                                    label: const Text(
+                                    child: Text(
                                       'Ulas',
-                                      style: TextStyle(fontSize: 12),
+                                      style: TextStyle(
+                                        fontSize: 15, // Ukuran font diperbesar
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.secondaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2), 
+                                  child: Text(
+                                    'Sudah Diulas',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: textSecondaryColor.withOpacity(0.6),
                                     ),
                                   ),
                                 ),
-                              ],
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 4), // Mengurangi jarak
+                          // Status Pengiriman di baris berikutnya
+                          Text(
+                            'Status Pengiriman: Selesai', 
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textSecondaryColor,
                             ),
-                          );
-                        },
+                          ),
+
+                          // Harga ditampilkan langsung di bawah Status Pengiriman
+                          const SizedBox(height: 8), // Jarak ke harga
+                          Text(
+                            formatRupiah(receipt.totalAmount),
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ],
                       ),
-              ),
-              const SizedBox(height: 12),
-
-              // Total dan buttons
-              Text(
-                formatRupiah(receipt.totalAmount),
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontWeight: FontWeight.w600,
-                  fontSize: (screenWidth * 0.045).clamp(14, 20),
+                    ),
+                  ],
+                )
+              else
+                Center(
+                  child: Text('Tidak ada barang', style: TextStyle(color: textPrimaryColor)),
                 ),
-              ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 16), // Jarak ke tombol aksi
+              
+              // Tombol Aksi
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () async {
-                        // Add items kembali ke cart
+                        // ... (Logika Pesan Lagi) ...
                         try {
                           for (var item in receipt.items) {
                             if (item is Map<String, dynamic>) {
-                              final productId = (item['product_id'] ?? '')
-                                  .toString();
-                              final productName = (item['product_name'] ?? '')
-                                  .toString();
-                              final productImage = (item['product_image'] ?? '')
-                                  .toString();
-                              final quantity =
-                                  int.tryParse(
-                                    (item['quantity'] ?? 1).toString(),
-                                  ) ??
-                                  1;
-                              final price =
-                                  double.tryParse(
-                                    (item['price'] ?? 0).toString(),
-                                  ) ??
-                                  0.0;
+                              final productId = (item['product_id'] ?? '').toString();
+                              final productName = (item['product_name'] ?? '').toString();
+                              final productImage = (item['product_image'] ?? '').toString();
+                              final quantity = int.tryParse((item['quantity'] ?? 1).toString()) ?? 1;
+                              final price = double.tryParse((item['price'] ?? 0).toString()) ?? 0.0;
 
                               context.read<CartCubit>().addItem(
-                                productId: productId,
-                                productName: productName,
-                                productImage: productImage,
-                                quantity: quantity,
-                                price: price,
-                              );
+                                    productId: productId,
+                                    productName: productName,
+                                    productImage: productImage,
+                                    quantity: quantity,
+                                    price: price,
+                                  );
                             }
                           }
 
-                          // Show success message
                           if (context.mounted) {
                             await NotificationService.showIfEnabledDialog(
                               context,
                               title: 'Berhasil',
-                              body:
-                                  '${receipt.items.length} produk ditambahkan ke cart',
+                              body: '${receipt.items.length} produk ditambahkan ke cart',
                             );
-
-                            // Navigate to cart after short delay
-                            Future.delayed(
-                              const Duration(milliseconds: 500),
-                              () {
-                                if (context.mounted) {
-                                  context.go('/cart');
-                                }
-                              },
-                            );
+                            Future.delayed(const Duration(milliseconds: 500), () {
+                              if (context.mounted) {
+                                context.go('/cart');
+                              }
+                            });
                           }
                         } catch (e) {
                           if (context.mounted) {

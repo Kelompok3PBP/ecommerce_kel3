@@ -25,6 +25,20 @@ class _DetailPageState extends State<DetailPage> {
   double avgRating = 0.0;
   int reviewCount = 0;
 
+  // --- Helper untuk Warna Adaptif ---
+  Color _getTextPrimaryColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onBackground;
+  }
+
+  Color _getTextSecondaryColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+
+  Color _getCardColor(BuildContext context) {
+    return Theme.of(context).cardColor;
+  }
+  // ----------------------------------
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +94,11 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final textPrimaryColor = _getTextPrimaryColor(context);
+    final textSecondaryColor = _getTextSecondaryColor(context);
+    final cardColor = _getCardColor(context);
+    final theme = Theme.of(context);
+
     return BlocBuilder<ProductCubit, ProductState>(
       builder: (context, state) {
         final product = state.selectedProduct;
@@ -90,8 +109,10 @@ class _DetailPageState extends State<DetailPage> {
         }
 
         return Scaffold(
-          backgroundColor: AppTheme.backgroundColor,
+          // 💡 Menggunakan scaffoldBackgroundColor dari tema
+          backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
+            // Warna AppBar tetap primaryColor
             backgroundColor: AppTheme.primaryColor,
             elevation: 0,
             leading: IconButton(
@@ -155,9 +176,9 @@ class _DetailPageState extends State<DetailPage> {
                     child: Text(
                       'Gagal memuat produk.\nError: ${state.error}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
-                        color: Colors.redAccent,
+                        color: theme.colorScheme.error,
                       ),
                     ),
                   ),
@@ -212,11 +233,13 @@ class _DetailPageState extends State<DetailPage> {
                               Center(
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).cardColor,
+                                    // 💡 Menggunakan cardColor dari tema
+                                    color: cardColor,
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
+                                        // 💡 Menggunakan warna adaptif untuk shadow
+                                        color: textPrimaryColor.withOpacity(0.1),
                                         blurRadius: 10,
                                         offset: const Offset(0, 6),
                                       ),
@@ -269,16 +292,13 @@ class _DetailPageState extends State<DetailPage> {
                                     width: imageWidth,
                                     height: imageHeight,
                                     decoration: BoxDecoration(
-                                      color: AppTheme.cardColor,
+                                      // 💡 Menggunakan cardColor dari tema
+                                      color: cardColor,
                                       borderRadius: BorderRadius.circular(20),
                                       boxShadow: [
                                         BoxShadow(
-                                          color:
-                                              (Theme.of(context).brightness ==
-                                                          Brightness.dark
-                                                      ? Colors.white
-                                                      : Colors.black)
-                                                  .withOpacity(0.1),
+                                          // 💡 Menggunakan warna adaptif untuk shadow
+                                          color: textPrimaryColor.withOpacity(0.1),
                                           blurRadius: 8,
                                           offset: const Offset(0, 3),
                                         ),
@@ -353,7 +373,8 @@ class _DetailPageState extends State<DetailPage> {
                                       ? 20
                                       : (isTablet ? 24 : 28),
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.textPrimaryColor,
+                                  // 💡 Menggunakan warna teks primary adaptif
+                                  color: textPrimaryColor, 
                                 ),
                               ),
                               SizedBox(height: 12.0),
@@ -376,9 +397,8 @@ class _DetailPageState extends State<DetailPage> {
                                       fontSize: isMobile
                                           ? 14
                                           : (isTablet ? 16 : 18),
-                                      color: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium?.color,
+                                      // 💡 Menggunakan warna teks bodyMedium dari tema (adaptif)
+                                      color: theme.textTheme.bodyMedium?.color,
                                       decoration: TextDecoration.lineThrough,
                                     ),
                                   ),
@@ -427,7 +447,8 @@ class _DetailPageState extends State<DetailPage> {
                                         ? '${avgRating.toStringAsFixed(1)} ($reviewCount)'
                                         : 'Belum ada ulasan',
                                     style: TextStyle(
-                                      color: AppTheme.textSecondaryColor,
+                                      // 💡 Menggunakan warna teks secondary adaptif
+                                      color: textSecondaryColor,
                                       fontSize: isMobile ? 12 : 14,
                                     ),
                                   ),
@@ -443,7 +464,8 @@ class _DetailPageState extends State<DetailPage> {
                                       ? 14
                                       : (isTablet ? 16 : 18),
                                   height: 1.5,
-                                  color: AppTheme.textSecondaryColor,
+                                  // 💡 Menggunakan warna teks secondary adaptif
+                                  color: textSecondaryColor,
                                 ),
                               ),
                               const SizedBox(height: 12.0),
@@ -452,7 +474,8 @@ class _DetailPageState extends State<DetailPage> {
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
+                                  // 💡 Menggunakan cardColor dari tema
+                                  color: cardColor,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Column(
@@ -462,7 +485,8 @@ class _DetailPageState extends State<DetailPage> {
                                       'Ulasan',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: AppTheme.textPrimaryColor,
+                                        // 💡 Menggunakan warna teks primary adaptif
+                                        color: textPrimaryColor,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -470,7 +494,8 @@ class _DetailPageState extends State<DetailPage> {
                                       Text(
                                         'Belum ada ulasan untuk produk ini',
                                         style: TextStyle(
-                                          color: AppTheme.textSecondaryColor,
+                                          // 💡 Menggunakan warna teks secondary adaptif
+                                          color: textSecondaryColor,
                                         ),
                                       )
                                     else
@@ -509,16 +534,16 @@ class _DetailPageState extends State<DetailPage> {
                                                 Text(
                                                   text,
                                                   style: TextStyle(
-                                                    color: AppTheme
-                                                        .textPrimaryColor,
+                                                    // 💡 Menggunakan warna teks primary adaptif
+                                                    color: textPrimaryColor,
                                                   ),
                                                 ),
                                               const SizedBox(height: 4),
                                               Text(
                                                 'Pesanan: $orderId • $orderDate',
                                                 style: TextStyle(
-                                                  color: AppTheme
-                                                      .textSecondaryColor,
+                                                  // 💡 Menggunakan warna teks secondary adaptif
+                                                  color: textSecondaryColor,
                                                   fontSize: 12,
                                                 ),
                                               ),
@@ -560,9 +585,11 @@ class _DetailPageState extends State<DetailPage> {
                                           child: Text(
                                             "$quantity",
                                             textAlign: TextAlign.center,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
+                                              // 💡 Menggunakan warna teks primary adaptif
+                                              color: textPrimaryColor, 
                                             ),
                                           ),
                                         ),
@@ -670,10 +697,11 @@ class _DetailPageState extends State<DetailPage> {
                                     size: isMobile ? 18 : (isTablet ? 20 : 22),
                                   ),
                                   SizedBox(width: 12.0),
-                                  const Text(
+                                  Text(
                                     "Kami menerima semua metode pembayaran",
                                     style: TextStyle(
-                                      color: AppTheme.textSecondaryColor,
+                                      // 💡 Menggunakan warna teks secondary adaptif
+                                      color: textSecondaryColor,
                                     ),
                                   ),
                                 ],
