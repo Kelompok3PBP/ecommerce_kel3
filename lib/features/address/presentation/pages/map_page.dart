@@ -14,8 +14,8 @@ class MapPickerPage extends StatefulWidget {
 }
 
 class _MapPickerPageState extends State<MapPickerPage> {
-  ll.LatLng? _selectedLatLng;
-  bool _useSatellite = false;
+  final ValueNotifier<ll.LatLng?> _selectedLatLng = ValueNotifier(null);
+  final ValueNotifier<bool> _useSatellite = ValueNotifier(false);
 
   Future<ll.LatLng> _getUserLocation() async {
     try {
@@ -121,77 +121,94 @@ class _MapPickerPageState extends State<MapPickerPage> {
 
         final center = snapshot.data as ll.LatLng;
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(context.t('pick_location')),
-            actions: [
-              IconButton(
-                tooltip: _useSatellite ? 'Streets' : 'Satellite',
-                icon: Icon(_useSatellite ? Icons.map : Icons.satellite_alt),
-                onPressed: () => setState(() => _useSatellite = !_useSatellite),
-              ),
-            ],
-          ),
-          body: Stack(
-            children: [
-              fm.FlutterMap(
-                options: fm.MapOptions(
-                  center: ll.LatLng(center.latitude, center.longitude),
-                  zoom: 16.0,
-                  onTap: (tapPosition, latlng) {
-                    setState(() {
-                      _selectedLatLng = latlng;
-                    });
-                  },
-                ),
-                children: [
-                  fm.TileLayer(
-                    urlTemplate: _useSatellite
-                        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    subdomains: _useSatellite
-                        ? const []
-                        : const ['a', 'b', 'c'],
-                    userAgentPackageName: 'com.example.app',
+        return ValueListenableBuilder<bool>(
+          valueListenable: _useSatellite,
+          builder: (context, useSat, _) {
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(context.t('pick_location')),
+                actions: [
+                  IconButton(
+                    tooltip: useSat ? 'Streets' : 'Satellite',
+                    icon: Icon(useSat ? Icons.map : Icons.satellite_alt),
+                    onPressed: () => _useSatellite.value = !useSat,
                   ),
-                  if (_selectedLatLng != null)
-                    fm.MarkerLayer(
-                      markers: [
-                        fm.Marker(
-                          point: _selectedLatLng!,
-                          width: 40,
-                          height: 40,
-                          child: const Icon(
-                            Icons.location_on,
-                            color: Colors.red,
-                            size: 40,
-                          ),
-                        ),
-                      ],
-                    ),
                 ],
               ),
-
-              if (_selectedLatLng != null)
-                Positioned(
-                  bottom: 22,
-                  left: 16,
-                  right: 16,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final data = await _reverseGeocode(_selectedLatLng!);
-                      // include coordinates so caller can show a map preview
-                      data['lat'] = _selectedLatLng!.latitude.toString();
-                      data['lng'] = _selectedLatLng!.longitude.toString();
-                      context.pop(data);
-                    },
-                    child: Text(context.t('use_this_location')),
+              body: Stack(
+                children: [
+                  fm.FlutterMap(
+                    options: fm.MapOptions(
+                      center: ll.LatLng(center.latitude, center.longitude),
+                      zoom: 16.0,
+                      onTap: (tapPosition, latlng) {
+                        _selectedLatLng.value = latlng;
+                      },
+                    ),
+                    children: [
+                      fm.TileLayer(
+                        urlTemplate: useSat
+                            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                            : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: useSat ? const [] : const ['a', 'b', 'c'],
+                        userAgentPackageName: 'com.example.app',
+                      ),
+                      ValueListenableBuilder<ll.LatLng?>(
+                        valueListenable: _selectedLatLng,
+                        builder: (context, sel, _) {
+                          if (sel == null) return const SizedBox.shrink();
+                          return fm.MarkerLayer(
+                            markers: [
+                              fm.Marker(
+                                point: sel,
+                                width: 40,
+                                height: 40,
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.red,
+                                  size: 40,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ),
-            ],
-          ),
+
+                  ValueListenableBuilder<ll.LatLng?>(
+                    valueListenable: _selectedLatLng,
+                    builder: (context, sel, _) {
+                      if (sel == null) return const SizedBox.shrink();
+                      return Positioned(
+                        bottom: 22,
+                        left: 16,
+                        right: 16,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final data = await _reverseGeocode(sel);
+                            data['lat'] = sel.latitude.toString();
+                            data['lng'] = sel.longitude.toString();
+                            context.pop(data);
+                          },
+                          child: Text(context.t('use_this_location')),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _selectedLatLng.dispose();
+    _useSatellite.dispose();
+    super.dispose();
   }
 }

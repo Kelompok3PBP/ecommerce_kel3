@@ -3,13 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/shipping_cubit.dart';
 import 'shipping_option_card.dart';
 
-// Fungsi untuk menampilkan dialog
 Future<void> showShippingSelectorDialog(BuildContext context) async {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     builder: (ctx) {
-      // Menggunakan BlocProvider untuk memastikan Cubit dapat diakses
       return BlocProvider.value(
         value: BlocProvider.of<ShippingCubit>(context),
         child: const _ShippingSelectorContent(),
@@ -25,8 +23,7 @@ class _ShippingSelectorContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16.0),
-      height:
-          MediaQuery.of(context).size.height * 0.75, // Ambil 75% tinggi layar
+      height: MediaQuery.of(context).size.height * 0.75,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -37,7 +34,6 @@ class _ShippingSelectorContent extends StatelessWidget {
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           Divider(),
-          // BlocBuilder mendengarkan state dari ShippingCubit
           Expanded(
             child: BlocBuilder<ShippingCubit, ShippingState>(
               builder: (context, state) {
@@ -55,7 +51,6 @@ class _ShippingSelectorContent extends StatelessWidget {
                 }
 
                 if (state is ShippingLoaded) {
-                  // Tampilkan Alamat Pengiriman
                   final address = state.shippingAddress;
                   final selected = state.selectedOption;
 
@@ -74,7 +69,6 @@ class _ShippingSelectorContent extends StatelessWidget {
                           ),
                         ),
 
-                      // Daftar Opsi Pengiriman
                       Expanded(
                         child: ListView.builder(
                           itemCount: state.options.length,
@@ -84,11 +78,9 @@ class _ShippingSelectorContent extends StatelessWidget {
                               option: option,
                               isSelected: option.id == selected?.id,
                               onTap: () {
-                                // Panggil cubit saat opsi dipilih
                                 context
                                     .read<ShippingCubit>()
                                     .selectShippingOption(option);
-                                // Tutup dialog setelah memilih
                                 Navigator.pop(context);
                               },
                             );
@@ -96,7 +88,6 @@ class _ShippingSelectorContent extends StatelessWidget {
                         ),
                       ),
 
-                      // Tombol Konfirmasi (Opsional, karena sudah tertutup saat tap)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(

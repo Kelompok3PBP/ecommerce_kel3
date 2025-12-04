@@ -88,12 +88,13 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icons/icon.jpg"
+# ]\
 
   web:
     generate: true
     image_path: "assets/icons/icon.jpg"
-    background_color: "#ffffff"
-    theme_color: "#ffffff"
+    background_color: "#000000"
+    theme_color: "#000000"
 
 
 # The following section is specific to Flutter packages.

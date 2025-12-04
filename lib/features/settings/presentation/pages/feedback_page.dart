@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // 1. Import GoRouter
+import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 import 'package:ecommerce/app/theme/app_theme.dart';
 import 'package:ecommerce/features/settings/data/localization_extension.dart';
@@ -13,11 +13,11 @@ class FeedbackPage extends StatefulWidget {
 }
 
 class _FeedbackPageState extends State<FeedbackPage> {
-  double _rating = 0;
+  final ValueNotifier<double> _ratingNotifier = ValueNotifier(0);
   final TextEditingController _commentController = TextEditingController();
 
   void _submitFeedback() {
-    if (_rating == 0 || _commentController.text.trim().isEmpty) {
+    if (_ratingNotifier.value == 0 || _commentController.text.trim().isEmpty) {
       NotificationService.showIfEnabledDialog(
         context,
         title: 'Validasi',
@@ -30,10 +30,8 @@ class _FeedbackPageState extends State<FeedbackPage> {
       title: context.t('success'),
       body: 'Terima kasih atas feedback Anda! ❤️',
     );
-    setState(() {
-      _rating = 0;
-      _commentController.clear();
-    });
+    _ratingNotifier.value = 0;
+    _commentController.clear();
   }
 
   @override
@@ -69,31 +67,32 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 ),
               ),
               SizedBox(height: 2.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return IconButton(
-                    icon: Icon(
-                      index < _rating ? Icons.star : Icons.star_border,
-                      color: AppTheme.secondaryColor,
-                      size: 40,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _rating = index + 1.0;
-                      });
-                    },
+              ValueListenableBuilder<double>(
+                valueListenable: _ratingNotifier,
+                builder: (context, rating, child) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: AppTheme.secondaryColor,
+                          size: 40,
+                        ),
+                        onPressed: () {
+                          _ratingNotifier.value = index + 1.0;
+                        },
+                      );
+                    }),
                   );
-                }),
+                },
               ),
               SizedBox(height: 2.h),
               TextField(
                 controller: _commentController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: context.t(
-                    'send_feedback',
-                  ), // Atau gunakan key 'comment'
+                  labelText: context.t('send_feedback'),
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -111,7 +110,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 1.5.h),
                       child: Text(
-                        context.t('send_feedback'), // Key untuk tombol Submit
+                        context.t('send_feedback'),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -126,5 +125,12 @@ class _FeedbackPageState extends State<FeedbackPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _ratingNotifier.dispose();
+    _commentController.dispose();
+    super.dispose();
   }
 }

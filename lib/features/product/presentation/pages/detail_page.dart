@@ -20,12 +20,11 @@ class DetailPage extends StatefulWidget {
 class _DetailPageState extends State<DetailPage> {
   double userRating = 0;
   int? lastLoadedId;
-  int quantity = 1;
+  late ValueNotifier<int> quantityNotifier;
   List<dynamic> productReviews = [];
   double avgRating = 0.0;
   int reviewCount = 0;
 
-  // --- Helper untuk Warna Adaptif ---
   Color _getTextPrimaryColor(BuildContext context) {
     return Theme.of(context).colorScheme.onBackground;
   }
@@ -37,12 +36,18 @@ class _DetailPageState extends State<DetailPage> {
   Color _getCardColor(BuildContext context) {
     return Theme.of(context).cardColor;
   }
-  // ----------------------------------
 
   @override
   void initState() {
     super.initState();
+    quantityNotifier = ValueNotifier<int>(1);
     _fetchProductData();
+  }
+
+  @override
+  void dispose() {
+    quantityNotifier.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchProductData() async {
@@ -109,10 +114,8 @@ class _DetailPageState extends State<DetailPage> {
         }
 
         return Scaffold(
-          // 💡 Menggunakan scaffoldBackgroundColor dari tema
           backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
-            // Warna AppBar tetap primaryColor
             backgroundColor: AppTheme.primaryColor,
             elevation: 0,
             leading: IconButton(
@@ -226,20 +229,19 @@ class _DetailPageState extends State<DetailPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // ---------- Left: Product Image ----------
                         if (!isDesktop) ...[
                           Column(
                             children: [
                               Center(
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    // 💡 Menggunakan cardColor dari tema
                                     color: cardColor,
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: [
                                       BoxShadow(
-                                        // 💡 Menggunakan warna adaptif untuk shadow
-                                        color: textPrimaryColor.withOpacity(0.1),
+                                        color: textPrimaryColor.withOpacity(
+                                          0.1,
+                                        ),
                                         blurRadius: 10,
                                         offset: const Offset(0, 6),
                                       ),
@@ -292,13 +294,13 @@ class _DetailPageState extends State<DetailPage> {
                                     width: imageWidth,
                                     height: imageHeight,
                                     decoration: BoxDecoration(
-                                      // 💡 Menggunakan cardColor dari tema
                                       color: cardColor,
                                       borderRadius: BorderRadius.circular(20),
                                       boxShadow: [
                                         BoxShadow(
-                                          // 💡 Menggunakan warna adaptif untuk shadow
-                                          color: textPrimaryColor.withOpacity(0.1),
+                                          color: textPrimaryColor.withOpacity(
+                                            0.1,
+                                          ),
                                           blurRadius: 8,
                                           offset: const Offset(0, 3),
                                         ),
@@ -349,7 +351,6 @@ class _DetailPageState extends State<DetailPage> {
                         else
                           SizedBox(height: 32.0),
 
-                        // ---------- Right: Product Info ----------
                         Expanded(
                           flex: isDesktop ? 5 : 0,
                           child: Column(
@@ -373,8 +374,7 @@ class _DetailPageState extends State<DetailPage> {
                                       ? 20
                                       : (isTablet ? 24 : 28),
                                   fontWeight: FontWeight.bold,
-                                  // 💡 Menggunakan warna teks primary adaptif
-                                  color: textPrimaryColor, 
+                                  color: textPrimaryColor,
                                 ),
                               ),
                               SizedBox(height: 12.0),
@@ -397,7 +397,7 @@ class _DetailPageState extends State<DetailPage> {
                                       fontSize: isMobile
                                           ? 14
                                           : (isTablet ? 16 : 18),
-                                      // 💡 Menggunakan warna teks bodyMedium dari tema (adaptif)
+
                                       color: theme.textTheme.bodyMedium?.color,
                                       decoration: TextDecoration.lineThrough,
                                     ),
@@ -425,7 +425,6 @@ class _DetailPageState extends State<DetailPage> {
                               ),
                               SizedBox(height: 16.0),
 
-                              // Rating (from order history reviews)
                               Row(
                                 children: [
                                   Row(
@@ -447,7 +446,6 @@ class _DetailPageState extends State<DetailPage> {
                                         ? '${avgRating.toStringAsFixed(1)} ($reviewCount)'
                                         : 'Belum ada ulasan',
                                     style: TextStyle(
-                                      // 💡 Menggunakan warna teks secondary adaptif
                                       color: textSecondaryColor,
                                       fontSize: isMobile ? 12 : 14,
                                     ),
@@ -464,17 +462,14 @@ class _DetailPageState extends State<DetailPage> {
                                       ? 14
                                       : (isTablet ? 16 : 18),
                                   height: 1.5,
-                                  // 💡 Menggunakan warna teks secondary adaptif
                                   color: textSecondaryColor,
                                 ),
                               ),
                               const SizedBox(height: 12.0),
-                              // Reviews section loaded from order history
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  // 💡 Menggunakan cardColor dari tema
                                   color: cardColor,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -485,7 +480,6 @@ class _DetailPageState extends State<DetailPage> {
                                       'Ulasan',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        // 💡 Menggunakan warna teks primary adaptif
                                         color: textPrimaryColor,
                                       ),
                                     ),
@@ -494,7 +488,6 @@ class _DetailPageState extends State<DetailPage> {
                                       Text(
                                         'Belum ada ulasan untuk produk ini',
                                         style: TextStyle(
-                                          // 💡 Menggunakan warna teks secondary adaptif
                                           color: textSecondaryColor,
                                         ),
                                       )
@@ -534,7 +527,6 @@ class _DetailPageState extends State<DetailPage> {
                                                 Text(
                                                   text,
                                                   style: TextStyle(
-                                                    // 💡 Menggunakan warna teks primary adaptif
                                                     color: textPrimaryColor,
                                                   ),
                                                 ),
@@ -542,7 +534,6 @@ class _DetailPageState extends State<DetailPage> {
                                               Text(
                                                 'Pesanan: $orderId • $orderDate',
                                                 style: TextStyle(
-                                                  // 💡 Menggunakan warna teks secondary adaptif
                                                   color: textSecondaryColor,
                                                   fontSize: 12,
                                                 ),
@@ -559,133 +550,138 @@ class _DetailPageState extends State<DetailPage> {
                               ),
                               SizedBox(height: 24.0),
 
-                              // Quantity selector + Add to Cart + Buy Now
-                              Row(
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: AppTheme.secondaryColor,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.remove),
-                                          color: AppTheme.primaryColor,
-                                          onPressed: quantity > 1
-                                              ? () {
-                                                  setState(() => quantity--);
-                                                }
-                                              : null,
+                              ValueListenableBuilder<int>(
+                                valueListenable: quantityNotifier,
+                                builder: (context, quantity, _) {
+                                  return Row(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: AppTheme.secondaryColor,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
-                                        SizedBox(
-                                          width: 30,
-                                          child: Text(
-                                            "$quantity",
-                                            textAlign: TextAlign.center,
+                                        child: Row(
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.remove),
+                                              color: AppTheme.primaryColor,
+                                              onPressed: quantity > 1
+                                                  ? () {
+                                                      quantityNotifier.value--;
+                                                    }
+                                                  : null,
+                                            ),
+                                            SizedBox(
+                                              width: 30,
+                                              child: Text(
+                                                "$quantity",
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.add),
+                                              color: AppTheme.primaryColor,
+                                              onPressed: () {
+                                                quantityNotifier.value++;
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(width: 12.0),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            context.read<CartCubit>().addItem(
+                                              productId: product.id.toString(),
+                                              productName: product.title,
+                                              productImage: product.image,
+                                              quantity: quantity,
+                                              price: product.price,
+                                            );
+                                            NotificationService.showIfEnabledDialog(
+                                              context,
+                                              title: 'Ditambahkan ke Keranjang',
+                                              body:
+                                                  '$quantity item ditambahkan ke keranjang!',
+                                            );
+                                            quantityNotifier.value = 1;
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                AppTheme.primaryColor,
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: isMobile
+                                                  ? 14.0
+                                                  : (isTablet ? 18.0 : 22.0),
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            "ADD TO CART",
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
+                                              color: Colors.white,
                                               fontSize: 16,
-                                              // 💡 Menggunakan warna teks primary adaptif
-                                              color: textPrimaryColor, 
                                             ),
                                           ),
                                         ),
-                                        IconButton(
-                                          icon: const Icon(Icons.add),
-                                          color: AppTheme.primaryColor,
+                                      ),
+                                      SizedBox(width: 12.0),
+                                      Expanded(
+                                        child: ElevatedButton(
                                           onPressed: () {
-                                            setState(() => quantity++);
+                                            context.go(
+                                              '/shipping-selection',
+                                              extra: {
+                                                'source': 'detail',
+                                                'productId': product.id
+                                                    .toString(),
+                                                'productName': product.title,
+                                                'productImage': product.image,
+                                                'quantity': quantity,
+                                                'price': product.price,
+                                                'total':
+                                                    product.price * quantity,
+                                              },
+                                            );
                                           },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(width: 12.0),
-                                  Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        context.read<CartCubit>().addItem(
-                                          productId: product.id.toString(),
-                                          productName: product.title,
-                                          productImage: product.image,
-                                          quantity: quantity,
-                                          price: product.price,
-                                        );
-                                        // Show popup notification only if enabled
-                                        NotificationService.showIfEnabledDialog(
-                                          context,
-                                          title: 'Ditambahkan ke Keranjang',
-                                          body:
-                                              '$quantity item ditambahkan ke keranjang!',
-                                        );
-                                        setState(() => quantity = 1);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppTheme.primaryColor,
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: isMobile
-                                              ? 14.0
-                                              : (isTablet ? 18.0 : 22.0),
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: isMobile
+                                                  ? 14.0
+                                                  : (isTablet ? 18.0 : 22.0),
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            "BUY NOW",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      child: const Text(
-                                        "ADD TO CART",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 12.0),
-                                  Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        context.go(
-                                          '/shipping-selection',
-                                          extra: {
-                                            'productId': product.id.toString(),
-                                            'productName': product.title,
-                                            'productImage': product.image,
-                                            'quantity': quantity,
-                                            'price': product.price,
-                                            'total': product.price * quantity,
-                                          },
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: isMobile
-                                              ? 14.0
-                                              : (isTablet ? 18.0 : 22.0),
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        "BUY NOW",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                    ],
+                                  );
+                                },
                               ),
                               SizedBox(height: 16.0),
 
@@ -699,10 +695,7 @@ class _DetailPageState extends State<DetailPage> {
                                   SizedBox(width: 12.0),
                                   Text(
                                     "Kami menerima semua metode pembayaran",
-                                    style: TextStyle(
-                                      // 💡 Menggunakan warna teks secondary adaptif
-                                      color: textSecondaryColor,
-                                    ),
+                                    style: TextStyle(color: textSecondaryColor),
                                   ),
                                 ],
                               ),

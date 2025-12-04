@@ -15,12 +15,13 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  final ValueNotifier<bool> _obscurePassword = ValueNotifier(true);
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _obscurePassword.dispose();
     super.dispose();
   }
 
@@ -171,7 +172,6 @@ class _LoginPageState extends State<LoginPage> {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Column(
                           children: [
-                            // Icon atau logo
                             Image.asset(
                               "assets/images/logo.png",
                               height: 72,
@@ -266,52 +266,56 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                               ),
                               const SizedBox(height: 12),
-                              // Password field
-                              TextFormField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                decoration: InputDecoration(
-                                  hintText: 'Password',
-                                  prefixIcon: Icon(
-                                    Icons.lock,
-                                    color: maroonColor,
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: maroonColor,
+                              ValueListenableBuilder<bool>(
+                                valueListenable: _obscurePassword,
+                                builder: (context, obscure, _) {
+                                  return TextFormField(
+                                    controller: _passwordController,
+                                    obscureText: obscure,
+                                    decoration: InputDecoration(
+                                      hintText: 'Password',
+                                      prefixIcon: Icon(
+                                        Icons.lock,
+                                        color: maroonColor,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          obscure
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: maroonColor,
+                                        ),
+                                        onPressed: () {
+                                          _obscurePassword.value = !obscure;
+                                        },
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: maroonColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: maroonColor.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          color: maroonColor,
+                                          width: 2,
+                                        ),
+                                      ),
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscurePassword = !_obscurePassword;
-                                      });
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Password tidak boleh kosong';
+                                      }
+                                      return null;
                                     },
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: maroonColor),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: maroonColor.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: maroonColor,
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Password tidak boleh kosong';
-                                  }
-                                  return null;
+                                  );
                                 },
                               ),
                               const SizedBox(height: 8),

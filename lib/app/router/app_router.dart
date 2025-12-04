@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// --- IMPORTS ---
 import '../../features/address/presentation/cubits/address_cubit.dart';
 import 'package:ecommerce/features/address/data/address_service.dart';
 import 'package:ecommerce/features/auth/data/auth_service.dart';
@@ -22,7 +21,6 @@ import 'package:ecommerce/features/settings/presentation/pages/settings_page.dar
 import 'package:ecommerce/features/settings/presentation/pages/about_page.dart';
 import 'package:ecommerce/features/settings/presentation/pages/device_info_page.dart';
 
-// --- FIX 1: Gunakan alias 'as' untuk menghindari konflik nama class ---
 import 'package:ecommerce/features/settings/presentation/pages/feedback_page.dart'
     as feedback_ui;
 
@@ -44,34 +42,36 @@ class AppRouter {
     initialLocation: '/splash',
     debugLogDiagnostics: true,
 
-    // --- LOGIKA REDIRECT ---
     redirect: (BuildContext context, GoRouterState state) async {
       final bool loggedIn = await AuthService.isLoggedIn();
       final String location = state.matchedLocation;
 
-      // Halaman Public (Tidak perlu cek login)
-      if (location == '/splash' || location == '/welcome') return null;
+      // Always allow splash to complete (it will decide where to navigate)
+      if (location == '/splash') return null;
 
-      // Jika belum login, blokir akses ke halaman privat
-      if (!loggedIn &&
-          location != '/login' &&
-          location != '/register' &&
-          !location.startsWith('/purchase-receipt') &&
-          !location.startsWith('/payment')) {
-        return '/login';
+      // Always allow welcome page
+      if (location == '/welcome') return null;
+
+      // Allow payment & receipt pages without login check
+      if (location.startsWith('/purchase-receipt') ||
+          location.startsWith('/payment')) {
+        return null;
       }
 
-      // Jika sudah login tapi buka login/register, arahkan ke dashboard
+      // If logged in, don't go to login/register (redirect to dashboard instead)
       if (loggedIn && (location == '/login' || location == '/register')) {
         return '/dashboard';
+      }
+
+      // If NOT logged in and trying to access protected pages, redirect to login
+      if (!loggedIn && location != '/login' && location != '/register') {
+        return '/login';
       }
 
       return null;
     },
 
-    // --- DAFTAR RUTE ---
     routes: <RouteBase>[
-      // Splash & Auth
       GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
       GoRoute(
         path: '/welcome',
@@ -83,7 +83,6 @@ class AppRouter {
         builder: (context, state) => const RegisterPage(),
       ),
 
-      // Dashboard
       GoRoute(
         path: '/dashboard',
         builder: (context, state) {
@@ -92,7 +91,6 @@ class AppRouter {
         },
       ),
 
-      // Profile & Address
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfilePage(),
@@ -117,7 +115,6 @@ class AppRouter {
         builder: (context, state) => const ChangePasswordPage(),
       ),
 
-      // Product & Cart
       GoRoute(
         path: '/detail/:id',
         builder: (context, state) {
@@ -127,7 +124,6 @@ class AppRouter {
       ),
       GoRoute(path: '/cart', builder: (context, state) => const CartPage()),
 
-      // Order & Payment
       GoRoute(
         path: '/shipping-selection',
         builder: (context, state) {
@@ -151,7 +147,6 @@ class AppRouter {
         path: '/payment',
         builder: (context, state) {
           dynamic extra = state.extra;
-          // Convert to proper type if needed
           if (extra is Map) {
             return PaymentPage(extra: Map<String, dynamic>.from(extra));
           }
@@ -174,10 +169,8 @@ class AppRouter {
         },
       ),
 
-      // --- SETTINGS GROUP ---
       GoRoute(
         path: '/settings',
-        // Pastikan class di settings_page.dart bernama SettingsPage
         builder: (context, state) => const SettingsPage(),
       ),
 
@@ -189,7 +182,6 @@ class AppRouter {
 
       GoRoute(
         path: '/feedback',
-        // --- FIX 2: Panggil menggunakan prefix ---
         builder: (context, state) => const feedback_ui.FeedbackPage(),
       ),
       GoRoute(
@@ -197,7 +189,6 @@ class AppRouter {
         builder: (context, state) => const SharedPreferencesPage(),
       ),
 
-      // Map
       GoRoute(path: '/map', builder: (context, state) => const MapPickerPage()),
     ],
   );

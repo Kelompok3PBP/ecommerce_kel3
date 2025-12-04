@@ -6,6 +6,7 @@ import 'package:sizer/sizer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:ecommerce/features/cart/presentation/cubits/cart_cubit.dart';
@@ -25,13 +26,14 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   List<Product> products = [];
-  List<Product> filteredProducts = [];
-  String _currentQuery = "";
-  String? _categoryFilter;
-  String _sortMode = 'none';
-  String userName = "";
-  String userEmail = "";
-  String? _webBase64;
+  final ValueNotifier<List<Product>> filteredProducts = ValueNotifier([]);
+  final ValueNotifier<String> _currentQuery = ValueNotifier("");
+  final ValueNotifier<String?> _categoryFilter = ValueNotifier(null);
+  final ValueNotifier<String> _sortMode = ValueNotifier('none');
+  final ValueNotifier<String> userName = ValueNotifier('');
+  final ValueNotifier<String> userEmail = ValueNotifier('');
+  final ValueNotifier<String?> _webBase64 = ValueNotifier(null);
+  final ValueNotifier<String?> _imagePath = ValueNotifier(null);
   late TextEditingController _searchController;
 
   final NumberFormat currencyFormat = NumberFormat.currency(
@@ -53,17 +55,34 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    filteredProducts.dispose();
+    _currentQuery.dispose();
+    _categoryFilter.dispose();
+    _sortMode.dispose();
+    userName.dispose();
+    userEmail.dispose();
+    _webBase64.dispose();
+    _imagePath.dispose();
     super.dispose();
   }
 
   ImageProvider? _buildProfileImage() {
-    if (kIsWeb && _webBase64 != null) {
+    if (kIsWeb && _webBase64.value != null) {
       try {
-        return MemoryImage(base64Decode(_webBase64!));
+        return MemoryImage(base64Decode(_webBase64.value!));
       } catch (_) {
         return null;
       }
     }
+
+    final imagePath = _imagePath.value;
+    if (!kIsWeb && imagePath != null) {
+      try {
+        final f = File(imagePath);
+        if (f.existsSync()) return FileImage(f);
+      } catch (_) {}
+    }
+
     return null;
   }
 
@@ -84,28 +103,25 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userName = prefs.getString('user_name') ?? widget.email.split('@')[0];
-      userEmail = prefs.getString('user_email') ?? widget.email;
-      _webBase64 = prefs.getString('profile_picture_base64');
-    });
+    userName.value = prefs.getString('user_name') ?? widget.email.split('@')[0];
+    userEmail.value = prefs.getString('user_email') ?? widget.email;
+    _webBase64.value = prefs.getString('profile_picture_base64');
+    _imagePath.value = prefs.getString('profile_picture_path');
   }
 
   void _searchProducts(String query) {
-    setState(() {
-      _currentQuery = query;
-      _applyFilters();
-    });
+    _currentQuery.value = query;
+    _applyFilters();
   }
 
   void _applyFilters() {
-    final q = _currentQuery.trim().toLowerCase();
+    final q = _currentQuery.value.trim().toLowerCase();
 
     Iterable<Product> result = products;
 
-    if (_categoryFilter != null && _categoryFilter!.isNotEmpty) {
+    if (_categoryFilter.value != null && _categoryFilter.value!.isNotEmpty) {
       result = result.where(
-        (p) => p.category.toLowerCase() == _categoryFilter!.toLowerCase(),
+        (p) => p.category.toLowerCase() == _categoryFilter.value!.toLowerCase(),
       );
     }
 
@@ -121,17 +137,17 @@ class _DashboardPageState extends State<DashboardPage> {
       }
     }
 
-    if (_sortMode == 'price_asc') {
+    if (_sortMode.value == 'price_asc') {
       final list = result.toList();
       list.sort((a, b) => a.price.compareTo(b.price));
       result = list;
-    } else if (_sortMode == 'price_desc') {
+    } else if (_sortMode.value == 'price_desc') {
       final list = result.toList();
       list.sort((a, b) => b.price.compareTo(a.price));
       result = list;
     }
 
-    filteredProducts = result.toList();
+    filteredProducts.value = result.toList();
   }
 
   Future<void> _logout() async {
@@ -147,18 +163,17 @@ class _DashboardPageState extends State<DashboardPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final theme = Theme.of(context);
 
-    // Dynamic scale biar ukuran pas di semua device
     double fontScale = screenWidth < 600
         ? 1.0
         : screenWidth < 1000
-            ? 0.9
-            : 0.8;
+        ? 0.9
+        : 0.8;
 
     double paddingScale = screenWidth < 600
         ? 1.0
         : screenWidth < 1000
-            ? 0.8
-            : 0.7;
+        ? 0.8
+        : 0.7;
 
     return Scaffold(
       drawer: _buildDrawer(context),
@@ -229,11 +244,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
           return Column(
             children: [
-              // Bagian Header yang TIDAK AKAN digulir (Statis)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Banner (Responsif)
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final w = constraints.maxWidth;
@@ -276,91 +289,88 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
 
                   SizedBox(height: 2.h * paddingScale),
-                  _buildCategoryChips(), // Chips Kategori
+                  _buildCategoryChips(),
 
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 3.w,
                       vertical: 1.h,
                     ),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: context.t('search'),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          // Menggunakan warna sekunder tema (adaptif)
-                          color: theme.colorScheme.secondary,
-                        ),
-                        suffixIcon: _currentQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _searchProducts('');
-                                },
-                              )
-                            : null,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          // Border color yang adaptif
-                          borderSide: BorderSide(color: theme.dividerColor),
-                        ),
-                        filled: true,
-                        // GUNAKAN cardColor DARI TEMA (ADAPTIF!)
-                        fillColor: theme.cardColor,
-                      ),
-                      onChanged: (v) => _searchProducts(v),
-                      // Tambahkan style untuk memastikan teks input terlihat
-                      style: theme.textTheme.bodyMedium,
+                    child: ValueListenableBuilder<String>(
+                      valueListenable: _currentQuery,
+                      builder: (context, currentQuery, _) {
+                        return TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: context.t('search'),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: theme.colorScheme.secondary,
+                            ),
+                            suffixIcon: currentQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      _searchProducts('');
+                                    },
+                                  )
+                                : null,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: theme.dividerColor),
+                            ),
+                            filled: true,
+                            fillColor: theme.cardColor,
+                          ),
+                          onChanged: (v) => _searchProducts(v),
+                          style: theme.textTheme.bodyMedium,
+                        );
+                      },
                     ),
-                  ), // Search Box
-
-                  // Sorting Dropdown
+                  ),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 3.w),
-                    child: DropdownButtonFormField<String>(
-                      value:
-                          (_sortMode == 'price_asc' || _sortMode == 'price_desc')
-                              ? _sortMode
+                    child: ValueListenableBuilder<String>(
+                      valueListenable: _sortMode,
+                      builder: (context, smode, _) {
+                        return DropdownButtonFormField<String>(
+                          value: (smode == 'price_asc' || smode == 'price_desc')
+                              ? smode
                               : 'none',
-                      decoration: InputDecoration(
-                        labelText: context.t('urutkan'),
-                        // Tambahkan labelStyle agar label terlihat jelas
-                        labelStyle: theme.textTheme.bodyMedium,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          // Border color yang adaptif
-                          borderSide: BorderSide(color: theme.dividerColor),
-                        ),
-                        filled: true,
-                        // GUNAKAN cardColor DARI TEMA (ADAPTIF!)
-                        fillColor: theme.cardColor,
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'none',
-                          child: Text(context.t('default')),
-                        ),
-                        DropdownMenuItem(
-                          value: 'price_asc',
-                          child: Text(context.t('Harga Terendah')),
-                        ),
-                        DropdownMenuItem(
-                          value: 'price_desc',
-                          child: Text(context.t('Harga Tertinggi')),
-                        ),
-                      ],
-                      onChanged: (val) {
-                        setState(() {
-                          _sortMode = val ?? 'none';
-                          _applyFilters();
-                        });
+                          decoration: InputDecoration(
+                            labelText: context.t('urutkan'),
+                            labelStyle: theme.textTheme.bodyMedium,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: theme.dividerColor),
+                            ),
+                            filled: true,
+                            fillColor: theme.cardColor,
+                          ),
+                          items: [
+                            DropdownMenuItem(
+                              value: 'none',
+                              child: Text(context.t('default')),
+                            ),
+                            DropdownMenuItem(
+                              value: 'price_asc',
+                              child: Text(context.t('Harga Terendah')),
+                            ),
+                            DropdownMenuItem(
+                              value: 'price_desc',
+                              child: Text(context.t('Harga Tertinggi')),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            _sortMode.value = val ?? 'none';
+                            _applyFilters();
+                          },
+
+                          style: theme.textTheme.bodyMedium,
+                          iconEnabledColor: theme.colorScheme.secondary,
+                        );
                       },
-                      // Tambahkan style untuk memastikan teks yang dipilih terlihat
-                      style: theme.textTheme.bodyMedium,
-                      // Warna ikon Dropdown adaptif
-                      iconEnabledColor: theme.colorScheme.secondary,
                     ),
                   ),
 
@@ -368,7 +378,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
 
-              // Bagian Grid Produk yang DAPAT digulir (Expanded)
               Expanded(
                 child: RefreshIndicator(
                   color: Theme.of(context).primaryColor,
@@ -378,8 +387,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   },
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 3.w),
-                    child: filteredProducts.isEmpty
-                        ? Center(
+                    child: ValueListenableBuilder<List<Product>>(
+                      valueListenable: filteredProducts,
+                      builder: (context, list, _) {
+                        if (list.isEmpty) {
+                          return Center(
                             child: Padding(
                               padding: EdgeInsets.only(top: 5.h),
                               child: Text(
@@ -387,32 +399,36 @@ class _DashboardPageState extends State<DashboardPage> {
                                 style: TextStyle(fontSize: 12.sp * fontScale),
                               ),
                             ),
-                          )
-                        : LayoutBuilder(
-                            builder: (context, constraints) {
-                              int crossAxisCount = constraints.maxWidth < 600
-                                  ? 2
-                                  : constraints.maxWidth < 900
-                                      ? 3
-                                      : constraints.maxWidth < 1200
-                                          ? 4
-                                          : 5;
-                              return GridView.builder(
-                                shrinkWrap: false,
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                itemCount: filteredProducts.length,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: crossAxisCount,
-                                  mainAxisSpacing: 2.w,
-                                  crossAxisSpacing: 2.w,
-                                  childAspectRatio: 0.7,
-                                ),
-                                itemBuilder: (context, i) =>
-                                    _buildProductCard(filteredProducts[i]),
-                              );
-                            },
-                          ),
+                          );
+                        }
+
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            int crossAxisCount = constraints.maxWidth < 600
+                                ? 2
+                                : constraints.maxWidth < 900
+                                ? 3
+                                : constraints.maxWidth < 1200
+                                ? 4
+                                : 5;
+                            return GridView.builder(
+                              shrinkWrap: false,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: list.length,
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    mainAxisSpacing: 2.w,
+                                    crossAxisSpacing: 2.w,
+                                    childAspectRatio: 0.7,
+                                  ),
+                              itemBuilder: (context, i) =>
+                                  _buildProductCard(list[i]),
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -425,48 +441,49 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildCategoryChips() {
     final cats = products.map((p) => p.category).toSet().toList();
-    // theme not needed here
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-      child: Row(
-        children: [
-          _buildCategoryChip("all", context.t('all')),
-          ...cats.map((c) => _buildCategoryChip(c, translateCategory(c))),
-        ],
-      ),
+    return ValueListenableBuilder<String?>(
+      valueListenable: _categoryFilter,
+      builder: (context, current, _) {
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+          child: Row(
+            children: [
+              _buildCategoryChip("all", context.t('all')),
+              ...cats.map((c) => _buildCategoryChip(c, translateCategory(c))),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildCategoryChip(String value, String label) {
     final theme = Theme.of(context);
     final bool selected =
-        _categoryFilter == value || (value == "all" && _categoryFilter == null);
+        _categoryFilter.value == value ||
+        (value == "all" && _categoryFilter.value == null);
     return Padding(
       padding: EdgeInsets.only(right: 2.w),
       child: ChoiceChip(
         label: Text(label),
         selected: selected,
         selectedColor: AppTheme.primaryColor,
-        // Gunakan cardColor dari tema dan berikan sedikit opacity jika Dark Mode untuk kontras yang lebih baik
-        backgroundColor: theme.brightness == Brightness.dark 
-            ? theme.cardColor.withOpacity(0.5) 
+
+        backgroundColor: theme.brightness == Brightness.dark
+            ? theme.cardColor.withOpacity(0.5)
             : theme.cardColor,
         labelStyle: TextStyle(
-          color: selected
-              ? Colors.white
-              : theme.textTheme.bodyMedium?.color, // Warna teks adaptif
+          color: selected ? Colors.white : theme.textTheme.bodyMedium?.color,
           fontWeight: FontWeight.bold,
         ),
         onSelected: (_) {
-          setState(() {
-            if (value == "all") {
-              _categoryFilter = null;
-            } else {
-              _categoryFilter = value;
-            }
-            _applyFilters();
-          });
+          if (value == "all") {
+            _categoryFilter.value = null;
+          } else {
+            _categoryFilter.value = value;
+          }
+          _applyFilters();
         },
       ),
     );
@@ -480,56 +497,75 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          // Header yang lebih kecil dan menarik (Small, appealing header)
           DrawerHeader(
             margin: EdgeInsets.zero,
             padding: EdgeInsets.only(top: 2.h, left: 3.w, bottom: 2.h),
-            decoration: const BoxDecoration(
-              color: AppTheme.primaryColor,
-            ),
+            decoration: const BoxDecoration(color: AppTheme.primaryColor),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Picture
-                CircleAvatar(
-                  radius: 24, // Lebih kecil dari default UserAccountsDrawerHeader
-                  backgroundColor: theme.cardColor,
-                  backgroundImage: _buildProfileImage(),
-                  child: _buildProfileImage() == null
-                      ? Icon(Icons.person, size: 28, color: theme.primaryColor)
-                      : null,
+                ValueListenableBuilder<String?>(
+                  valueListenable: _imagePath,
+                  builder: (context, imagePath, _) {
+                    return ValueListenableBuilder<String?>(
+                      valueListenable: _webBase64,
+                      builder: (context, webBase64, _) {
+                        final profileImg = _buildProfileImage();
+                        return CircleAvatar(
+                          radius: 24,
+                          backgroundColor: theme.cardColor,
+                          backgroundImage: profileImg,
+                          child: profileImg == null
+                              ? Icon(
+                                  Icons.person,
+                                  size: 28,
+                                  color: theme.primaryColor,
+                                )
+                              : null,
+                        );
+                      },
+                    );
+                  },
                 ),
                 SizedBox(width: 3.w),
-                // Welcome Text
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        // Menggunakan bodyLarge/titleMedium untuk ukuran font dashboard
-                        context.t('welcome'),
-                        style: textTheme.titleSmall?.copyWith(
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        userName,
-                        style: textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        userEmail,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: Colors.white70,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                  child: ValueListenableBuilder<String>(
+                    valueListenable: userName,
+                    builder: (context, uname, _) {
+                      return ValueListenableBuilder<String>(
+                        valueListenable: userEmail,
+                        builder: (context, uemail, __) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                context.t('welcome'),
+                                style: textTheme.titleSmall?.copyWith(
+                                  color: Colors.white,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                uname,
+                                style: textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                uemail,
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: Colors.white70,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
               ],
@@ -610,10 +646,9 @@ class _DashboardPageState extends State<DashboardPage> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 p.title,
-                // Menggunakan warna teks default tema (putih/terang di Dark Mode)
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyMedium?.color, 
+                  color: theme.textTheme.bodyMedium?.color,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -626,7 +661,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  // Menggunakan AppTheme.primaryColor (merah) yang terlihat jelas di kedua mode
+
                   color: AppTheme.primaryColor,
                 ),
               ),

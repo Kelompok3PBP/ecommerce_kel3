@@ -17,14 +17,16 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
+  final ValueNotifier<bool> _obscurePassword = ValueNotifier(true);
+  final ValueNotifier<bool> _obscureConfirmPassword = ValueNotifier(true);
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _obscurePassword.dispose();
+    _obscureConfirmPassword.dispose();
     super.dispose();
   }
 
@@ -80,7 +82,6 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // background image with mild saturation boost
           Positioned.fill(
             child: ColorFiltered(
               colorFilter: ColorFilter.matrix(<double>[
@@ -111,11 +112,9 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
           ),
-          // light dark overlay so image remains visible
           Positioned.fill(
             child: Container(color: Colors.black.withOpacity(0.12)),
           ),
-          // soft vignette to focus content
           Positioned.fill(
             child: IgnorePointer(
               child: Container(
@@ -133,7 +132,6 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
           ),
-          // subtle blur (reduced so background is visible)
           Positioned.fill(
             child: ClipRect(
               child: BackdropFilter(
@@ -157,7 +155,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Header banner dengan maroon
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -170,7 +167,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Column(
                           children: [
-                            // Icon atau logo
                             Image.asset(
                               "assets/images/logo.png",
                               height: 64,
@@ -196,7 +192,6 @@ class _RegisterPageState extends State<RegisterPage> {
                           ],
                         ),
                       ),
-                      // Form section
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
@@ -226,7 +221,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              // Email field
                               TextFormField(
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
@@ -267,112 +261,119 @@ class _RegisterPageState extends State<RegisterPage> {
                                 },
                               ),
                               const SizedBox(height: 12),
-                              // Password field
-                              TextFormField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                decoration: InputDecoration(
-                                  hintText: 'Password',
-                                  prefixIcon: Icon(
-                                    Icons.lock,
-                                    color: maroonColor,
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: maroonColor,
+                              ValueListenableBuilder<bool>(
+                                valueListenable: _obscurePassword,
+                                builder: (context, obscure, _) {
+                                  return TextFormField(
+                                    controller: _passwordController,
+                                    obscureText: obscure,
+                                    decoration: InputDecoration(
+                                      hintText: 'Password',
+                                      prefixIcon: Icon(
+                                        Icons.lock,
+                                        color: maroonColor,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          obscure
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: maroonColor,
+                                        ),
+                                        onPressed: () {
+                                          _obscurePassword.value = !obscure;
+                                        },
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: maroonColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: maroonColor.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          color: maroonColor,
+                                          width: 2,
+                                        ),
+                                      ),
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscurePassword = !_obscurePassword;
-                                      });
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Password tidak boleh kosong';
+                                      }
+                                      if (value.length < 6) {
+                                        return 'Password minimal 6 karakter';
+                                      }
+                                      return null;
                                     },
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: maroonColor),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: maroonColor.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: maroonColor,
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Password tidak boleh kosong';
-                                  }
-                                  if (value.length < 6) {
-                                    return 'Password minimal 6 karakter';
-                                  }
-                                  return null;
+                                  );
                                 },
                               ),
                               const SizedBox(height: 12),
-                              // Confirm Password field
-                              TextFormField(
-                                controller: _confirmPasswordController,
-                                obscureText: _obscureConfirmPassword,
-                                decoration: InputDecoration(
-                                  hintText: 'Konfirmasi Password',
-                                  prefixIcon: Icon(
-                                    Icons.lock_outline,
-                                    color: maroonColor,
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscureConfirmPassword
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: maroonColor,
+                              ValueListenableBuilder<bool>(
+                                valueListenable: _obscureConfirmPassword,
+                                builder: (context, obscure, _) {
+                                  return TextFormField(
+                                    controller: _confirmPasswordController,
+                                    obscureText: obscure,
+                                    decoration: InputDecoration(
+                                      hintText: 'Konfirmasi Password',
+                                      prefixIcon: Icon(
+                                        Icons.lock_outline,
+                                        color: maroonColor,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          obscure
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: maroonColor,
+                                        ),
+                                        onPressed: () {
+                                          _obscureConfirmPassword.value =
+                                              !obscure;
+                                        },
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: maroonColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: maroonColor.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          color: maroonColor,
+                                          width: 2,
+                                        ),
+                                      ),
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscureConfirmPassword =
-                                            !_obscureConfirmPassword;
-                                      });
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Konfirmasi password tidak boleh kosong';
+                                      }
+                                      if (value != _passwordController.text) {
+                                        return 'Password tidak cocok';
+                                      }
+                                      return null;
                                     },
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: maroonColor),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: maroonColor.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: maroonColor,
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Konfirmasi password tidak boleh kosong';
-                                  }
-                                  if (value != _passwordController.text) {
-                                    return 'Password tidak cocok';
-                                  }
-                                  return null;
+                                  );
                                 },
                               ),
                               const SizedBox(height: 16),
-                              // Register button
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
@@ -397,7 +398,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              // Login link
                               GestureDetector(
                                 onTap: () => context.go('/login'),
                                 child: Text.rich(

@@ -34,9 +34,14 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> loadProfile() async {
     emit(state.copyWith(loading: true));
     final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString('profile_name');
-    final email = prefs.getString('profile_email');
-    final avatar = prefs.getString('profile_avatar');
+    final name =
+        prefs.getString('user_name') ?? prefs.getString('profile_name');
+    final email =
+        prefs.getString('user_email') ?? prefs.getString('profile_email');
+    final avatarPath = prefs.getString('profile_picture_path');
+    final avatarBase64 = prefs.getString('profile_picture_base64');
+    final avatar =
+        avatarPath ?? avatarBase64 ?? prefs.getString('profile_avatar');
     emit(
       state.copyWith(
         loading: false,
@@ -54,9 +59,10 @@ class ProfileCubit extends Cubit<ProfileState> {
   }) async {
     emit(state.copyWith(loading: true));
     final prefs = await SharedPreferences.getInstance();
-    if (name != null) await prefs.setString('profile_name', name);
-    if (email != null) await prefs.setString('profile_email', email);
-    if (avatarUrl != null) await prefs.setString('profile_avatar', avatarUrl);
+    if (name != null) await prefs.setString('user_name', name);
+    if (email != null) await prefs.setString('user_email', email);
+    if (avatarUrl != null)
+      await prefs.setString('profile_picture_path', avatarUrl);
     await loadProfile();
   }
 }

@@ -1,7 +1,5 @@
-// lib/features/order/domain/entities/purchase_receipt.dart (FINAL & SIAP TEMPEL)
-
 import 'package:ecommerce/features/product/domain/entities/product.dart';
-import '../../../shipping/domain/entities/shipping_option.dart'; // Import Wajib
+import '../../../shipping/domain/entities/shipping_option.dart';
 
 class PurchaseReceipt extends Product {
   final String _orderId;
@@ -12,7 +10,6 @@ class PurchaseReceipt extends Product {
   final String _shippingAddress;
   final List<dynamic> _items;
   final double _subtotal;
-  // final double _shippingCost; <--- DIBIARKAN DIHAPUS
   final double _tax;
   final double _discount;
   final double _totalAmount;
@@ -22,11 +19,9 @@ class PurchaseReceipt extends Product {
   final int _installmentMonths;
   final double _installmentAmount;
 
-  // FIELD BARU: Objek Opsi Pengiriman
   final ShippingOption? _selectedShippingOption;
 
   PurchaseReceipt({
-    // Product parent fields
     required int id,
     required String title,
     required double price,
@@ -36,7 +31,6 @@ class PurchaseReceipt extends Product {
     required double rating,
     required int ratingCount,
 
-    // PurchaseReceipt specific fields
     required String orderId,
     required String orderDate,
     required String customerName,
@@ -45,7 +39,6 @@ class PurchaseReceipt extends Product {
     required String shippingAddress,
     required List<dynamic> items,
     required double subtotal,
-    // required double shippingCost, <--- SUDAH DIHAPUS DARI PARAMETER
     required double tax,
     required double discount,
     required double totalAmount,
@@ -55,9 +48,7 @@ class PurchaseReceipt extends Product {
     required int installmentMonths,
     required double installmentAmount,
 
-    // PARAMETER BARU: ShippingOption yang bersifat opsional
     ShippingOption? selectedShippingOption,
-    // HAPUS: required int shippingCost, <-- BARIS INI YANG ERROR
   }) : _orderId = orderId,
        _orderDate = orderDate,
        _customerName = customerName,
@@ -66,7 +57,6 @@ class PurchaseReceipt extends Product {
        _shippingAddress = shippingAddress,
        _items = items,
        _subtotal = subtotal,
-       // _shippingCost = shippingCost, <--- DIHAPUS
        _tax = tax,
        _discount = discount,
        _totalAmount = totalAmount,
@@ -75,7 +65,6 @@ class PurchaseReceipt extends Product {
        _purchaseStructure = purchaseStructure,
        _installmentMonths = installmentMonths,
        _installmentAmount = installmentAmount,
-       // INISIALISASI FIELD BARU DENGAN PARAMETER LOKAL
        _selectedShippingOption = selectedShippingOption,
        super(
          id: id,
@@ -88,7 +77,6 @@ class PurchaseReceipt extends Product {
          ratingCount: ratingCount,
        );
 
-  // Getters
   String get orderId => _orderId;
   String get orderDate => _orderDate;
   String get customerName => _customerName;
@@ -98,7 +86,6 @@ class PurchaseReceipt extends Product {
   List<dynamic> get items => List.unmodifiable(_items);
   double get subtotal => _subtotal;
 
-  // MODIFIKASI: Ambil biaya kirim dari objek ShippingOption (SUDAH BENAR)
   double get shippingCost => _selectedShippingOption?.cost ?? 0.0;
 
   double get tax => _tax;
@@ -110,10 +97,8 @@ class PurchaseReceipt extends Product {
   int get installmentMonths => _installmentMonths;
   double get installmentAmount => _installmentAmount;
 
-  // Getter BARU
   ShippingOption? get selectedShippingOption => _selectedShippingOption;
 
-  /// Override validateData from parent class - POLYMORPHISM
   @override
   bool validateData() {
     return _orderId.isNotEmpty &&
@@ -122,20 +107,16 @@ class PurchaseReceipt extends Product {
         _totalAmount >= 0;
   }
 
-  /// POLYMORPHISM - Override to provide PurchaseReceipt-specific display name
   @override
   String getDisplayName() =>
       'Struk Pembelian - ${_orderId.isNotEmpty ? _orderId : title}';
 
-  /// POLYMORPHISM - Override to calculate final price including tax and shipping
   @override
   double calculateFinalPrice() => _totalAmount;
 
-  /// POLYMORPHISM - Override to identify this as a purchase receipt product type
   @override
   String getProductType() => 'PURCHASE_RECEIPT';
 
-  /// Calculate remaining installment balance - specialized method
   double getRemainingBalance(int paidMonths) {
     if (paidMonths < 0 || paidMonths > _installmentMonths) {
       throw ArgumentError('Invalid paid months');
@@ -143,7 +124,6 @@ class PurchaseReceipt extends Product {
     return _totalAmount - (_installmentAmount * paidMonths);
   }
 
-  /// Check if purchase is completed
   bool isPurchaseCompleted() {
     return _paymentStatus.toLowerCase() == 'completed' ||
         _paymentStatus.toLowerCase() == 'paid';
@@ -167,7 +147,6 @@ class PurchaseReceipt extends Product {
         (json[a] ?? json[b] ?? []) as List<dynamic>;
 
     final ratingData = json['rating'] ?? {};
-    // Ambil data pengiriman dengan support kedua format (camelCase dan snake_case)
     Map<String, dynamic>? shippingJson;
     final shippingData =
         json['selectedShippingOption'] ?? json['selected_shipping_option'];
@@ -176,7 +155,6 @@ class PurchaseReceipt extends Product {
     }
 
     return PurchaseReceipt(
-      // Product parent fields
       id: json['id'] ?? json['product_id'] ?? 0,
       title: json['title'] ?? json['product_title'] ?? 'Produk Tanpa Nama',
       price: _d('price', 'product_price'),
@@ -188,7 +166,6 @@ class PurchaseReceipt extends Product {
           "https://cdn-icons-png.flaticon.com/512/869/869636.png",
       rating: (ratingData['rate'] ?? 0).toDouble(),
       ratingCount: ratingData['count'] ?? 0,
-      // PurchaseReceipt specific fields
       orderId: _s('orderId', 'order_id'),
       orderDate: _s('orderDate', 'order_date'),
       customerName: _s('customerName', 'customer_name'),
@@ -197,7 +174,6 @@ class PurchaseReceipt extends Product {
       shippingAddress: _s('shippingAddress', 'shipping_address'),
       items: _l('items', 'items'),
       subtotal: _d('subtotal', 'subtotal'),
-      // shippingCost: _d('shippingCost', 'shipping_cost'), <--- HAPUS
       tax: _d('tax', 'tax'),
       discount: _d('discount', 'discount'),
       totalAmount: _d('totalAmount', 'total_amount'),
@@ -207,7 +183,6 @@ class PurchaseReceipt extends Product {
       installmentMonths: _i('installmentMonths', 'installment_months'),
       installmentAmount: _d('installmentAmount', 'installment_amount'),
 
-      // INISIALISASI FIELD BARU
       selectedShippingOption: shippingJson != null
           ? ShippingOption.fromJson(shippingJson)
           : null,
@@ -217,9 +192,7 @@ class PurchaseReceipt extends Product {
   @override
   Map<String, dynamic> toJson() {
     return {
-      // Parent Product fields
       ...super.toJson(),
-      // PurchaseReceipt specific fields
       'order_id': _orderId,
       'order_date': _orderDate,
       'customer_name': _customerName,
@@ -237,7 +210,6 @@ class PurchaseReceipt extends Product {
       'installment_months': _installmentMonths,
       'installment_amount': _installmentAmount,
 
-      // Tambahkan FIELD BARU dengan snake_case
       'selected_shipping_option': _selectedShippingOption?.toJson(),
     };
   }

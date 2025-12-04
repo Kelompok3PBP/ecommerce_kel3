@@ -15,14 +15,12 @@ class _AddressListPageState extends State<AddressListPage> {
   @override
   void initState() {
     super.initState();
-    // Ensure addresses are loaded when page first opens
     context.read<AddressCubit>().fetchAll();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Refresh addresses every time this page becomes active
     context.read<AddressCubit>().fetchAll();
   }
 

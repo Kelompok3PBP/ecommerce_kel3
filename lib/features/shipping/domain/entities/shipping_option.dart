@@ -1,14 +1,12 @@
-// lib/features/shipping/domain/entities/shipping_option.dart
-
 import 'package:equatable/equatable.dart';
 
 class ShippingOption extends Equatable {
   final String id;
-  final String name; // Contoh: "Reguler", "Next Day"
-  final String serviceType; // Contoh: "JNE Reg", "SiCepat BEST"
+  final String name;
+  final String serviceType;
   final double cost;
-  final String? estimate; // Contoh: "2-3 hari"
-  final String courierName; // Contoh: "JNE", "Sicepat", "GoSend"
+  final String? estimate;
+  final String courierName;
 
   const ShippingOption({
     required this.id,
@@ -19,11 +17,8 @@ class ShippingOption extends Equatable {
     this.estimate,
   });
 
-  // Metode untuk konversi dari Map (misalnya dari API)
   factory ShippingOption.fromJson(Map<String, dynamic> json) {
-    // Helper function untuk parsing string
     String _s(String key) => (json[key] ?? '').toString();
-    // Helper function untuk parsing double dengan aman
     double _d(String key) => (json[key] as num?)?.toDouble() ?? 0.0;
 
     return ShippingOption(
@@ -36,7 +31,6 @@ class ShippingOption extends Equatable {
     );
   }
 
-  // Metode untuk konversi ke Map (misalnya untuk dikirim saat checkout atau disimpan di PurchaseReceipt)
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -48,7 +42,6 @@ class ShippingOption extends Equatable {
     };
   }
 
-  // Implementasi Equatable untuk perbandingan objek
   @override
   List<Object?> get props => [
     id,

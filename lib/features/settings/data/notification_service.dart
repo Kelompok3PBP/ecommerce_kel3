@@ -49,7 +49,6 @@ class NotificationService {
     );
   }
 
-  /// Show an in-app bottom sheet notification only if notifications are enabled in prefs.
   static Future<void> showIfEnabledDialog(
     BuildContext context, {
     required String title,
@@ -60,33 +59,31 @@ class NotificationService {
     if (!enabled) return;
     if (!context.mounted) return;
 
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Text(body, style: const TextStyle(fontSize: 14)),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('OK'),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              body,
+              style: const TextStyle(fontSize: 14, color: Colors.white),
             ),
           ],
         ),
+        duration: const Duration(seconds: 3),
+        backgroundColor: Colors.black87,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

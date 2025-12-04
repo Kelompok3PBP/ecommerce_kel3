@@ -7,7 +7,6 @@ class AddressService {
   int _nextId = 1;
 
   AddressService() {
-    // load persisted addresses (async init not allowed in constructor)
     _ensureInitialized();
   }
 
@@ -15,7 +14,6 @@ class AddressService {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString('addresses');
     if (raw == null) {
-      // seed with a default address
       final seed = Address(
         id: _nextId++,
         label: 'Rumah',
@@ -40,14 +38,11 @@ class AddressService {
           _store.add(Address.fromJson(m));
         }
       }
-      // compute next id
       if (_store.isNotEmpty) {
         final maxId = _store.map((e) => e.id).reduce((a, b) => a > b ? a : b);
         _nextId = maxId + 1;
       }
-    } catch (_) {
-      // ignore and keep store empty
-    }
+    } catch (_) {}
   }
 
   Future<void> _saveToPrefs() async {

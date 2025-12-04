@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart' as sp;
-import 'package:sizer/sizer.dart'; // Import Sizer
+import 'package:sizer/sizer.dart';
 
-// Import Entitas Dummy yang diperlukan untuk memuat opsi
 import '../../../address/domain/entities/address.dart';
 import '../../../address/presentation/cubits/address_cubit.dart';
 import '../cubits/shipping_cubit.dart';
 import '../../domain/entities/shipping_option.dart';
 import '../../../settings/data/notification_service.dart';
+import 'package:ecommerce/app/theme/app_theme.dart';
 
 class ShippingSelectionPage extends StatefulWidget {
   static const String routeName = '/shipping-selection';
@@ -24,35 +24,52 @@ class ShippingSelectionPage extends StatefulWidget {
 }
 
 class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
-  Address? _selectedAddress;
-  double _subtotal = 0.0;
-  double _totalWeight = 0.0;
+  late final ValueNotifier<Address?> _selectedAddressNotifier;
+  late final ValueNotifier<double> _subtotalNotifier;
+  late final ValueNotifier<double> _totalWeightNotifier;
 
   @override
   void initState() {
     super.initState();
-    // Ensure addresses are loaded by AddressCubit
-    try {
-      final addrCubit = context.read<AddressCubit>();
-      addrCubit.fetchAll();
-    } catch (_) {
-      // AddressCubit not provided above — router should provide it.
-    }
+    _subtotalNotifier = ValueNotifier<double>(0.0);
+    _totalWeightNotifier = ValueNotifier<double>(0.0);
+    _selectedAddressNotifier = ValueNotifier<Address?>(null);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final addrCubit = context.read<AddressCubit>();
+        addrCubit.fetchAll();
+      } catch (_) {}
 
-    // Handle BUY NOW flow: extra contains product data
-    if (widget.extra is Map<String, dynamic>) {
-      final buyNowData = widget.extra as Map<String, dynamic>;
-      final price = (buyNowData['price'] as num?)?.toDouble() ?? 0.0;
-      final quantity = (buyNowData['quantity'] as num?)?.toInt() ?? 1;
-      final total =
-          (buyNowData['total'] as num?)?.toDouble() ?? (price * quantity);
+      if (widget.extra is Map<String, dynamic>) {
+        final buyNowData = widget.extra as Map<String, dynamic>;
+        final price = (buyNowData['price'] as num?)?.toDouble() ?? 0.0;
+        final quantity = (buyNowData['quantity'] as num?)?.toInt() ?? 1;
+        final total =
+            (buyNowData['total'] as num?)?.toDouble() ?? (price * quantity);
 
-      setState(() {
-        _subtotal = total;
-        _totalWeight = quantity * 1.0; // assume 1kg per item
-      });
-    } else {
-      _loadSelectedCheckout();
+        _subtotalNotifier.value = total;
+        _totalWeightNotifier.value = quantity * 1.0;
+      } else {
+        _loadSelectedCheckout();
+      }
+
+      _restoreSelectedShippingOption();
+    });
+  }
+
+  Future<void> _restoreSelectedShippingOption() async {
+    final prefs = await sp.SharedPreferences.getInstance();
+    final shippingJson = prefs.getString('selected_shipping_option');
+    if (shippingJson != null) {
+      try {
+        final shippingMap = jsonDecode(shippingJson) as Map<String, dynamic>;
+        final option = ShippingOption.fromJson(shippingMap);
+        if (mounted) {
+          context.read<ShippingCubit>().selectShippingOption(option);
+        }
+      } catch (e) {
+        print('Error restoring shipping option: $e');
+      }
     }
   }
 
@@ -69,18 +86,16 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
         final price = (it['price'] as num?)?.toDouble() ?? 0.0;
         final qty = (it['quantity'] as num?)?.toInt() ?? 1;
         subtotal += price * qty;
-        weight += qty * 1.0; // assume 1kg per item if not available
+        weight += qty * 1.0;
       }
 
-      setState(() {
-        _subtotal = subtotal;
-        _totalWeight = weight;
-      });
+      _subtotalNotifier.value = subtotal;
+      _totalWeightNotifier.value = weight;
     } catch (_) {}
   }
 
   void _onLoadShippingOptions() {
-    if (_selectedAddress == null) {
+    if (_selectedAddressNotifier.value == null) {
       NotificationService.showIfEnabledDialog(
         context,
         title: 'Alamat',
@@ -90,9 +105,20 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
     }
 
     context.read<ShippingCubit>().loadShippingOptions(
-      address: _selectedAddress!,
-      totalWeight: _totalWeight > 0 ? _totalWeight : 1.0,
+      address: _selectedAddressNotifier.value!,
+      totalWeight: _totalWeightNotifier.value > 0
+          ? _totalWeightNotifier.value
+          : 1.0,
     );
+  }
+
+  Future<void> _saveSelectedAddress(Address addr) async {
+    try {
+      final prefs = await sp.SharedPreferences.getInstance();
+      await prefs.setString('selected_address', jsonEncode(addr.toJson()));
+    } catch (e) {
+      print('Failed to save selected address: $e');
+    }
   }
 
   Future<void> _proceedToPayment() async {
@@ -111,34 +137,81 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
       jsonEncode(selected.toJson()),
     );
 
-    final finalTotal = _subtotal + selected.cost;
+    final finalTotal = _subtotalNotifier.value + selected.cost;
 
-    // Navigate to payment and pass final total
-    context.go('/payment', extra: finalTotal);
+    final source = (widget.extra is Map<String, dynamic>)
+        ? (widget.extra as Map<String, dynamic>)['source'] as String?
+        : null;
+
+    context.go(
+      '/payment',
+      extra: {'finalTotal': finalTotal, 'source': source ?? 'cart'},
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Gunakan Sizer untuk inisialisasi di root widget
     return Sizer(
       builder: (context, orientation, deviceType) {
+        final double width = MediaQuery.of(context).size.width;
+        final bool isMobile = width < 600;
+        final bool isTablet = width >= 600 && width < 1024;
+
         return Scaffold(
-          appBar: AppBar(title: const Text('Pilih Jasa Pengiriman')),
+          appBar: AppBar(
+            leading: IconButton(
+              icon: Icon(
+                Icons.arrow_back,
+                size: isMobile ? 24.0 : 28.0,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                String source = 'cart';
+                if (widget.extra is Map<String, dynamic>) {
+                  source =
+                      (widget.extra as Map<String, dynamic>)['source']
+                          as String? ??
+                      'cart';
+                }
+
+                if (source == 'detail' &&
+                    widget.extra is Map<String, dynamic>) {
+                  final pid =
+                      (widget.extra as Map<String, dynamic>)['productId']
+                          ?.toString() ??
+                      '';
+                  if (pid.isNotEmpty) {
+                    context.go('/detail/$pid');
+                    return;
+                  }
+                }
+
+                context.go('/cart');
+              },
+            ),
+            title: Text(
+              'Pilih Jasa Pengiriman',
+              style: TextStyle(
+                fontSize: isMobile ? 18.0 : 20.0,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            centerTitle: true,
+          ),
           body: Padding(
-            padding: EdgeInsets.all(4.w),
+            padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Pilih Alamat',
-                  // 👇 Ukuran font dikecilkan dari 18.sp menjadi 16.sp
                   style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600),
+                    fontSize: isMobile ? 20.0 : 24.0,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                SizedBox(height: 1.h),
+                SizedBox(height: isMobile ? 12.0 : 16.0),
 
-                // Addresses
                 BlocBuilder<AddressCubit, AddressState>(
                   builder: (context, astate) {
                     if (astate is AddressLoading) {
@@ -149,25 +222,44 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
                       if (addrs.isEmpty) {
                         return Text(
                           'Belum ada alamat. Tambah di Pengaturan > Alamat.',
-                          // 👇 Ukuran font dikecilkan dari 11.sp menjadi 9.sp
-                          style: TextStyle(fontSize: 9.sp),
+                          style: TextStyle(fontSize: isMobile ? 12.0 : 14.0),
                         );
                       }
 
-                      return Column(
-                        children: addrs.map((addr) {
-                          return RadioListTile<Address>(
-                            value: addr,
-                            groupValue: _selectedAddress,
-                            // 👇 Ukuran font dikecilkan dari 12.sp menjadi 10.sp
-                            title: Text('${addr.label} — ${addr.street}',
-                                style: TextStyle(fontSize: 10.sp)),
-                            // 👇 Ukuran font dikecilkan dari 10.sp menjadi 9.sp
-                            subtitle: Text('${addr.city} • ${addr.postalCode}',
-                                style: TextStyle(fontSize: 9.sp)),
-                            onChanged: (v) => setState(() => _selectedAddress = v),
+                      return ValueListenableBuilder<Address?>(
+                        valueListenable: _selectedAddressNotifier,
+                        builder: (context, selAddr, _) {
+                          return Column(
+                            children: addrs.map((addr) {
+                              return RadioListTile<Address>(
+                                value: addr,
+                                groupValue: selAddr,
+                                title: Text(
+                                  '${addr.label} — ${addr.street}',
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 14.0 : 16.0,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${addr.city} • ${addr.postalCode}',
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 12.0 : 14.0,
+                                  ),
+                                ),
+                                onChanged: (v) {
+                                  _selectedAddressNotifier.value = v;
+                                  if (v != null) {
+                                    _saveSelectedAddress(v);
+                                  }
+                                  Future.delayed(
+                                    const Duration(milliseconds: 200),
+                                    () => _onLoadShippingOptions(),
+                                  );
+                                },
+                              );
+                            }).toList(),
                           );
-                        }).toList(),
+                        },
                       );
                     }
 
@@ -185,14 +277,13 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
 
                 Text(
                   'Opsi Pengiriman',
-                  // 👇 Ukuran font dikecilkan dari 18.sp menjadi 16.sp
                   style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600),
+                    fontSize: isMobile ? 18.0 : 20.0,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 SizedBox(height: 1.h),
 
-                // Shipping options
                 Expanded(
                   child: BlocConsumer<ShippingCubit, ShippingState>(
                     listener: (context, state) {
@@ -212,8 +303,7 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
                         if (options.isEmpty) {
                           return Text(
                             'Tidak ada opsi pengiriman.',
-                            // 👇 Ukuran font dikecilkan dari 11.sp menjadi 9.sp
-                            style: TextStyle(fontSize: 9.sp),
+                            style: TextStyle(fontSize: isMobile ? 12.0 : 14.0),
                           );
                         }
 
@@ -222,13 +312,17 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
                             return RadioListTile<ShippingOption>(
                               value: opt,
                               groupValue: state.selectedOption,
-                              // 👇 Ukuran font dikecilkan dari 12.sp menjadi 10.sp
-                              title: Text('${opt.courierName} — ${opt.name}',
-                                  style: TextStyle(fontSize: 10.sp)),
+                              title: Text(
+                                '${opt.courierName} — ${opt.name}',
+                                style: TextStyle(
+                                  fontSize: isMobile ? 14.0 : 16.0,
+                                ),
+                              ),
                               subtitle: Text(
                                 'Estimasi: ${opt.estimate ?? '-'} • Biaya: Rp ${opt.cost.toStringAsFixed(0)}',
-                                // 👇 Ukuran font dikecilkan dari 10.sp menjadi 9.sp
-                                style: TextStyle(fontSize: 9.sp),
+                                style: TextStyle(
+                                  fontSize: isMobile ? 12.0 : 14.0,
+                                ),
                               ),
                               onChanged: (v) {
                                 if (v != null) {
@@ -242,22 +336,25 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
                         );
                       }
 
-                      // Initial / empty state
                       return Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               'Tekan tombol di bawah untuk memuat opsi pengiriman',
-                              // 👇 Ukuran font dikecilkan dari 11.sp menjadi 9.sp
-                              style: TextStyle(fontSize: 9.sp),
+                              style: TextStyle(
+                                fontSize: isMobile ? 12.0 : 14.0,
+                              ),
                             ),
-                            SizedBox(height: 1.5.h),
+                            SizedBox(height: isMobile ? 12.0 : 16.0),
                             ElevatedButton(
                               onPressed: _onLoadShippingOptions,
-                              child: Text('Pilih Jasa Pengiriman',
-                                  // 👇 Ukuran font dikecilkan dari 11.sp menjadi 10.sp
-                                  style: TextStyle(fontSize: 10.sp)),
+                              child: Text(
+                                'Pilih Jasa Pengiriman',
+                                style: TextStyle(
+                                  fontSize: isMobile ? 14.0 : 16.0,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -266,21 +363,31 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
                   ),
                 ),
 
-                // Bottom action: proceed to payment
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _proceedToPayment,
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 2.h),
-                      backgroundColor: Colors.green.shade700,
-                    ),
-                    child: Text(
-                      'Lanjut ke Pembayaran (Rp ${(_subtotal + (context.read<ShippingCubit>().state is ShippingLoaded && (context.read<ShippingCubit>().state as ShippingLoaded).selectedOption != null ? (context.read<ShippingCubit>().state as ShippingLoaded).selectedOption!.cost : 0.0)).toStringAsFixed(0)})',
-                      // 👇 Ukuran font dikecilkan dari 12.sp menjadi 11.sp
-                      style: TextStyle(fontSize: 11.sp),
-                    ),
-                  ),
+                BlocBuilder<ShippingCubit, ShippingState>(
+                  builder: (context, sState) {
+                    double shippingCost = 0.0;
+                    if (sState is ShippingLoaded &&
+                        sState.selectedOption != null) {
+                      shippingCost = sState.selectedOption!.cost;
+                    }
+
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _proceedToPayment,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            vertical: isMobile ? 14.0 : 18.0,
+                          ),
+                          backgroundColor: AppTheme.primaryColor,
+                        ),
+                        child: Text(
+                          'Lanjut ke Pembayaran (Rp ${(_subtotalNotifier.value + shippingCost).toStringAsFixed(0)})',
+                          style: TextStyle(fontSize: isMobile ? 14.0 : 16.0),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -288,5 +395,13 @@ class _ShippingSelectionPageState extends State<ShippingSelectionPage> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _subtotalNotifier.dispose();
+    _totalWeightNotifier.dispose();
+    _selectedAddressNotifier.dispose();
+    super.dispose();
   }
 }

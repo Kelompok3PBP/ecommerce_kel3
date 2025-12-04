@@ -1,4 +1,3 @@
-// ignore: depend_on_referenced_packages
 import 'package:bloc/bloc.dart';
 import 'package:ecommerce/features/shipping/domain/entities/shipping_option.dart';
 import 'package:ecommerce/features/shipping/domain/usecases/get_shipping_options_usecase.dart';
@@ -35,7 +34,6 @@ class ShippingLoaded extends ShippingState {
     this.shippingAddress,
   });
 
-  // copyWith sangat berguna untuk membuat State baru tanpa merubah semua field
   ShippingLoaded copyWith({
     List<ShippingOption>? options,
     ShippingOption? selectedOption,
@@ -48,21 +46,15 @@ class ShippingLoaded extends ShippingState {
     );
   }
 
-  // Equatable akan membandingkan semua properti di bawah ini
   @override
   List<Object?> get props => [options, selectedOption, shippingAddress];
 }
-
-// --------------------------------------------------------------------------
-// B. SHIPPING CUBIT
-// --------------------------------------------------------------------------
 
 class ShippingCubit extends Cubit<ShippingState> {
   final GetShippingOptionsUseCase getOptionsUseCase;
 
   ShippingCubit(this.getOptionsUseCase) : super(ShippingInitial());
 
-  /// Memuat opsi pengiriman dari Use Case.
   Future<void> loadShippingOptions({
     required Address address,
     required double totalWeight,
@@ -80,7 +72,6 @@ class ShippingCubit extends Cubit<ShippingState> {
         totalWeight: totalWeight,
       );
 
-      // Setelah berhasil, emit ShippingLoaded. Opsi pertama dipilih sebagai default.
       emit(
         ShippingLoaded(
           options: options,
@@ -93,12 +84,10 @@ class ShippingCubit extends Cubit<ShippingState> {
     }
   }
 
-  /// Memperbarui opsi pengiriman yang dipilih oleh pengguna.
   void selectShippingOption(ShippingOption option) {
     if (state is ShippingLoaded) {
       final currentState = state as ShippingLoaded;
 
-      // Menggunakan copyWith untuk emit State baru dengan hanya opsi yang berubah
       emit(currentState.copyWith(selectedOption: option));
     }
   }

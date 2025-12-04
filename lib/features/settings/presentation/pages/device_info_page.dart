@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:go_router/go_router.dart';
 
 class DeviceInfoPage extends StatefulWidget {
   const DeviceInfoPage({super.key});
@@ -12,8 +12,8 @@ class DeviceInfoPage extends StatefulWidget {
 }
 
 class _DeviceInfoPageState extends State<DeviceInfoPage> {
-  Map<String, dynamic> _deviceData = {};
-  bool _isLoading = true;
+  final ValueNotifier<Map<String, dynamic>> _deviceData = ValueNotifier({});
+  final ValueNotifier<bool> _isLoading = ValueNotifier(true);
 
   @override
   void initState() {
@@ -69,10 +69,8 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
     }
 
     if (mounted) {
-      setState(() {
-        _deviceData = deviceData;
-        _isLoading = false;
-      });
+      _deviceData.value = deviceData;
+      _isLoading.value = false;
     }
   }
 
@@ -84,22 +82,18 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
-        centerTitle: true, // Judul di tengah seperti About
-        
-        // JUDUL: Menggunakan gaya yang sama dengan About (Primary Color & Bold)
+        centerTitle: true,
         title: Text(
           "Device Info",
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary, 
+            color: theme.colorScheme.primary,
           ),
         ),
-        
-        // NAVIGASI: Disamakan persis dengan kode About
+
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary), // Icon warna Primary
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary),
           onPressed: () {
-            // Logika GoRouter yang sama persis
             if (Navigator.of(context).canPop()) {
               context.pop();
             } else {
@@ -108,44 +102,57 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
           },
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: _deviceData.entries.map((e) {
-                return Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.info_outline,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
+      body: ValueListenableBuilder<bool>(
+        valueListenable: _isLoading,
+        builder: (context, loading, child) {
+          if (loading) return const Center(child: CircularProgressIndicator());
+
+          final deviceData = _deviceData.value;
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: deviceData.entries.map((e) {
+              return Card(
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
                     ),
-                    title: Text(
-                      e.key,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      e.value.toString(),
-                      style: const TextStyle(fontSize: 14),
+                    child: Icon(
+                      Icons.info_outline,
+                      color: theme.colorScheme.onPrimaryContainer,
                     ),
                   ),
-                );
-              }).toList(),
-            ),
+                  title: Text(
+                    e.key,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    e.value.toString(),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        },
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _deviceData.dispose();
+    _isLoading.dispose();
+    super.dispose();
   }
 }

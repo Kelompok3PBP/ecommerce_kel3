@@ -19,28 +19,37 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String userName = "";
-  String userEmail = "";
-  String? _imagePath;
-  String? _webBase64;
+  late final ValueNotifier<String> userNameNotifier;
+  late final ValueNotifier<String> userEmailNotifier;
+  late final ValueNotifier<String?> _imagePathNotifier;
+  late final ValueNotifier<String?> _webBase64Notifier;
 
   @override
   void initState() {
     super.initState();
+    userNameNotifier = ValueNotifier<String>('');
+    userEmailNotifier = ValueNotifier<String>('');
+    _imagePathNotifier = ValueNotifier<String?>(null);
+    _webBase64Notifier = ValueNotifier<String?>(null);
+
     _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    userNameNotifier.dispose();
+    userEmailNotifier.dispose();
+    _imagePathNotifier.dispose();
+    _webBase64Notifier.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        userName = prefs.getString('user_name') ?? 'User';
-        userEmail = prefs.getString('user_email') ?? 'user@mail.com';
-
-        _imagePath = prefs.getString('profile_picture_path');
-        _webBase64 = prefs.getString('profile_picture_base64');
-      });
-    }
+    userNameNotifier.value = prefs.getString('user_name') ?? 'User';
+    userEmailNotifier.value = prefs.getString('user_email') ?? 'user@mail.com';
+    _imagePathNotifier.value = prefs.getString('profile_picture_path');
+    _webBase64Notifier.value = prefs.getString('profile_picture_base64');
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -66,12 +75,8 @@ class _ProfilePageState extends State<ProfilePage> {
         final base64Image = base64Encode(bytes);
         await prefs.setString('profile_picture_base64', base64Image);
         await prefs.remove('profile_picture_path');
-        if (mounted) {
-          setState(() {
-            _webBase64 = base64Image;
-            _imagePath = null;
-          });
-        }
+        _webBase64Notifier.value = base64Image;
+        _imagePathNotifier.value = null;
       } else {
         final appDir = await getApplicationDocumentsDirectory();
         final fileName = path.basename(pickedFile.path);
@@ -84,12 +89,8 @@ class _ProfilePageState extends State<ProfilePage> {
         await prefs.setString('profile_picture_path', savedImage.path);
         await prefs.remove('profile_picture_base64');
 
-        if (mounted) {
-          setState(() {
-            _imagePath = savedImage.path;
-            _webBase64 = null;
-          });
-        }
+        _imagePathNotifier.value = savedImage.path;
+        _webBase64Notifier.value = null;
       }
     } catch (e) {
       if (mounted) {
@@ -190,15 +191,17 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   ImageProvider? _buildProfileImage() {
-    if (kIsWeb && _webBase64 != null) {
+    final webBase64 = _webBase64Notifier.value;
+    final imagePath = _imagePathNotifier.value;
+    if (kIsWeb && webBase64 != null) {
       try {
-        return MemoryImage(base64Decode(_webBase64!));
+        return MemoryImage(base64Decode(webBase64));
       } catch (_) {
         return null;
       }
     }
-    if (!kIsWeb && _imagePath != null && File(_imagePath!).existsSync()) {
-      return FileImage(File(_imagePath!));
+    if (!kIsWeb && imagePath != null && File(imagePath).existsSync()) {
+      return FileImage(File(imagePath));
     }
     return null;
   }
@@ -206,7 +209,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final profileImage = _buildProfileImage();
 
     return Scaffold(
       appBar: AppBar(
@@ -227,17 +229,31 @@ class _ProfilePageState extends State<ProfilePage> {
                 Center(
                   child: Stack(
                     children: [
-                      CircleAvatar(
-                        radius: 60,
-                        backgroundColor: theme.primaryColor.withOpacity(0.1),
-                        backgroundImage: profileImage,
-                        child: profileImage == null
-                            ? Icon(
-                                Icons.person,
-                                size: 60,
-                                color: theme.colorScheme.primary,
-                              )
-                            : null,
+                      // Wrap in ValueListenableBuilder so image updates when changed
+                      ValueListenableBuilder<String?>(
+                        valueListenable: _imagePathNotifier,
+                        builder: (context, imagePath, _) {
+                          return ValueListenableBuilder<String?>(
+                            valueListenable: _webBase64Notifier,
+                            builder: (context, webBase64, _) {
+                              final profileImage = _buildProfileImage();
+                              return CircleAvatar(
+                                radius: 60,
+                                backgroundColor: theme.primaryColor.withOpacity(
+                                  0.1,
+                                ),
+                                backgroundImage: profileImage,
+                                child: profileImage == null
+                                    ? Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: theme.colorScheme.primary,
+                                      )
+                                    : null,
+                              );
+                            },
+                          );
+                        },
                       ),
                       Positioned(
                         bottom: 0,
@@ -259,22 +275,32 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 SizedBox(height: 3.h),
-                Text(
-                  userName,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                  ),
+                ValueListenableBuilder<String>(
+                  valueListenable: userNameNotifier,
+                  builder: (context, userName, _) {
+                    return Text(
+                      userName,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                      ),
+                    );
+                  },
                 ),
                 SizedBox(height: 1.h),
-                Text(
-                  userEmail,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.textTheme.bodyMedium?.color,
-                    fontSize: 16,
-                  ),
+                ValueListenableBuilder<String>(
+                  valueListenable: userEmailNotifier,
+                  builder: (context, userEmail, _) {
+                    return Text(
+                      userEmail,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.textTheme.bodyMedium?.color,
+                        fontSize: 16,
+                      ),
+                    );
+                  },
                 ),
                 SizedBox(height: 4.h),
                 const Divider(),
@@ -288,11 +314,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () async {
                     final result = await context.push(
                       '/edit-profile',
-                      extra: {'name': userName, 'email': userEmail},
+                      extra: {
+                        'name': userNameNotifier.value,
+                        'email': userEmailNotifier.value,
+                      },
                     );
 
-                    if (result == true && mounted) {
-                      _loadProfile();
+                    if (result == true) {
+                      await _loadProfile();
                     }
                   },
                 ),

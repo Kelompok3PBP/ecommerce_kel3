@@ -13,7 +13,7 @@ class SharedPreferencesPage extends StatefulWidget {
 }
 
 class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
-  Map<String, Object> data = {};
+  final ValueNotifier<Map<String, Object>> dataNotifier = ValueNotifier({});
 
   @override
   void initState() {
@@ -28,9 +28,7 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
     for (var key in allKeys) {
       temp[key] = prefs.get(key) ?? 'null';
     }
-    setState(() {
-      data = temp;
-    });
+    dataNotifier.value = temp;
   }
 
   Future<void> _clearPrefs() async {
@@ -54,35 +52,45 @@ class _SharedPreferencesPageState extends State<SharedPreferencesPage> {
           IconButton(icon: const Icon(Icons.delete), onPressed: _clearPrefs),
         ],
       ),
-      body: data.isEmpty
-          ? Center(
+      body: ValueListenableBuilder<Map<String, Object>>(
+        valueListenable: dataNotifier,
+        builder: (context, data, child) {
+          if (data.isEmpty) {
+            return Center(
               child: Text(context.t('info'), style: TextStyle(fontSize: 16)),
-            )
-          : ListView(
-              padding: EdgeInsets.all(2.w),
-              children: data.entries.map((entry) {
-                return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+            );
+          }
+
+          return ListView(
+            padding: EdgeInsets.all(2.w),
+            children: data.entries.map((entry) {
+              return Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 2,
+                child: ListTile(
+                  title: Text(
+                    entry.key,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
-                  elevation: 2,
-                  child: ListTile(
-                    title: Text(
-                      entry.key,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    subtitle: Text(
-                      entry.value.toString(),
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    leading: Icon(Icons.storage, color: AppTheme.primaryColor),
+                  subtitle: Text(
+                    entry.value.toString(),
+                    style: TextStyle(fontSize: 14),
                   ),
-                );
-              }).toList(),
-            ),
+                  leading: Icon(Icons.storage, color: AppTheme.primaryColor),
+                ),
+              );
+            }).toList(),
+          );
+        },
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    dataNotifier.dispose();
+    super.dispose();
   }
 }

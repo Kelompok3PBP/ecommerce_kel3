@@ -6,8 +6,7 @@ class Address extends UserModel {
   String _city;
   String _postalCode;
   String _phone;
-  
-  // FINAL FIX: Field privat untuk koordinat
+
   double? _latitude;
   double? _longitude;
 
@@ -18,7 +17,6 @@ class Address extends UserModel {
     required String city,
     required String postalCode,
     required String phone,
-    // Parameter opsional biasa (bukan this.field)
     double? latitude,
     double? longitude,
   }) : _label = label,
@@ -26,7 +24,6 @@ class Address extends UserModel {
        _city = city,
        _postalCode = postalCode,
        _phone = phone,
-       // FINAL FIX: Inisialisasi field privat di initializer list
        _latitude = latitude,
        _longitude = longitude,
        super(id: id, name: label, email: '');
@@ -42,8 +39,7 @@ class Address extends UserModel {
   String get city => _city;
   String get postalCode => _postalCode;
   String get phone => _phone;
-  
-  // Getter untuk koordinat
+
   double? get latitude => _latitude;
   double? get longitude => _longitude;
 
@@ -59,8 +55,7 @@ class Address extends UserModel {
   set city(String value) => _city = value;
   set postalCode(String value) => _postalCode = value;
   set phone(String value) => _phone = value;
-  
-  // Setter untuk koordinat
+
   set latitude(double? value) => _latitude = value;
   set longitude(double? value) => _longitude = value;
 
@@ -71,7 +66,6 @@ class Address extends UserModel {
     city: json['city'] ?? '',
     postalCode: json['postalCode'] ?? '',
     phone: json['phone'] ?? '',
-    // Memuat koordinat dari JSON
     latitude: (json['latitude'] as num?)?.toDouble(),
     longitude: (json['longitude'] as num?)?.toDouble(),
   );
@@ -85,7 +79,6 @@ class Address extends UserModel {
       'city': _city,
       'postalCode': _postalCode,
       'phone': _phone,
-      // Menyimpan koordinat ke JSON
       'latitude': _latitude,
       'longitude': _longitude,
     });

@@ -19,13 +19,11 @@ class UserEntity {
        _phone = phone,
        _avatar = avatar,
        _createdAt = createdAt {
-    // Validate user data on initialization
     if (!_validateUserData()) {
       throw ArgumentError('Invalid user data');
     }
   }
 
-  // Getters - controlled access to private fields (ENCAPSULATION)
   String get id => _id;
   String get email => _email;
   String get name => _name;
@@ -33,7 +31,6 @@ class UserEntity {
   String? get avatar => _avatar;
   DateTime get createdAt => _createdAt;
 
-  /// Validate user data - ENCAPSULATION OF VALIDATION LOGIC
   bool _validateUserData() {
     return _id.isNotEmpty &&
         _email.isNotEmpty &&
@@ -41,17 +38,14 @@ class UserEntity {
         _name.isNotEmpty;
   }
 
-  /// Check if user profile is complete
   bool isProfileComplete() {
     return _phone != null && _phone.isNotEmpty && _avatar != null;
   }
 
-  /// Get user display name
   String getDisplayName() {
     return _name;
   }
 
-  /// Get initials from name
   String getInitials() {
     final initials = _name
         .split(' ')
@@ -61,14 +55,12 @@ class UserEntity {
     return initials.length < 2 ? '${initials}U' : initials;
   }
 
-  /// Check if email is valid
   bool isEmailValid() {
     return RegExp(
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     ).hasMatch(_email);
   }
 
-  /// Check if phone number is valid (basic validation)
   bool isPhoneValid() {
     if (_phone == null || _phone.isEmpty) return false;
     final cleanPhone = _phone.replaceAll(RegExp(r'[^\d]'), '');

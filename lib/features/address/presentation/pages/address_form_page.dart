@@ -9,7 +9,6 @@ import 'package:latlong2/latlong.dart' as ll;
 
 class AddressFormPage extends StatefulWidget {
   final Address? address;
-  // Fiksasi: Menggunakan super.key untuk clean code
   const AddressFormPage({super.key, this.address});
 
   @override
@@ -19,22 +18,21 @@ class AddressFormPage extends StatefulWidget {
 class _AddressFormPageState extends State<AddressFormPage> {
   final _formKey = GlobalKey<FormState>();
   ll.LatLng? _previewLatLng;
-  bool _useSatellite = false;
-  
-  // Controllers Address
+  late ValueNotifier<bool> useSatelliteNotifier;
+
   late TextEditingController labelController;
   late TextEditingController streetController;
   late TextEditingController cityController;
   late TextEditingController postalController;
   late TextEditingController phoneController;
-  
-  // Penambahan Fiksasi: Controllers untuk menyimpan koordinat
+
   late TextEditingController latitudeController;
   late TextEditingController longitudeController;
 
   @override
   void initState() {
     super.initState();
+    useSatelliteNotifier = ValueNotifier<bool>(false);
     labelController = TextEditingController(text: widget.address?.label ?? '');
     streetController = TextEditingController(
       text: widget.address?.street ?? '',
@@ -45,7 +43,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
     );
     phoneController = TextEditingController(text: widget.address?.phone ?? '');
 
-    // Fiksasi: Inisialisasi controller koordinat dengan data lama (jika ada)
     latitudeController = TextEditingController(
       text: widget.address?.latitude?.toString() ?? '',
     );
@@ -53,7 +50,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
       text: widget.address?.longitude?.toString() ?? '',
     );
 
-    // Fiksasi: Inisialisasi Map Preview jika ada koordinat
     final initialLat = widget.address?.latitude;
     final initialLng = widget.address?.longitude;
     if (initialLat != null && initialLng != null) {
@@ -68,7 +64,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
     cityController.dispose();
     postalController.dispose();
     phoneController.dispose();
-    // Fiksasi: Dispose controller koordinat
     latitudeController.dispose();
     longitudeController.dispose();
     super.dispose();
@@ -76,7 +71,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      // Fiksasi: Ambil dan parse koordinat sebelum membuat objek
       final double? latitude = double.tryParse(latitudeController.text);
       final double? longitude = double.tryParse(longitudeController.text);
 
@@ -87,48 +81,42 @@ class _AddressFormPageState extends State<AddressFormPage> {
         city: cityController.text,
         postalCode: postalController.text,
         phone: phoneController.text,
-        
-        // Fiksasi: Menyimpan LatLng ke entitas Address
+
         latitude: latitude,
         longitude: longitude,
       );
-      
+
       final cubit = context.read<AddressCubit>();
-      
+
       if (widget.address == null) {
         cubit.create(address);
       } else {
         cubit.update(address);
       }
-      
-      // Menggunakan context.pop() dari GoRouter
-      context.pop(); 
+
+      context.pop();
     }
   }
-  
-  // Fiksasi: Method terpisah untuk handle hasil dari map picker
+
   void _handleMapResult(Map<String, dynamic> result) {
-    setState(() {
-      streetController.text = result['street'] ?? '';
-      cityController.text = result['city'] ?? '';
-      postalController.text = result['postal'] ?? '';
+    streetController.text = result['street'] ?? '';
+    cityController.text = result['city'] ?? '';
+    postalController.text = result['postal'] ?? '';
 
-      final latStr = result['lat'];
-      final lngStr = result['lng'];
+    final latStr = result['lat'];
+    final lngStr = result['lng'];
 
-      if (latStr != null && lngStr != null) {
-        final lat = double.tryParse(latStr.toString());
-        final lng = double.tryParse(lngStr.toString());
-        
-        if (lat != null && lng != null) {
-          _previewLatLng = ll.LatLng(lat, lng);
-          
-          // Fiksasi: Menyimpan LatLng ke controller
-          latitudeController.text = lat.toString();
-          longitudeController.text = lng.toString();
-        }
+    if (latStr != null && lngStr != null) {
+      final lat = double.tryParse(latStr.toString());
+      final lng = double.tryParse(lngStr.toString());
+
+      if (lat != null && lng != null) {
+        _previewLatLng = ll.LatLng(lat, lng);
+
+        latitudeController.text = lat.toString();
+        longitudeController.text = lng.toString();
       }
-    });
+    }
   }
 
   @override
@@ -161,7 +149,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
                 children: [
                   SizedBox(height: spacingSmall),
 
-                  // LABEL
                   TextFormField(
                     controller: labelController,
                     decoration: InputDecoration(
@@ -178,7 +165,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
                   SizedBox(height: spacingSmall),
 
-                  // STREET
                   TextFormField(
                     controller: streetController,
                     decoration: InputDecoration(
@@ -195,7 +181,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
                   SizedBox(height: spacingSmall),
 
-                  // CITY
                   TextFormField(
                     controller: cityController,
                     decoration: InputDecoration(
@@ -212,7 +197,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
                   SizedBox(height: spacingSmall),
 
-                  // POSTAL CODE
                   TextFormField(
                     controller: postalController,
                     decoration: InputDecoration(
@@ -229,7 +213,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
                   SizedBox(height: spacingSmall),
 
-                  // PHONE
                   TextFormField(
                     controller: phoneController,
                     decoration: InputDecoration(
@@ -246,14 +229,13 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
                   SizedBox(height: spacingLarge),
 
-                  // GOOGLE MAP PICKER BUTTON
                   ElevatedButton.icon(
                     onPressed: () async {
                       final result =
                           await context.push('/map') as Map<String, dynamic>?;
 
                       if (result != null) {
-                        _handleMapResult(result); // Panggil method fiksasi
+                        _handleMapResult(result);
                       }
                     },
                     icon: const Icon(Icons.location_on),
@@ -269,7 +251,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
                     ),
                   ),
 
-                  // Fiksasi Penambahan: Field tersembunyi untuk LatLng
                   SizedBox(
                     height: 0,
                     width: 0,
@@ -283,69 +264,75 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
                   SizedBox(height: spacingLarge),
 
-                  // MAP PREVIEW (with satellite toggle)
                   if (_previewLatLng != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    ValueListenableBuilder<bool>(
+                      valueListenable: useSatelliteNotifier,
+                      builder: (context, useSatellite, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Fiksasi: Tampilkan koordinat yang dipilih
-                            Text(
-                              'Lokasi Dipilih (${_previewLatLng!.latitude.toStringAsFixed(4)}, ${_previewLatLng!.longitude.toStringAsFixed(4)})',
-                              style: Theme.of(context).textTheme.bodyLarge,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Lokasi Dipilih (${_previewLatLng!.latitude.toStringAsFixed(4)}, ${_previewLatLng!.longitude.toStringAsFixed(4)})',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                                IconButton(
+                                  tooltip: useSatellite
+                                      ? 'Streets'
+                                      : 'Satellite',
+                                  icon: Icon(
+                                    useSatellite
+                                        ? Icons.map
+                                        : Icons.satellite_alt,
+                                  ),
+                                  onPressed: () {
+                                    useSatelliteNotifier.value = !useSatellite;
+                                  },
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              tooltip: _useSatellite ? 'Streets' : 'Satellite',
-                              icon: Icon(
-                                _useSatellite ? Icons.map : Icons.satellite_alt,
-                              ),
-                              onPressed: () => setState(
-                                () => _useSatellite = !_useSatellite,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: isWide ? 260 : 180,
-                          child: fm.FlutterMap(
-                            options: fm.MapOptions(
-                              initialCenter: _previewLatLng!, // Fiksasi: menggunakan initialCenter
-                              initialZoom: 16.0,
-                            ),
-                            children: [
-                              fm.TileLayer(
-                                urlTemplate: _useSatellite
-                                    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                                    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                subdomains: _useSatellite
-                                    ? const []
-                                    : const ['a', 'b', 'c'],
-                              ),
-                              fm.MarkerLayer(
-                                markers: [
-                                  fm.Marker(
-                                    point: _previewLatLng!,
-                                    width: 40,
-                                    height: 40,
-                                    child: const Icon(
-                                      Icons.location_on,
-                                      color: Colors.red,
-                                      size: 40,
-                                    ),
+                            SizedBox(
+                              height: isWide ? 260 : 180,
+                              child: fm.FlutterMap(
+                                options: fm.MapOptions(
+                                  initialCenter: _previewLatLng!,
+                                  initialZoom: 16.0,
+                                ),
+                                children: [
+                                  fm.TileLayer(
+                                    urlTemplate: useSatellite
+                                        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                                        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    subdomains: useSatellite
+                                        ? const []
+                                        : const ['a', 'b', 'c'],
+                                  ),
+                                  fm.MarkerLayer(
+                                    markers: [
+                                      fm.Marker(
+                                        point: _previewLatLng!,
+                                        width: 40,
+                                        height: 40,
+                                        child: const Icon(
+                                          Icons.location_on,
+                                          color: Colors.red,
+                                          size: 40,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ),
+                          ],
+                        );
+                      },
                     ),
 
                   SizedBox(height: spacingLarge),
 
-                  // SUBMIT BUTTON
                   SizedBox(
                     width: double.infinity,
                     height: buttonHeight,

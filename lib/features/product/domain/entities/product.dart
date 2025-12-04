@@ -1,29 +1,20 @@
-/// Abstract base class for products with encapsulation and polymorphism support
 abstract class BaseProduct {
-  /// Get product identifier
   int getId();
 
-  /// Get product price
   double getPrice();
 
-  /// Validate product data
   bool validateData();
 
-  /// Get serializable map representation
   Map<String, dynamic> toJson();
 
-  /// Polymorphic method - can be overridden by subclasses
   String getDisplayName() => 'Product';
 
-  /// Polymorphic method - calculate final price (can include taxes, fees, etc)
   double calculateFinalPrice() => getPrice();
 
-  /// Polymorphic method - get product type
   String getProductType();
 }
 
 class Product extends BaseProduct {
-  // Private fields - ENCAPSULATION
   int _id;
   String _title;
   double _price;
@@ -50,13 +41,11 @@ class Product extends BaseProduct {
        _image = image,
        _rating = rating,
        _ratingCount = ratingCount {
-    // Validate data on initialization (only title is required)
     if (_title.isEmpty) {
       throw ArgumentError('Product title cannot be empty');
     }
   }
 
-  /// Constructor untuk cart items (relax validation)
   Product.fromCart({
     required int id,
     required String title,
@@ -75,7 +64,6 @@ class Product extends BaseProduct {
        _rating = rating,
        _ratingCount = ratingCount;
 
-  // Getters - controlled access to private fields (ENCAPSULATION)
   @override
   int getId() => _id;
   int get id => _id;
@@ -96,7 +84,6 @@ class Product extends BaseProduct {
 
   int get ratingCount => _ratingCount;
 
-  // Setters - controlled modification of private fields (ENCAPSULATION)
   set id(int value) {
     if (value > 0) {
       _id = value;
@@ -141,7 +128,6 @@ class Product extends BaseProduct {
     }
   }
 
-  /// Validate product data - ENCAPSULATION OF VALIDATION LOGIC
   @override
   bool validateData() {
     return _id > 0 &&
@@ -153,7 +139,6 @@ class Product extends BaseProduct {
         _ratingCount >= 0;
   }
 
-  /// Calculate discounted price
   double getDiscountedPrice(double discountPercent) {
     if (discountPercent < 0 || discountPercent > 100) {
       throw ArgumentError('Discount must be between 0 and 100');
@@ -161,15 +146,12 @@ class Product extends BaseProduct {
     return _price * (1 - discountPercent / 100);
   }
 
-  /// POLYMORPHISM - Override to provide Product-specific display name
   @override
   String getDisplayName() => _title;
 
-  /// POLYMORPHISM - Override to calculate final price (can be extended by subclasses)
   @override
   double calculateFinalPrice() => _price;
 
-  /// POLYMORPHISM - Override to identify product type
   @override
   String getProductType() => 'STANDARD_PRODUCT';
 

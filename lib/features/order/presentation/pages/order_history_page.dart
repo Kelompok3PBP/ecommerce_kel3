@@ -18,10 +18,9 @@ class OrderHistoryPage extends StatefulWidget {
 }
 
 class _OrderHistoryPageState extends State<OrderHistoryPage> {
-  List<PurchaseReceipt> history = [];
-  bool isLoading = true;
+  final ValueNotifier<List<PurchaseReceipt>> history = ValueNotifier([]);
+  final ValueNotifier<bool> isLoading = ValueNotifier(true);
 
-  // --- Helper untuk Warna Adaptif ---
   Color _getTextPrimaryColor(BuildContext context) {
     return Theme.of(context).colorScheme.onBackground;
   }
@@ -33,7 +32,6 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   Color _getCardColor(BuildContext context) {
     return Theme.of(context).cardColor;
   }
-  // ----------------------------------
 
   @override
   void initState() {
@@ -51,16 +49,14 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     }).toList();
 
     if (mounted) {
-      setState(() {
-        history = loadedHistory
-            .where(
-              (e) =>
-                  e.paymentStatus.toLowerCase() == 'success' ||
-                  e.paymentStatus.toLowerCase() == 'done',
-            )
-            .toList();
-        isLoading = false;
-      });
+      history.value = loadedHistory
+          .where(
+            (e) =>
+                e.paymentStatus.toLowerCase() == 'success' ||
+                e.paymentStatus.toLowerCase() == 'done',
+          )
+          .toList();
+      isLoading.value = false;
     }
   }
 
@@ -111,68 +107,73 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     showDialog<void>(
       context: context,
       builder: (context) {
-        double selectedRating = 5.0;
+        final selectedRating = ValueNotifier<double>(5.0);
         final TextEditingController controller = TextEditingController();
-        return StatefulBuilder(
-          builder: (context, setStateSB) {
-            return AlertDialog(
-              title: Text('Ulas $productName'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+        return AlertDialog(
+          title: Text('Ulas $productName'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ValueListenableBuilder<double>(
+                  valueListenable: selectedRating,
+                  builder: (context, rating, _) {
+                    return Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (i) {
                         return IconButton(
                           icon: Icon(
-                            i < selectedRating ? Icons.star : Icons.star_border,
-                            color: AppTheme.secondaryColor, // Warna bintang tetap
+                            i < rating ? Icons.star : Icons.star_border,
+                            color: AppTheme.secondaryColor,
                           ),
-                          onPressed: () =>
-                              setStateSB(() => selectedRating = i + 1.0),
+                          onPressed: () => selectedRating.value = i + 1.0,
                         );
                       }),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: controller,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: 'Tulis ulasan Anda (opsional)',
-                        border: const OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: theme.dividerColor)),
-                        focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: theme.colorScheme.primary)),
-                        hintStyle: TextStyle(color: theme.hintColor),
-                      ),
-                      style: TextStyle(color: textPrimaryColor),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Batal'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    await _saveReview(
-                      productId,
-                      selectedRating,
-                      controller.text.trim(),
-                      receipt,
                     );
-                    if (mounted) Navigator.of(context).pop();
                   },
-                  child: const Text('Kirim'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: controller,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: 'Tulis ulasan Anda (opsional)',
+                    border: const OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.dividerColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.colorScheme.primary),
+                    ),
+                    hintStyle: TextStyle(color: theme.hintColor),
+                  ),
+                  style: TextStyle(color: textPrimaryColor),
                 ),
               ],
-            );
-          },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                selectedRating.dispose();
+                Navigator.of(context).pop();
+              },
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await _saveReview(
+                  productId,
+                  selectedRating.value,
+                  controller.text.trim(),
+                  receipt,
+                );
+                selectedRating.dispose();
+                if (mounted) Navigator.of(context).pop();
+              },
+              child: const Text('Kirim'),
+            ),
+          ],
         );
       },
     );
@@ -192,10 +193,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      // 💡 Menggunakan scaffoldBackgroundColor dari tema
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        // AppBar tetap primaryColor
         backgroundColor: AppTheme.primaryColor,
         elevation: 0,
         leading: IconButton(
@@ -208,28 +207,38 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
         ),
         centerTitle: true,
       ),
-      body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: theme.primaryColor))
-          : history.isEmpty
-              // 💡 Menggunakan warna teks adaptif
-              ? Center(
+      body: ValueListenableBuilder<bool>(
+        valueListenable: isLoading,
+        builder: (context, loading, _) {
+          if (loading)
+            return Center(
+              child: CircularProgressIndicator(color: theme.primaryColor),
+            );
+          return ValueListenableBuilder<List<PurchaseReceipt>>(
+            valueListenable: history,
+            builder: (context, list, __) {
+              if (list.isEmpty) {
+                return Center(
                   child: Text(
                     'Tidak ada pesanan selesai',
                     style: TextStyle(color: _getTextPrimaryColor(context)),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: history.length,
-                  itemBuilder: (context, index) {
-                    return _orderCard(context, history[index]);
-                  },
-                ),
+                );
+              }
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: list.length,
+                itemBuilder: (context, index) {
+                  return _orderCard(context, list[index]);
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
-  // ================= CARD =================
   Widget _orderCard(BuildContext context, PurchaseReceipt receipt) {
     final theme = Theme.of(context);
     final textPrimaryColor = _getTextPrimaryColor(context);
@@ -252,7 +261,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       .toString()
                       .trim(),
               'product_name':
-                  (itemMap['product_name'] ?? itemMap['productName'] ?? 'Produk')
+                  (itemMap['product_name'] ??
+                          itemMap['productName'] ??
+                          'Produk')
                       .toString()
                       .trim(),
               'quantity': itemMap['quantity'] ?? 1,
@@ -261,29 +272,27 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           }
         }
       }
-    } catch (e) {
-      // debug print removed
-    }
+    } catch (e) {}
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
         double screenWidth = MediaQuery.of(context).size.width;
         final double itemSize = math.min(80, math.max(56, width * 0.16));
-        
-        final productRepresentative = productsList.isNotEmpty ? productsList.first : null;
-        final bool isReviewed = false; 
+
+        final productRepresentative = productsList.isNotEmpty
+            ? productsList.first
+            : null;
+        final bool isReviewed = false;
 
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            // 💡 Menggunakan cardColor dari tema
             color: cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                // 💡 Warna shadow adaptif
                 color: textPrimaryColor.withOpacity(0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 6),
@@ -293,12 +302,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Bagian Detail Produk Utama (Row)
               if (productRepresentative != null)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Gambar Produk
                     Container(
                       width: itemSize,
                       height: itemSize,
@@ -309,7 +316,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                         borderRadius: BorderRadius.circular(12),
                         image: productRepresentative['product_image'].isNotEmpty
                             ? DecorationImage(
-                                image: NetworkImage(productRepresentative['product_image']),
+                                image: NetworkImage(
+                                  productRepresentative['product_image'],
+                                ),
                                 fit: BoxFit.cover,
                               )
                             : null,
@@ -323,56 +332,62 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                           : null,
                     ),
                     const SizedBox(width: 12),
-                    
-                    // Detail Teks (Nama, Status, Ulas)
+
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        // PERBAIKAN: Mengurangi margin vertikal dengan menghilangkan SizedBox/Padding yang tidak perlu
+
                         children: [
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Nama Produk dan Quantity
                               Expanded(
                                 child: Text(
-                                  // Menggabungkan nama dan quantity
                                   '${productRepresentative['product_name']} (x${productRepresentative['quantity']})',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: textPrimaryColor,
                                   ),
-                                  maxLines: 1, // Batasi 1 baris
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              
-                              // Tombol Ulas (Diperbesar Maksimal)
+
                               if (!isReviewed)
-                                // PERUBAHAN: Padding lebih besar dan ukuran font lebih besar
-                                // Kita gunakan Padding horizontal 14 dan vertikal 6 untuk membuatnya besar
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), 
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.secondaryColor.withOpacity(0.15), 
-                                    borderRadius: BorderRadius.circular(16), 
-                                    border: Border.all(color: AppTheme.secondaryColor.withOpacity(0.5), width: 1),
+                                    color: AppTheme.secondaryColor.withOpacity(
+                                      0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: AppTheme.secondaryColor
+                                          .withOpacity(0.5),
+                                      width: 1,
+                                    ),
                                   ),
                                   child: GestureDetector(
                                     onTap: () {
-                                      final pid = productRepresentative['product_id'].toString();
+                                      final pid =
+                                          productRepresentative['product_id']
+                                              .toString();
                                       _showReviewDialog(
                                         context,
                                         pid,
-                                        productRepresentative['product_name'].toString(),
+                                        productRepresentative['product_name']
+                                            .toString(),
                                         receipt,
                                       );
                                     },
                                     child: Text(
                                       'Ulas',
                                       style: TextStyle(
-                                        fontSize: 15, // Ukuran font diperbesar
+                                        fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         color: AppTheme.secondaryColor,
                                       ),
@@ -381,30 +396,31 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                 )
                               else
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 2), 
+                                  padding: const EdgeInsets.only(top: 2),
                                   child: Text(
                                     'Sudah Diulas',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: textSecondaryColor.withOpacity(0.6),
+                                      color: textSecondaryColor.withOpacity(
+                                        0.6,
+                                      ),
                                     ),
                                   ),
                                 ),
                             ],
                           ),
-                          
-                          const SizedBox(height: 4), // Mengurangi jarak
-                          // Status Pengiriman di baris berikutnya
+
+                          const SizedBox(height: 4),
+
                           Text(
-                            'Status Pengiriman: Selesai', 
+                            'Status Pengiriman: Selesai',
                             style: TextStyle(
                               fontSize: 12,
                               color: textSecondaryColor,
                             ),
                           ),
 
-                          // Harga ditampilkan langsung di bawah Status Pengiriman
-                          const SizedBox(height: 8), // Jarak ke harga
+                          const SizedBox(height: 8),
                           Text(
                             formatRupiah(receipt.totalAmount),
                             style: TextStyle(
@@ -420,34 +436,45 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 )
               else
                 Center(
-                  child: Text('Tidak ada barang', style: TextStyle(color: textPrimaryColor)),
+                  child: Text(
+                    'Tidak ada barang',
+                    style: TextStyle(color: textPrimaryColor),
+                  ),
                 ),
 
-              const SizedBox(height: 16), // Jarak ke tombol aksi
-              
-              // Tombol Aksi
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () async {
-                        // ... (Logika Pesan Lagi) ...
                         try {
                           for (var item in receipt.items) {
                             if (item is Map<String, dynamic>) {
-                              final productId = (item['product_id'] ?? '').toString();
-                              final productName = (item['product_name'] ?? '').toString();
-                              final productImage = (item['product_image'] ?? '').toString();
-                              final quantity = int.tryParse((item['quantity'] ?? 1).toString()) ?? 1;
-                              final price = double.tryParse((item['price'] ?? 0).toString()) ?? 0.0;
+                              final productId = (item['product_id'] ?? '')
+                                  .toString();
+                              final productName = (item['product_name'] ?? '')
+                                  .toString();
+                              final productImage = (item['product_image'] ?? '')
+                                  .toString();
+                              final quantity =
+                                  int.tryParse(
+                                    (item['quantity'] ?? 1).toString(),
+                                  ) ??
+                                  1;
+                              final price =
+                                  double.tryParse(
+                                    (item['price'] ?? 0).toString(),
+                                  ) ??
+                                  0.0;
 
                               context.read<CartCubit>().addItem(
-                                    productId: productId,
-                                    productName: productName,
-                                    productImage: productImage,
-                                    quantity: quantity,
-                                    price: price,
-                                  );
+                                productId: productId,
+                                productName: productName,
+                                productImage: productImage,
+                                quantity: quantity,
+                                price: price,
+                              );
                             }
                           }
 
@@ -455,13 +482,17 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                             await NotificationService.showIfEnabledDialog(
                               context,
                               title: 'Berhasil',
-                              body: '${receipt.items.length} produk ditambahkan ke cart',
+                              body:
+                                  '${receipt.items.length} produk ditambahkan ke cart',
                             );
-                            Future.delayed(const Duration(milliseconds: 500), () {
-                              if (context.mounted) {
-                                context.go('/cart');
-                              }
-                            });
+                            Future.delayed(
+                              const Duration(milliseconds: 500),
+                              () {
+                                if (context.mounted) {
+                                  context.go('/cart');
+                                }
+                              },
+                            );
                           }
                         } catch (e) {
                           if (context.mounted) {
